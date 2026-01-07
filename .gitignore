@@ -1,1 +1,2 @@
-doc/*
+# Doxygen local output directory
+html/*

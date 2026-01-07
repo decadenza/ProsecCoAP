@@ -14,7 +14,7 @@ To manually build documentation, from the main folder, run:
 ```
 doxygen
 ```
-The documentation will be placed in [./doc/html/index.html](./html/index.html).
+The documentation will be placed in [./html/index.html](./html/index.html).
 
 ## How to install
 ### From Arduino IDE
