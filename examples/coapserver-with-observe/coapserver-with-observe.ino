@@ -43,7 +43,6 @@ IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 
 // Declarations.
 void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port);
-void response_callback(CoapPacket &packet, IPAddress ip, int port);
 
 void setup()
 {
