@@ -7,8 +7,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # This creates a separate runner for each board simultaneously
-        board: [esp32thing, uno, nodemcuv2]
+        # We group boards by their architecture to handle dependencies
+        include:
+          - board: uno
+            platform: atmelavr
+          - board: esp32thing
+            platform: espressif32
+          - board: nodemcuv2
+            platform: espressif8266
 
     steps:
       - name: Checkout code
@@ -19,8 +25,6 @@ jobs:
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
 
       - name: Cache PlatformIO
         uses: actions/cache@v4
@@ -40,14 +44,22 @@ jobs:
 
       - name: Build Examples
         run: |
-          # Install the Ethernet library dependency globally for this runner
-          pio lib install "Ethernet"
+          # 1. Install specific requirements based on the board
+          if [ "${{ matrix.board }}" == "uno" ]; then
+            pio lib install "Ethernet"
+          fi
 
-          # Loop through every .ino file found in the examples subdirectories
-          # 'pio ci' builds each file in isolation so they don't conflict
+          # 2. Loop through every .ino file
           for example in examples/*/*.ino; do
             echo "-------------------------------------------------------"
             echo "BUILDING: $example for ${{ matrix.board }}"
             echo "-------------------------------------------------------"
-            pio ci "$example" --board=${{ matrix.board }} --lib="."
+            
+            # Using --project-conf or -O to ensure WiFi is available for ESP boards
+            # we use -O to inject "lib_deps" dynamically
+            pio ci "$example" \
+              --board=${{ matrix.board }} \
+              --lib="." \
+              -O "lib_deps=Ethernet" \
+              -O "build_flags=-D PLATFORMIO_CI"
           done
