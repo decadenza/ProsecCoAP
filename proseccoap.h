@@ -273,7 +273,7 @@ private:
         /**
          * @brief Whether this entry is in use.
          */
-        bool in_use = false;
+        bool active = false;
         /**
          * @brief The IP address of the observer.
          */

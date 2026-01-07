@@ -577,7 +577,7 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
 
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
-        if (!observers[i].in_use)
+        if (!observers[i].active)
             continue;
         if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
@@ -588,9 +588,9 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
 
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
-        if (!observers[i].in_use)
+        if (!observers[i].active)
         {
-            observers[i].in_use = true;
+            observers[i].active = true;
             observers[i].ip = ip;
             observers[i].port = (uint16_t)port;
             observers[i].tokenLength = tokenLength;
@@ -614,11 +614,11 @@ bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t
     bool removed = false;
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
-        if (!observers[i].in_use)
+        if (!observers[i].active)
             continue;
         if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
-            observers[i].in_use = false;
+            observers[i].active = false;
             observers[i].tokenLength = 0;
             observers[i].observationSequentialNumber = 0;
             observers[i].lastSeenMs = 0;
@@ -638,14 +638,14 @@ int Coap::notifyObservers(const char *url, const char *payload, int payload_len,
 
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
-        if (!observers[i].in_use)
+        if (!observers[i].active)
             continue;
         if (!urlEquals(observers[i].url, url))
             continue;
 
         if (COAP_OBSERVER_LEASE_MS > 0 && (now - observers[i].lastSeenMs) > COAP_OBSERVER_LEASE_MS)
         {
-            observers[i].in_use = false;
+            observers[i].active = false;
             continue;
         }
 
