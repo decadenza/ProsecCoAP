@@ -1,4 +1,4 @@
-# ProsecCoAP: A CoAP client and server library for Arduino.
+# ProsecCoAP - A CoAP client and server library for Arduino.
 
 <a href="http://coap.space/" target=_blank>CoAP</a> simple server/client library for Arduino IDE/PlatformIO, ESP32, ESP8266.
 
@@ -10,6 +10,7 @@ This library is a partial implementation of CoAP protocol ([RFC-7252](https://da
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
 
+### Building the documentation
 To manually build documentation from the main folder, run:
 ```
 doxygen
@@ -21,9 +22,10 @@ The documentation will be placed in [./html/index.html](./html/index.html).
 ** COMING SOON **
 
 ### Manual
-Download this source code branch zip file and extract it to the Arduino libraries directory.
-You should be able the find the examples from the Arduino IDE menu.
 
+1. Download this source code branch as a zip file.
+2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
+3. Navigate to *File > Examples > ProsecCoAP* to get started.
 
 ## How to test
 The [examples](./examples) need CoAP server libcoap or microcoap server to work. 
