@@ -510,9 +510,8 @@ static uint8_t encodeUintOption(uint32_t value, uint8_t out[3])
     return 3;
 }
 
-// TODO: Use the observer directly...
-uint16_t Coap::sendObserveConfirmation(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
-                                       COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength, uint32_t observeSequence)
+uint16_t Coap::sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
+                                               COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
 {
     CoapPacket packet;
 
@@ -525,8 +524,11 @@ uint16_t Coap::sendObserveConfirmation(IPAddress ip, int port, uint16_t messageI
     packet.optionCount = 0;
     packet.messageId = messageId;
 
+    // When registering a new observer, the observe option value is send back.
+    // https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
+    // The value will be the sequential number, hard coded to start from 0.
     uint8_t observeBuf[3] = {0};
-    uint8_t observeLen = encodeUintOption(observeSequence, observeBuf);
+    uint8_t observeLen = encodeUintOption(0, observeBuf);
     packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
 
     uint8_t optionBuffer[2] = {0};
