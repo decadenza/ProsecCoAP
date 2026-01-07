@@ -1,0 +1,41 @@
+name: Doxygen Deployment
+
+on:
+  push:
+    branches: ["main"] # Or your default branch
+  workflow_dispatch:
+
+# Permissions required for GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. Generate Documentation
+      - name: Run Doxygen
+        uses: mattnotmitt/doxygen-action@v1
+        with:
+          doxyfile-path: ./Doxyfile
+          working-directory: .
+
+      # 2. Setup Pages (Standard GitHub Action)
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 3. Upload Artifacts (Point to your Doxygen HTML output folder)
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./doc/html
+
+      # 4. Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
