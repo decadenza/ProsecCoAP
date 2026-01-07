@@ -41,6 +41,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define COAP_BUF_MAX_SIZE 128
 #endif
 #ifndef COAP_MAX_OBSERVERS
+/**
+ * @brief Maximum number of observers that can be registered at runtime.
+ */
 #define COAP_MAX_OBSERVERS 4
 #endif
 #ifndef COAP_OBSERVER_LEASE_MS
@@ -159,11 +162,6 @@ public:
      * @brief Add an option to the packet.
      */
     void addOption(uint8_t number, uint8_t length, uint8_t *optPayload);
-
-    /**
-     * @brief Check whether the packet requests observation.
-     */
-    bool isObserve();
 
     /**
      * @brief Fetch the observe value (either 1 or 0).

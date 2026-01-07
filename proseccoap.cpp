@@ -14,18 +14,6 @@ void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *opt_payload)
     ++optionCount;
 }
 
-bool CoapPacket::isObserve()
-{
-    for (int i = 0; i < optionCount; i++)
-    {
-        if (options[i].number == COAP_OBSERVE)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
 bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
 {
     for (int i = 0; i < optionCount; i++)
