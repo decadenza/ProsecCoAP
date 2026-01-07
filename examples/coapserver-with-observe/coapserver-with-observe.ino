@@ -90,7 +90,7 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
             }
             else
             {
-                // The first notification will confirm the subscription to the client, with no payload.
+                // First confirm the subscription to the client, with no payload.
                 coap.sendObserveRegisterConfirmation(ip, port, packet.messageId, packet.token, packet.tokenLength);
                 SERIAL_PRINTLN("Subscribed!");
             }

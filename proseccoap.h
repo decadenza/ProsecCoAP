@@ -314,6 +314,8 @@ public:
 
     /**
      * @brief Notify all observers of a specific URL with a non-confirmable message.
+     *
+     * @return Number of notifications sent successfully.
      */
     int notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
 
