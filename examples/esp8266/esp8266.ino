@@ -1,6 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
-#include <proseccoap.h>
+#include <ProsecCoAP.h>
 
 const char *ssid = "your-ssid";
 const char *password = "your-password";

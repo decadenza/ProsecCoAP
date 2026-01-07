@@ -1,5 +1,5 @@
-#include "proseccoap.h"
 #include "Arduino.h"
+#include "ProsecCoAP.h"
 
 void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *opt_payload)
 {

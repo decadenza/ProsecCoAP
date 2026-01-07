@@ -6,7 +6,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-#include <proseccoap.h>
+#include <ProsecCoAP.h>
 
 // --- DEBUG MACROS ---
 // Set to 1 to enable Serial output for debugging. Set to 0 to disable all Serial calls (no-ops).
