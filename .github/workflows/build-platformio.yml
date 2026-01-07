@@ -1,4 +1,4 @@
-name: build-platformio
+name: Build with PlatformIO
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
