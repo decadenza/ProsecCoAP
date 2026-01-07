@@ -324,13 +324,6 @@ public:
     bool addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
-     * @brief Send an observe confirmation response to a client that has just registered.
-     *
-     * To be used after a client has registered as an observer.
-     */
-    uint16_t sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
-
-    /**
      * @brief Remove an observer for a specific URL.
      */
     bool removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);

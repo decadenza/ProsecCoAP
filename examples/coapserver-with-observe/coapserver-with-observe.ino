@@ -90,8 +90,7 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
             }
             else
             {
-                // Initial observe response includes Observe option and echoes token.
-                coap.sendObserveRegisterConfirmation(ip, port, packet.messageId, "subscribed", strlen("subscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+                // The first notification will confirm the subscription to the client.
                 SERIAL_PRINTLN("Subscribed!");
             }
         }
