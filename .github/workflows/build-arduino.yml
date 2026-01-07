@@ -1,7 +1,7 @@
 # Created this action based on information found in:
 # - <https://github.com/marketplace/actions/test-compile-for-arduino>
 # - <https://docs.github.com/en/free-pro-team@latest/actions/quickstart>
-name: build-arduino
+name: Build with Arduino CLI
 on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
