@@ -133,20 +133,22 @@ public:
     uint8_t type = 0;
     uint8_t code = 0;
     const uint8_t *token = NULL;
-    uint8_t tokenlen = 0;
+    uint8_t tokenLength = 0;
     const uint8_t *payload = NULL;
-    size_t payloadlen = 0;
-    uint16_t messageid = 0;
-    uint8_t optionnum = 0;
+    size_t payloadLength = 0;
+    uint16_t messageId = 0;
+    uint8_t optionCount = 0;
     CoapOption options[COAP_MAX_OPTION_NUM];
 
-    void addOption(uint8_t number, uint8_t length, uint8_t *opt_payload);
+    /**
+     * @brief Add an option to the packet.
+     */
+    void addOption(uint8_t number, uint8_t length, uint8_t *optPayload);
 
     /**
-     * @brief Checks if the packet is an Observe request.
-     * @return true if the packet is an Observe request, false otherwise.
+     * @brief Check whether the packet requests observation.
      */
-    bool is_observe();
+    bool isObserve();
 };
 
 #if defined(ESP8266)
@@ -162,41 +164,52 @@ typedef void (*CoapCallback)(CoapPacket &, IPAddress, int);
 class CoapUri
 {
 private:
-    String u[COAP_MAX_CALLBACK];
-    CoapCallback c[COAP_MAX_CALLBACK];
+    String urls[COAP_MAX_CALLBACK];
+    CoapCallback callbacks[COAP_MAX_CALLBACK];
 
 public:
+    /**
+     * @brief Create an empty URI callback registry.
+     */
     CoapUri()
     {
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
         {
-            u[i] = "";
-            c[i] = NULL;
+            urls[i] = "";
+            callbacks[i] = NULL;
         }
     };
+
+    /**
+     * @brief Register or update a callback for a URL.
+     */
     void add(CoapCallback call, String url)
     {
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-            if (c[i] != NULL && u[i].equals(url))
+            if (callbacks[i] != NULL && urls[i].equals(url))
             {
-                c[i] = call;
+                callbacks[i] = call;
                 return;
             }
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
         {
-            if (c[i] == NULL)
+            if (callbacks[i] == NULL)
             {
-                c[i] = call;
-                u[i] = url;
+                callbacks[i] = call;
+                urls[i] = url;
                 return;
             }
         }
     };
+
+    /**
+     * @brief Find a callback bound to a URL.
+     */
     CoapCallback find(String url)
     {
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-            if (c[i] != NULL && u[i].equals(url))
-                return c[i];
+            if (callbacks[i] != NULL && urls[i].equals(url))
+                return callbacks[i];
         return NULL;
     };
 };
@@ -210,13 +223,13 @@ public:
     IPAddress ip;
     int port = 0;
     uint8_t token[8];
-    int token_len = 0;
+    int tokenLength = 0;
     uint16_t counter = 0; // Will be used as message ID.
 
     /**
      * @brief Construct a new Observer object.
      */
-    Observer(IPAddress ip, int port, const uint8_t *token, int token_len);
+    Observer(IPAddress ip, int port, const uint8_t *token, int tokenLength);
 };
 
 class Coap
@@ -224,45 +237,107 @@ class Coap
 private:
     UDP *_udp;
     CoapUri uri;
-    CoapCallback resp;
+    CoapCallback responseHandler = NULL;
     int _port;
-    int coap_buf_size;
-    uint8_t *tx_buffer = NULL;
-    uint8_t *rx_buffer = NULL;
+    int coapBufferSize;
+    uint8_t *txBuffer = NULL;
+    uint8_t *rxBuffer = NULL;
 
     uint16_t sendPacket(CoapPacket &packet, IPAddress ip);
     uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
     int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
 
 public:
+    /**
+     * @brief Construct a CoAP instance using the given UDP transport.
+     */
     Coap(
         UDP &udp,
-        int coap_buf_size = COAP_BUF_MAX_SIZE);
-    ~Coap();
-    bool start();
-    bool start(int port);
-    void response(CoapCallback c) { resp = c; }
-
-    void server(CoapCallback c, String url) { uri.add(c, url); }
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid);
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, const char *payload);
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, const char *payload, size_t payloadlen);
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, const char *payload, size_t payloadlen, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenlen);
+        int coapBufferSize = COAP_BUF_MAX_SIZE);
 
     /**
-     * @brief Notify the observer with the given payload.
-     *
-     * It sends a non-confirmable notification according to the CoAP observe specifications RFC-7641.
+     * @brief Destroy the CoAP instance and free buffers.
      */
-    uint16_t notify(Observer *observer, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
+    ~Coap();
 
+    /**
+     * @brief Start the server on the default port.
+     */
+    bool start();
+
+    /**
+     * @brief Start the server on a custom port.
+     */
+    bool start(int port);
+
+    /**
+     * @brief Set the response callback for acknowledgements.
+     */
+    void response(CoapCallback c) { responseHandler = c; }
+
+    /**
+     * @brief Register a server callback for a URI.
+     */
+    void server(CoapCallback c, String url) { uri.add(c, url); }
+
+    /**
+     * @brief Send a basic acknowledgment with empty payload.
+     */
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId);
+
+    /**
+     * @brief Send a text acknowledgment response.
+     */
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload);
+
+    /**
+     * @brief Send a typed acknowledgment response with explicit length.
+     */
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength);
+
+    /**
+     * @brief Send a fully customized acknowledgment response.
+     */
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
+
+    /**
+     * @brief Notify an observer with a non-confirmable message.
+     */
+    uint16_t notify(Observer *observer, const char *payload, int payloadLength, COAP_CONTENT_TYPE type);
+
+    /**
+     * @brief Send a confirmable GET request.
+     */
     uint16_t get(IPAddress ip, int port, const char *url);
-    uint16_t put(IPAddress ip, int port, const char *url, const char *payload);
-    uint16_t put(IPAddress ip, int port, const char *url, const char *payload, size_t payloadlen);
-    uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenlen, const uint8_t *payload, size_t payloadlen);
-    uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenlen, const uint8_t *payload, size_t payloadlen, COAP_CONTENT_TYPE content_type);
-    uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenlen, const uint8_t *payload, size_t payloadlen, COAP_CONTENT_TYPE content_type, uint16_t messageid);
 
+    /**
+     * @brief Send a confirmable PUT with null-terminated payload.
+     */
+    uint16_t put(IPAddress ip, int port, const char *url, const char *payload);
+
+    /**
+     * @brief Send a confirmable PUT with explicit payload length.
+     */
+    uint16_t put(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
+
+    /**
+     * @brief Send a CoAP request with optional payload.
+     */
+    uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
+
+    /**
+     * @brief Send a CoAP request specifying the content format.
+     */
+    uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
+
+    /**
+     * @brief Send a CoAP request with explicit message ID.
+     */
+    uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
+
+    /**
+     * @brief Process incoming packets and dispatch handlers.
+     */
     bool loop();
 };
 
