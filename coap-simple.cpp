@@ -1,8 +1,6 @@
 #include "coap-simple.h"
 #include "Arduino.h"
 
-#define LOGGING
-
 void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *opt_payload)
 {
     options[optionCount].number = number;
@@ -189,16 +187,16 @@ uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COA
     packet.messageId = messageId;
 
     // use URI_HOST UIR_PATH
-    char ipaddress[16] = "";
-    sprintf(ipaddress, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-    packet.addOption(COAP_URI_HOST, strlen(ipaddress), (uint8_t *)ipaddress);
+    char ip_address[16] = "";
+    sprintf(ip_address, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    packet.addOption(COAP_URI_HOST, strlen(ip_address), (uint8_t *)ip_address);
 
     /*
         Add Query Support
         Author: @YelloooBlue
     */
 
-    // parse url
+    // Parse url.
     size_t idx = 0;
     bool hasQuery = false;
     for (size_t i = 0; i < strlen(url); i++)
@@ -248,7 +246,6 @@ uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COA
         packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
     }
 
-    // send packet
     return this->sendPacket(packet, ip, port);
 }
 
@@ -315,18 +312,18 @@ int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf
 
 bool Coap::loop()
 {
-    int32_t packetlen = _udp->parsePacket();
+    int32_t packet_length = _udp->parsePacket();
 
-    while (packetlen > 0)
+    while (packet_length > 0)
     {
-        packetlen = _udp->read(this->rxBuffer, packetlen >= coapBufferSize ? coapBufferSize : packetlen);
+        packet_length = _udp->read(this->rxBuffer, packet_length >= coapBufferSize ? coapBufferSize : packet_length);
 
         CoapPacket packet;
 
         // parse coap packet header
-        if (packetlen < COAP_HEADER_SIZE || (((this->rxBuffer[0] & 0xC0) >> 6) != 1))
+        if (packet_length < COAP_HEADER_SIZE || (((this->rxBuffer[0] & 0xC0) >> 6) != 1))
         {
-            packetlen = _udp->parsePacket();
+            packet_length = _udp->parsePacket();
             continue;
         }
 
@@ -342,16 +339,16 @@ bool Coap::loop()
             packet.token = this->rxBuffer + 4;
         else
         {
-            packetlen = _udp->parsePacket();
+            packet_length = _udp->parsePacket();
             continue;
         }
 
         // parse packet options/payload
-        if (COAP_HEADER_SIZE + packet.tokenLength < packetlen)
+        if (COAP_HEADER_SIZE + packet.tokenLength < packet_length)
         {
             int optionIndex = 0;
             uint16_t delta = 0;
-            uint8_t *end = this->rxBuffer + packetlen;
+            uint8_t *end = this->rxBuffer + packet_length;
             uint8_t *p = this->rxBuffer + COAP_HEADER_SIZE + packet.tokenLength;
             while (optionIndex < COAP_MAX_OPTION_NUM && p < end && *p != 0xFF)
             {
@@ -418,7 +415,7 @@ bool Coap::loop()
         }
 
         // next packet
-        packetlen = _udp->parsePacket();
+        packet_length = _udp->parsePacket();
     }
 
     return true;
