@@ -457,7 +457,7 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const ch
     CoapPacket packet;
 
     packet.type = COAP_ACK;
-    packet.code = code;
+    packet.code = COAP_CONTENT;
     packet.token = token;
     packet.tokenLength = tokenLength;
     packet.payload = (uint8_t *)payload;
@@ -542,6 +542,7 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
             continue;
         if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
+            // Duplicate observer, just update last seen time.
             observers[i].lastSeenMs = now;
             return true;
         }
@@ -566,6 +567,29 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
     }
 
     return false;
+}
+
+uint16_t Coap::sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t messageId, const uint8_t *token, int tokenLength)
+{
+    CoapPacket packet;
+
+    packet.type = COAP_ACK;   // ACK the registration.
+    packet.code = COAP_EMPTY; // No payload. Refer to https://www.rfc-editor.org/rfc/rfc7252#section-5.2.2
+    packet.token = token;
+    packet.tokenLength = tokenLength;
+    packet.payload = NULL;
+    packet.payloadLength = 0;
+    packet.optionCount = 0;
+    packet.messageId = messageId;
+
+    // When registering a new observer, the observe option value is send back.
+    // https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
+    // The value will be the sequential number, hard coded to start from 0.
+    uint8_t observeBuf[3] = {0};
+    uint8_t observeLen = encodeUintOption(0, observeBuf);
+    packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
+
+    return this->sendPacket(packet, ip, port);
 }
 
 bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)

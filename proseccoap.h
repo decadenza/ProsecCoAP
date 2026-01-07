@@ -75,6 +75,7 @@ typedef enum
 
 typedef enum
 {
+    COAP_EMPTY = (0, 0),
     COAP_CREATED = RESPONSE_CODE(2, 1),
     COAP_DELETED = RESPONSE_CODE(2, 2),
     COAP_VALID = RESPONSE_CODE(2, 3),
@@ -322,6 +323,14 @@ public:
      * @return true if the observer was added successfully, false otherwise.
      */
     bool addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
+
+    /**
+     * @brief Send an observe confirmation response to a client that has just registered.
+     *
+     * To be used after a client has registered as an observer. It sends an empty ACK with the Observe option set to 0.
+     * This acknowledges the registration and avoids multiple requests from the client.
+     */
+    uint16_t sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t messageId, const uint8_t *token, int tokenLength);
 
     /**
      * @brief Remove an observer for a specific URL.
