@@ -8,9 +8,9 @@ This library is a partial implementation of CoAP protocol ([RFC-7252](https://da
 - observe pattern.
 
 ## Documentation
-Documentation is available at: **COMING SOON**.
+Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
 
-To manually build documentation, from the main folder, run:
+To manually build documentation from the main folder, run:
 ```
 doxygen
 ```
