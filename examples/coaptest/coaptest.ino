@@ -5,8 +5,8 @@
 #include <EthernetUdp.h>
 #include <coap-simple.h>
 
-byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02 };
-IPAddress dev_ip(XXX,XXX,XXX,XXX);
+byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
+IPAddress dev_ip(10, 0, 0, 99); // Set your own.
 
 // CoAP client response callback
 void callback_response(CoapPacket &packet, IPAddress ip, int port);
@@ -16,24 +16,25 @@ EthernetUDP Udp;
 Coap coap(Udp);
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port) {
+void callback_response(CoapPacket &packet, IPAddress ip, int port)
+{
   Serial.println("[Coap Response got]");
 
-  char p[packet.payloadlen + 1];
-  memcpy(p, packet.payload, packet.payloadlen);
-  p[packet.payloadlen] = '\0';
+  char p[packet.payloadLength + 1];
+  memcpy(p, packet.payload, packet.payloadLength);
+  p[packet.payloadLength] = '\0';
 
   Serial.println(p);
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
-  Ethernet.begin(mac,dev_ip);
+  Ethernet.begin(mac, dev_ip);
   Serial.print("My IP address: ");
   Serial.print(Ethernet.localIP());
   Serial.println();
-
 
   // client response callback.
   // this endpoint is single callback.
@@ -44,12 +45,12 @@ void setup() {
   coap.start();
 }
 
-void loop() {
+void loop()
+{
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
-  // int msgid = coap.put(IPAddress(10, 0, 0, 1), 5683, "light", "1");
   Serial.println("Send Request");
-  int msgid = coap.get(IPAddress(XXX, XXX, XXX, XXX), 5683, "time");
+  int msg_id = coap.get(IPAddress(10, 0, 0, 1), 5683, "time");
 
   delay(1000);
   coap.loop();

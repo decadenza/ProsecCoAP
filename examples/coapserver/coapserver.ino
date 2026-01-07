@@ -7,8 +7,8 @@
 
 #define LEDP 9
 
-byte mac[] = { 0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02 };
-IPAddress dev_ip(XXX,XXX,XXX,XXX);
+byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
+IPAddress dev_ip(10, 0, 0, 99); // Set your own.
 
 // CoAP client response callback
 void callback_response(CoapPacket &packet, IPAddress ip, int port);
@@ -24,45 +24,51 @@ Coap coap(Udp);
 bool LEDSTATE;
 
 // CoAP server endpoint URL
-void callback_light(CoapPacket &packet, IPAddress ip, int port) {
+void callback_light(CoapPacket &packet, IPAddress ip, int port)
+{
   Serial.println("[Light] ON/OFF");
-  
+
   // send response
-  char p[packet.payloadlen + 1];
-  memcpy(p, packet.payload, packet.payloadlen);
-  p[packet.payloadlen] = '\0';
-  
+  char p[packet.payloadLength + 1];
+  memcpy(p, packet.payload, packet.payloadLength);
+  p[packet.payloadLength] = '\0';
+
   String message(p);
 
   if (message.equals("0"))
     LEDSTATE = false;
-  else if(message.equals("1"))
+  else if (message.equals("1"))
     LEDSTATE = true;
-      
-  if (LEDSTATE) {
-    digitalWrite(LEDP, HIGH) ; 
-    coap.sendResponse(ip, port, packet.messageid, "1");
-  } else { 
-    digitalWrite(LEDP, LOW) ; 
-    coap.sendResponse(ip, port, packet.messageid, "0");
+
+  if (LEDSTATE)
+  {
+    digitalWrite(LEDP, HIGH);
+    coap.sendResponse(ip, port, packet.messageId, "1");
+  }
+  else
+  {
+    digitalWrite(LEDP, LOW);
+    coap.sendResponse(ip, port, packet.messageId, "0");
   }
 }
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port) {
+void callback_response(CoapPacket &packet, IPAddress ip, int port)
+{
   Serial.println("[Coap Response got]");
-  
-  char p[packet.payloadlen + 1];
-  memcpy(p, packet.payload, packet.payloadlen);
-  p[packet.payloadlen] = '\0';
-  
+
+  char p[packet.payloadLength + 1];
+  memcpy(p, packet.payload, packet.payloadLength);
+  p[packet.payloadLength] = '\0';
+
   Serial.println(p);
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
-  Ethernet.begin(mac,dev_ip);
+  Ethernet.begin(mac, dev_ip);
   Serial.print("My IP address: ");
   Serial.print(Ethernet.localIP());
   Serial.println();
@@ -71,7 +77,7 @@ void setup() {
   pinMode(LEDP, OUTPUT);
   digitalWrite(LEDP, HIGH);
   LEDSTATE = true;
-  
+
   // add server url endpoints.
   // can add multiple endpoint urls.
   // exp) coap.server(callback_switch, "switch");
@@ -89,12 +95,12 @@ void setup() {
   coap.start();
 }
 
-void loop() {
+void loop()
+{
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
-  // int msgid = coap.put(IPAddress(10, 0, 0, 1), 5683, "light", "1");
   Serial.println("Send Request");
-  int msgid = coap.get(IPAddress(XXX, XXX, XXX, XXX), 5683, "time");
+  int msgid = coap.get(IPAddress(10, 0, 0, 1), 5683, "time"); // Set your own IP.
 
   delay(1000);
   coap.loop();

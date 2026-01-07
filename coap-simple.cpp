@@ -413,7 +413,7 @@ bool Coap::loop()
         /* this type check did not use.
         if (packet.type == COAP_CON) {
             // send response
-             sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid);
+             sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageId);
         }
          */
 

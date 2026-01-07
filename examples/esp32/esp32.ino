@@ -2,8 +2,8 @@
 #include <WiFiUdp.h>
 #include <coap-simple.h>
 
-const char* ssid     = "your-ssid";
-const char* password = "your-password";
+const char *ssid = "your-ssid";
+const char *password = "your-password";
 
 // CoAP client response callback
 void callback_response(CoapPacket &packet, IPAddress ip, int port);
@@ -23,48 +23,55 @@ Coap coap(udp);
 bool LEDSTATE;
 
 // CoAP server endpoint URL
-void callback_light(CoapPacket &packet, IPAddress ip, int port) {
+void callback_light(CoapPacket &packet, IPAddress ip, int port)
+{
   Serial.println("[Light] ON/OFF");
-  
+
   // send response
-  char p[packet.payloadlen + 1];
-  memcpy(p, packet.payload, packet.payloadlen);
-  p[packet.payloadlen] = '\0';
-  
+  char p[packet.payloadLength + 1];
+  memcpy(p, packet.payload, packet.payloadLength);
+  p[packet.payloadLength] = '\0';
+
   String message(p);
 
   if (message.equals("0"))
     LEDSTATE = false;
-  else if(message.equals("1"))
+  else if (message.equals("1"))
     LEDSTATE = true;
-      
-  if (LEDSTATE) {
-    digitalWrite(9, HIGH) ; 
-    coap.sendResponse(ip, port, packet.messageid, "1");
-  } else { 
-    digitalWrite(9, LOW) ; 
-    coap.sendResponse(ip, port, packet.messageid, "0");
+
+  if (LEDSTATE)
+  {
+    digitalWrite(9, HIGH);
+    coap.sendResponse(ip, port, packet.messageId, "1");
+  }
+  else
+  {
+    digitalWrite(9, LOW);
+    coap.sendResponse(ip, port, packet.messageId, "0");
   }
 }
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port) {
+void callback_response(CoapPacket &packet, IPAddress ip, int port)
+{
   Serial.println("[Coap Response got]");
-  
-  char p[packet.payloadlen + 1];
-  memcpy(p, packet.payload, packet.payloadlen);
-  p[packet.payloadlen] = '\0';
-  
+
+  char p[packet.payloadLength + 1];
+  memcpy(p, packet.payload, packet.payloadLength);
+  p[packet.payloadLength] = '\0';
+
   Serial.println(p);
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
-      Serial.print(".");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
   }
 
   Serial.println("");
@@ -76,7 +83,7 @@ void setup() {
   pinMode(9, OUTPUT);
   digitalWrite(9, HIGH);
   LEDSTATE = true;
-  
+
   // add server url endpoints.
   // can add multiple endpoint urls.
   // exp) coap.server(callback_switch, "switch");
@@ -94,7 +101,8 @@ void setup() {
   coap.start();
 }
 
-void loop() {
+void loop()
+{
   delay(1000);
   coap.loop();
 }

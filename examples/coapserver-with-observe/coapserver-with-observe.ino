@@ -80,21 +80,21 @@ void setup()
 
 void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
 {
-    if (packet.is_observe())
+    if (packet.isObserve())
     {
-        observer = new Observer(ip, port, packet.token, packet.tokenlen);
+        observer = new Observer(ip, port, packet.token, packet.tokenLength);
 
         // Initial response.
         // NOTE: sendResponse always sends a CONFIRMABLE message (ACK required).
         // The client expects ACK or it will retry.
         // NOTE: Periodic responses must be sent from the main loop().
-        coap.sendResponse(ip, port, packet.messageid, "subscribed");
+        coap.sendResponse(ip, port, packet.messageId, "subscribed");
         SERIAL_PRINTLN("Subscribed!");
     }
     else
     {
         // Invalid!
-        coap.sendResponse(ip, port, packet.messageid, "invalid");
+        coap.sendResponse(ip, port, packet.messageId, "invalid");
         SERIAL_PRINTLN("Invalid subscription request");
     }
 }
