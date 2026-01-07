@@ -1,0 +1,96 @@
+name: build-platformio
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Arduino UNO
+            board: uno
+            platform: atmelavr
+            sketch-root: examples
+            exclude-prefixes: "examples/esp32 examples/esp8266"
+            extra-lib-deps: Ethernet
+          - name: ESP8266
+            board: nodemcuv2
+            platform: espressif8266
+            sketch-root: examples/esp8266
+            exclude-prefixes: ""
+            extra-lib-deps: ""
+          - name: ESP32
+            board: esp32thing
+            platform: espressif32
+            sketch-root: examples/esp32
+            exclude-prefixes: ""
+            extra-lib-deps: ""
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: ${{ runner.os }}-pio-${{ matrix.board }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade platformio
+
+      - name: Build Examples (${{ matrix.name }})
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          # Board-specific libraries
+          if [ "${{ matrix.extra-lib-deps }}" != "" ]; then
+            pio lib install "${{ matrix.extra-lib-deps }}"
+            lib_deps_opt="-O lib_deps=${{ matrix.extra-lib-deps }}"
+          else
+            lib_deps_opt=""
+          fi
+
+          sketch_root="${{ matrix.sketch-root }}"
+          excludes=( ${{ matrix.exclude-prefixes }} )
+
+          build_list=()
+          while IFS= read -r -d '' sketch; do
+            skip=false
+            for ex in "${excludes[@]}"; do
+              [ -n "$ex" ] && [[ "$sketch" == $ex* ]] && skip=true
+            done
+            $skip || build_list+=("$sketch")
+          done < <(find "$sketch_root" -name '*.ino' -print0 | sort -z)
+
+          if [ ${#build_list[@]} -eq 0 ]; then
+            echo "No sketches found under $sketch_root"
+            exit 1
+          fi
+
+          for example in "${build_list[@]}"; do
+            echo "-------------------------------------------------------"
+            echo "BUILDING: $example for ${{ matrix.board }}"
+            echo "-------------------------------------------------------"
+
+            pio ci "$example" \
+              --board=${{ matrix.board }} \
+              --lib="." \
+              ${lib_deps_opt} \
+              -O "build_flags=-D PLATFORMIO_CI"
+          done
