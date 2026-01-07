@@ -40,6 +40,15 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef COAP_BUF_MAX_SIZE
 #define COAP_BUF_MAX_SIZE 128
 #endif
+#ifndef COAP_MAX_OBSERVERS
+#define COAP_MAX_OBSERVERS 4
+#endif
+#ifndef COAP_OBSERVER_LEASE_MS
+#define COAP_OBSERVER_LEASE_MS 60000UL
+#endif
+#ifndef COAP_MAX_OBSERVE_URL_LEN
+#define COAP_MAX_OBSERVE_URL_LEN 32
+#endif
 #define COAP_DEFAULT_PORT 5683
 
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
@@ -94,6 +103,7 @@ typedef enum
     COAP_URI_HOST = 3,
     COAP_E_TAG = 4,
     COAP_IF_NONE_MATCH = 5,
+    COAP_OBSERVE = 6,
     COAP_URI_PORT = 7,
     COAP_LOCATION_PATH = 8,
     COAP_URI_PATH = 11,
@@ -148,6 +158,13 @@ public:
      * @brief Check whether the packet requests observation.
      */
     bool isObserve();
+
+    /**
+     * @brief Fetch the observe value (either 1 or 0).
+     *
+     * @return true if the observe option is present and value retrieved successfully, false otherwise.
+     */
+    bool getObserveValue(uint32_t &value);
 };
 
 #if defined(ESP8266)
@@ -242,6 +259,19 @@ private:
     uint8_t *txBuffer = NULL;
     uint8_t *rxBuffer = NULL;
 
+    struct ObserveEntry
+    {
+        bool in_use = false;
+        IPAddress ip;
+        uint16_t port = 0;
+        uint8_t token[8] = {0};
+        uint8_t tokenlen = 0;
+        uint32_t observe_seq = 0;
+        unsigned long last_seen_ms = 0;
+        char url[COAP_MAX_OBSERVE_URL_LEN] = {0};
+    };
+    ObserveEntry observers[COAP_MAX_OBSERVERS];
+
     uint16_t sendPacket(CoapPacket &packet, IPAddress ip);
     uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
     int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
@@ -254,10 +284,18 @@ public:
         UDP &udp,
         int coapBufferSize = COAP_BUF_MAX_SIZE);
 
+    uint16_t sendObserveResponse(IPAddress ip, int port, uint16_t messageid, const char *payload, size_t payloadlen, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenlen, uint32_t observe_seq);
+
     /**
      * @brief Destroy the CoAP instance and free buffers.
      */
     ~Coap();
+
+    uint16_t notify(Observer *observer, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
+    int notify(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
+
+    bool addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenlen);
+    bool removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenlen);
 
     /**
      * @brief Start the server on the default port.
