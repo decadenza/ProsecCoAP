@@ -7,6 +7,10 @@ This library is a partial implementation of CoAP protocol ([RFC-7252](https://da
 - request/respose semantics,
 - observe pattern.
 
+This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) and aims at providing:
+- Clear documentation and ease of use.
+- A close implementation of the ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)), adding the missing features like the Observe pattern.
+
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
 
@@ -50,3 +54,5 @@ Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the lib
 
 ## Credits
 This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) by Hirotaka Niisato. Credits for all the orginal code go to the original contributors.
+
+We are grateful to the original author for providing a solid, lightweight foundation for CoAP communication on embedded systems. This project maintains the original MIT License and continues the spirit of open-source IoT development.
