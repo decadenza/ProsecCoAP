@@ -2,6 +2,7 @@ name: Documentation build and deploy
 
 on:
   push:
+    branches: ["main"]
   workflow_dispatch:
 
 # Permissions required for GitHub Pages
