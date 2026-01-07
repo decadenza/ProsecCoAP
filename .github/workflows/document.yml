@@ -1,8 +1,7 @@
-name: Doxygen Deployment
+name: Documentation build and deploy
 
 on:
   push:
-    branches: ["main"] # Or your default branch
   workflow_dispatch:
 
 # Permissions required for GitHub Pages
@@ -11,8 +10,17 @@ permissions:
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -25,11 +33,12 @@ jobs:
           doxyfile-path: ./Doxyfile
           working-directory: .
 
-      # 2. Setup Pages (Standard GitHub Action)
+      # 2. Setup Pages
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      # 3. Upload Artifacts (Point to your Doxygen HTML output folder)
+      # 3. Upload Artifacts
+      # Ensure './docs' matches the 'OUTPUT_DIRECTORY' or 'HTML_OUTPUT' in your Doxyfile
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
