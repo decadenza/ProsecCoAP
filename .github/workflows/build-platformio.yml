@@ -1,14 +1,19 @@
-# Created this action based on information found in:
-# - <https://docs.platformio.org/en/latest/integration/ci/github-actions.html>
-# - <https://docs.github.com/en/free-pro-team@latest/actions/quickstart>
 name: build-platformio
 on: [push, pull_request, workflow_dispatch]
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # This creates a separate runner for each board simultaneously
+        board: [esp32thing, uno, nodemcuv2]
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -16,31 +21,33 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+
       - name: Cache PlatformIO
         uses: actions/cache@v4
         with:
           path: ~/.platformio
-          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+          key: ${{ runner.os }}-pio-${{ matrix.board }}
+
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
       - name: Install PlatformIO
         run: |
           python -m pip install --upgrade pip
           pip install --upgrade platformio
-      - name: Update test code environments.
+
+      - name: Build Examples
         run: |
-          platformio project init
-          mkdir lib/proseccoap/
-          mv proseccoap* lib/proseccoap/
-          mv ./examples/coaptest/coaptest.ino src/
-          mv ./examples/coapserver/coapserver.ino src/
-          mv ./examples/coapserver-with-observe/coapserver-with-observe.ino src/
-          pio init -b esp32thing -b uno
-          pio lib install Ethernet
-          pio init -b nodemcuv2
-      - name: Run PlatformIO(uno)
-        run: pio run -e uno
-      - name: Run PlatformIO(esp8266)
-        run: pio run -e nodemcuv2
-      - name: Run PlatformIO(esp32)
-        run: pio run -e esp32thing
+          # Install the Ethernet library dependency globally for this runner
+          pio lib install "Ethernet"
+
+          # Loop through every .ino file found in the examples subdirectories
+          # 'pio ci' builds each file in isolation so they don't conflict
+          for example in examples/*/*.ino; do
+            echo "-------------------------------------------------------"
+            echo "BUILDING: $example for ${{ matrix.board }}"
+            echo "-------------------------------------------------------"
+            pio ci "$example" --board=${{ matrix.board }} --lib="."
+          done
