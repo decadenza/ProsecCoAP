@@ -30,11 +30,11 @@ jobs:
       - name: Update test code environments.
         run: |
           platformio project init
-          mkdir lib/coap-simple/
-          mv coap-simple* lib/coap-simple/
+          mkdir lib/proseccoap/
+          mv proseccoap* lib/proseccoap/
           mv ./examples/coaptest/coaptest.ino src/
           mv ./examples/coapserver/coapserver.ino src/
-          mv ./examples/coapserver/coapserver-with-observe.ino src/
+          mv ./examples/coapserver-with-observe/coapserver-with-observe.ino src/
           pio init -b esp32thing -b uno
           pio lib install Ethernet
           pio init -b nodemcuv2

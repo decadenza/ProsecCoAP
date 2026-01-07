@@ -3,7 +3,7 @@
 #include <Dns.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-#include <coap-simple.h>
+#include <proseccoap.h>
 
 #define LEDP 9
 

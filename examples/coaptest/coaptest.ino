@@ -3,7 +3,7 @@
 #include <Dns.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
-#include <coap-simple.h>
+#include <proseccoap.h>
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress dev_ip(10, 0, 0, 99); // Set your own.
