@@ -76,38 +76,34 @@ void setup()
 
 void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
 {
-    uint32_t observeValue = 0;
-    if (!packet.getObserveValue(observeValue))
+    if (packet.isObserve())
     {
-        coap.sendResponse(ip, port, packet.messageid, "invalid", strlen("invalid"), COAP_BAD_REQUEST, COAP_TEXT_PLAIN, packet.token, packet.tokenlen);
-        SERIAL_PRINTLN("Invalid subscription request");
-        return;
-    }
-
-    // Observe=0 register, Observe=1 deregister.
-    if (observeValue == 0)
-    {
-        if (!coap.addObserver("subscribe", ip, port, packet.token, packet.tokenlen))
+        COAP_OBSERVE_VALUE observe_value;
+        if (packet.getObserveValue(observe_value))
         {
-            coap.sendResponse(ip, port, packet.messageid, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenlen);
-            SERIAL_PRINTLN("Observer table full; refused");
-            return;
+          if (observe_value == COAP_OBSERVE_VALUE_REGISTER)
+          {
+              if (!coap.addObserver("subscribe", ip, port, packet.token, packet.tokenLength))
+              {
+                  coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+                  SERIAL_PRINTLN("Observer table full; refused");
+                  return;
+              }
+              else
+              {
+                  // Initial observe response includes Observe option and echoes token.
+                  coap.sendObserveConfirmation(ip, port, packet.messageId, "subscribed", strlen("subscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength, 0);
+                  SERIAL_PRINTLN("Subscribed!");
+              }
+          }
+          else if (observe_value == COAP_OBSERVE_VALUE_CANCEL)
+          {
+              coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
+              coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+              SERIAL_PRINTLN("Unsubscribed!");
+          }
+        // Else ignore.
         }
-
-        // Initial observe response includes Observe option and echoes token.
-        coap.sendObserveResponse(ip, port, packet.messageid, "subscribed", strlen("subscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenlen, 0);
-        SERIAL_PRINTLN("Subscribed!");
-    }
-    else if (observeValue == 1)
-    {
-        coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenlen);
-        coap.sendResponse(ip, port, packet.messageid, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenlen);
-        SERIAL_PRINTLN("Unsubscribed!");
-    }
-    else
-    {
-        coap.sendResponse(ip, port, packet.messageid, "invalid", strlen("invalid"), COAP_BAD_OPTION, COAP_TEXT_PLAIN, packet.token, packet.tokenlen);
-        SERIAL_PRINTLN("Invalid Observe value");
     }
 }
 
@@ -125,7 +121,7 @@ void send_notification()
     sprintf(payload, "%u", 42);
     int payload_len = strlen(payload);
 
-    if (coap.notify("subscribe", payload, payload_len, COAP_APPLICATION_OCTET_STREAM) > 0)
+    if (coap.notifyObservers("subscribe", payload, payload_len, COAP_APPLICATION_OCTET_STREAM) > 0)
     {
         SERIAL_PRINTLN("Notified!");
     }

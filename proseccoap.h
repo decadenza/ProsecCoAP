@@ -118,6 +118,12 @@ typedef enum
 
 typedef enum
 {
+    COAP_OBSERVE_VALUE_REGISTER = 0, // https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
+    COAP_OBSERVE_VALUE_CANCEL = 1    // https://datatracker.ietf.org/doc/html/rfc7641#section-3.6
+} COAP_OBSERVE_VALUE;
+
+typedef enum
+{
     COAP_NONE = -1,
     COAP_TEXT_PLAIN = 0,
     COAP_APPLICATION_LINK_FORMAT = 40,
@@ -164,7 +170,7 @@ public:
      *
      * @return true if the observe option is present and value retrieved successfully, false otherwise.
      */
-    bool getObserveValue(uint32_t &value);
+    bool getObserveValue(COAP_OBSERVE_VALUE &value);
 };
 
 #if defined(ESP8266)
@@ -259,15 +265,33 @@ private:
     uint8_t *txBuffer = NULL;
     uint8_t *rxBuffer = NULL;
 
+    /**
+     * Represents an observe entry in the observer array.
+     */
     struct ObserveEntry
     {
+        /**
+         * @brief Whether this entry is in use.
+         */
         bool in_use = false;
+        /**
+         * @brief The IP address of the observer.
+         */
         IPAddress ip;
+        /**
+         * @brief The port of the observer.
+         */
         uint16_t port = 0;
+        /**
+         * @brief The token used by the observer.
+         */
         uint8_t token[8] = {0};
-        uint8_t tokenlen = 0;
-        uint32_t observe_seq = 0;
-        unsigned long last_seen_ms = 0;
+        uint8_t tokenLength = 0;
+        uint32_t observationSequentialNumber = 0;
+        unsigned long lastSeenMs = 0; // TODO: Implement cleaning up old observers.
+        /**
+         * @brief The URL being observed.
+         */
         char url[COAP_MAX_OBSERVE_URL_LEN] = {0};
     };
     ObserveEntry observers[COAP_MAX_OBSERVERS];
@@ -284,18 +308,32 @@ public:
         UDP &udp,
         int coapBufferSize = COAP_BUF_MAX_SIZE);
 
-    uint16_t sendObserveResponse(IPAddress ip, int port, uint16_t messageid, const char *payload, size_t payloadlen, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenlen, uint32_t observe_seq);
-
     /**
      * @brief Destroy the CoAP instance and free buffers.
      */
     ~Coap();
 
-    uint16_t notify(Observer *observer, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
-    int notify(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
+    /**
+     * @brief Notify all observers of a specific URL with a non-confirmable message.
+     */
+    int notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
 
-    bool addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenlen);
-    bool removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenlen);
+    /**
+     * @brief Add a new observer for a specific URL.
+     *
+     * @return true if the observer was added successfully, false otherwise.
+     */
+    bool addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
+
+    /**
+     * @brief Send an observe confirmation response to a client.
+     */
+    uint16_t sendObserveConfirmation(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength, uint32_t observationSequentialNumber);
+
+    /**
+     * @brief Remove an observer for a specific URL.
+     */
+    bool removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Start the server on the default port.
@@ -336,11 +374,6 @@ public:
      * @brief Send a fully customized acknowledgment response.
      */
     uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
-
-    /**
-     * @brief Notify an observer with a non-confirmable message.
-     */
-    uint16_t notify(Observer *observer, const char *payload, int payloadLength, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Send a confirmable GET request.

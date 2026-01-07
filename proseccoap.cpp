@@ -26,9 +26,9 @@ bool CoapPacket::isObserve()
     return false;
 }
 
-bool CoapPacket::getObserveValue(uint32_t &value)
+bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
 {
-    for (int i = 0; i < optionnum; i++)
+    for (int i = 0; i < optionCount; i++)
     {
         if (options[i].number != COAP_OBSERVE)
             continue;
@@ -39,7 +39,10 @@ bool CoapPacket::getObserveValue(uint32_t &value)
         {
             v = (v << 8) | options[i].buffer[j];
         }
-        value = v;
+        // Validate: only 0 (register) and 1 (cancel) are valid per RFC 7641.
+        if (v > 1)
+            return false; // Invalid observe value.
+        value = (COAP_OBSERVE_VALUE)v;
         return true;
     }
     return false;
@@ -507,22 +510,23 @@ static uint8_t encodeUintOption(uint32_t value, uint8_t out[3])
     return 3;
 }
 
-uint16_t Coap::sendObserveResponse(IPAddress ip, int port, uint16_t messageid, const char *payload, size_t payloadlen,
-                                   COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenlen, uint32_t observe_seq)
+// TODO: Use the observer directly...
+uint16_t Coap::sendObserveConfirmation(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
+                                       COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength, uint32_t observeSequence)
 {
     CoapPacket packet;
 
     packet.type = COAP_ACK;
     packet.code = code;
     packet.token = token;
-    packet.tokenlen = tokenlen;
+    packet.tokenLength = tokenLength;
     packet.payload = (uint8_t *)payload;
-    packet.payloadlen = payloadlen;
-    packet.optionnum = 0;
-    packet.messageid = messageid;
+    packet.payloadLength = payloadLength;
+    packet.optionCount = 0;
+    packet.messageId = messageId;
 
     uint8_t observeBuf[3] = {0};
-    uint8_t observeLen = encodeUintOption(observe_seq, observeBuf);
+    uint8_t observeLen = encodeUintOption(observeSequence, observeBuf);
     packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
 
     uint8_t optionBuffer[2] = {0};
@@ -533,39 +537,13 @@ uint16_t Coap::sendObserveResponse(IPAddress ip, int port, uint16_t messageid, c
     return this->sendPacket(packet, ip, port);
 }
 
-Observer::Observer(IPAddress ip, int port, const uint8_t *token, int token_length)
-    : ip(ip), port(port), token_length(token_length), counter(0)
+Observer::Observer(IPAddress ip, int port, const uint8_t *token, int tokenLength)
+    : ip(ip), port(port), tokenLength(tokenLength), counter(0)
 {
-    if (this->token_length > 8)
-        this->token_length = 8;
-    if (this->token_length > 0 && token != NULL)
-        memcpy(this->token, token, this->token_length);
-}
-
-uint16_t Coap::notify(Observer *observer, const char *payload, int payloadLength, COAP_CONTENT_TYPE type)
-{
-    CoapPacket packet;
-
-    packet.type = COAP_NONCON; // Notifications are non-confirmable.
-    packet.code = COAP_CONTENT;
-    packet.token = observer->token;
-    packet.tokenLength = observer->tokenLength;
-    packet.payload = (uint8_t *)payload;
-    packet.payloadLength = payloadLength;
-    packet.optionCount = 0;
-    uint32_t observe_seq = ++observer->counter;
-    packet.messageId = rand();
-
-    uint8_t observeBuf[3] = {0};
-    uint8_t observeLen = encodeUintOption(observe_seq, observeBuf);
-    packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
-
-    uint8_t optionBuffer[2] = {0};
-    optionBuffer[0] = ((uint16_t)type & 0xFF00) >> 8;
-    optionBuffer[1] = ((uint16_t)type & 0x00FF);
-    packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
-
-    return this->sendPacket(packet, observer->ip, observer->port);
+    if (this->tokenLength > 8)
+        this->tokenLength = 8;
+    if (this->tokenLength > 0 && token != NULL)
+        memcpy(this->token, token, this->tokenLength);
 }
 
 static bool urlEquals(const char *a, const char *b)
@@ -586,13 +564,13 @@ static bool tokenEquals(const uint8_t *a, uint8_t alen, const uint8_t *b, uint8_
     return memcmp(a, b, alen) == 0;
 }
 
-bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenlen)
+bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
     if (url == NULL)
         return false;
     if (strlen(url) >= COAP_MAX_OBSERVE_URL_LEN)
         return false;
-    if (tokenlen > 8)
+    if (tokenLength > 8)
         return false;
 
     unsigned long now = millis();
@@ -601,9 +579,9 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
     {
         if (!observers[i].in_use)
             continue;
-        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenlen, token, tokenlen))
+        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
-            observers[i].last_seen_ms = now;
+            observers[i].lastSeenMs = now;
             return true;
         }
     }
@@ -615,11 +593,11 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
             observers[i].in_use = true;
             observers[i].ip = ip;
             observers[i].port = (uint16_t)port;
-            observers[i].tokenlen = tokenlen;
-            if (tokenlen > 0 && token != NULL)
-                memcpy(observers[i].token, token, tokenlen);
-            observers[i].observe_seq = 0;
-            observers[i].last_seen_ms = now;
+            observers[i].tokenLength = tokenLength;
+            if (tokenLength > 0 && token != NULL)
+                memcpy(observers[i].token, token, tokenLength);
+            observers[i].observationSequentialNumber = 0;
+            observers[i].lastSeenMs = now;
             strncpy(observers[i].url, url, COAP_MAX_OBSERVE_URL_LEN - 1);
             observers[i].url[COAP_MAX_OBSERVE_URL_LEN - 1] = 0;
             return true;
@@ -629,7 +607,7 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
     return false;
 }
 
-bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenlen)
+bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
     if (url == NULL)
         return false;
@@ -638,12 +616,12 @@ bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t
     {
         if (!observers[i].in_use)
             continue;
-        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenlen, token, tokenlen))
+        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
             observers[i].in_use = false;
-            observers[i].tokenlen = 0;
-            observers[i].observe_seq = 0;
-            observers[i].last_seen_ms = 0;
+            observers[i].tokenLength = 0;
+            observers[i].observationSequentialNumber = 0;
+            observers[i].lastSeenMs = 0;
             observers[i].url[0] = 0;
             removed = true;
         }
@@ -651,7 +629,7 @@ bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t
     return removed;
 }
 
-int Coap::notify(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type)
+int Coap::notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type)
 {
     if (url == NULL)
         return 0;
@@ -665,7 +643,7 @@ int Coap::notify(const char *url, const char *payload, int payload_len, COAP_CON
         if (!urlEquals(observers[i].url, url))
             continue;
 
-        if (COAP_OBSERVER_LEASE_MS > 0 && (now - observers[i].last_seen_ms) > COAP_OBSERVER_LEASE_MS)
+        if (COAP_OBSERVER_LEASE_MS > 0 && (now - observers[i].lastSeenMs) > COAP_OBSERVER_LEASE_MS)
         {
             observers[i].in_use = false;
             continue;
@@ -674,16 +652,16 @@ int Coap::notify(const char *url, const char *payload, int payload_len, COAP_CON
         CoapPacket packet;
         packet.type = COAP_NONCON;
         packet.code = COAP_CONTENT;
-        packet.token = observers[i].tokenlen ? observers[i].token : NULL;
-        packet.tokenlen = observers[i].tokenlen;
+        packet.token = observers[i].tokenLength ? observers[i].token : NULL;
+        packet.tokenLength = observers[i].tokenLength;
         packet.payload = (uint8_t *)payload;
-        packet.payloadlen = payload_len;
-        packet.optionnum = 0;
-        packet.messageid = rand();
+        packet.payloadLength = payload_len;
+        packet.optionCount = 0;
+        packet.messageId = rand();
 
-        uint32_t observe_seq = ++observers[i].observe_seq;
+        uint32_t observe_sequence = ++observers[i].observationSequentialNumber;
         uint8_t observeBuf[3] = {0};
-        uint8_t observeLen = encodeUintOption(observe_seq, observeBuf);
+        uint8_t observeLen = encodeUintOption(observe_sequence, observeBuf);
         packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
 
         uint8_t optionBuffer[2] = {0};
