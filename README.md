@@ -1,20 +1,34 @@
-# CoAP client and server library for Arduino.
+# ProsecCoAP client and server library for Arduino.
 
-<a href="http://coap.technology/" target=_blank>CoAP</a> simple server/client library for Arduino IDE/PlatformIO, ESP32, ESP8266.
+<a href="http://coap.space/" target=_blank>CoAP</a> simple server/client library for Arduino IDE/PlatformIO, ESP32, ESP8266.
 
 ## Details
-This library is a partial implementation of CoAP protocol ((RFC-7252)[https://datatracker.ietf.org/doc/html/rfc7252]) supporting:
+This library is a partial implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)) supporting:
 - request/respose semantics,
 - observe pattern.
 
-## How to use
+## Documentation
+Documentation is available at: **COMING SOON**.
+
+To manually build documentation, from the main folder, run:
+```
+doxygen
+```
+The documentation will be placed in [./doc/html/index.html](./html/index.html).
+
+## How to install
+### From Arduino IDE
+** COMING SOON **
+
+### Manual
 Download this source code branch zip file and extract it to the Arduino libraries directory.
 You should be able the find the examples from the Arduino IDE menu.
 
-## How to test
-The (examples)[./examples] need CoAP server libcoap or microcoap server to work. 
 
-This is how to use the example with libcoap on Ubuntu Linux. You don't need to use CoAP server (request/reseponse), simply follow these steps:
+## How to test
+The [examples](./examples) need CoAP server libcoap or microcoap server to work. 
+
+This is how to use the example with libcoap on Ubuntu Linux. You don't need to use CoAP server (request/response), simply follow these steps:
 
 ```bash
 git clone https://github.com/obgm/libcoap 
@@ -33,4 +47,4 @@ Next, start Arduino and check the request/response in the serial monitor.
 Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
 
 ## Credits
-This library is a fork from (CoAP-simple-library)[https://github.com/hirotakaster/CoAP-simple-library] by Hirotaka Niisato. Credits for all the orginal code go to the original contributors.
+This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) by Hirotaka Niisato. Credits for all the orginal code go to the original contributors.
