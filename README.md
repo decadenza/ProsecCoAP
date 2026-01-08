@@ -31,7 +31,7 @@ Navigate to *File > Examples > ProsecCoAP* to get started with some basic exampl
 The [examples](./examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
 - Use two devices and use serial monitor.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
-- Use [libcoap](https://github.com/obgm/libcoap).
+- Use [libcoap](https://github.com/obgm/libcoap) by compiling the examples yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
 
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
