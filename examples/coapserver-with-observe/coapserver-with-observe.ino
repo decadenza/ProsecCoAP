@@ -83,11 +83,11 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
         {
             // Add a new observer in the table.
             Observer *observer = NULL;
-            if (!coap.addObserver(observer, "subscribe", ip, port, packet.token, packet.tokenLength))
+            coap.addObserver(observer, "subscribe", ip, port, packet.token, packet.tokenLength);
+            if (observer != NULL)
             {
-                // Observer could not be added.
                 coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
-                SERIAL_PRINTLN("Observer table full; refused");
+                SERIAL_PRINTLN("Observer could not be added!");
                 return;
             }
             else
