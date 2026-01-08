@@ -622,17 +622,14 @@ bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t
 bool Observer::remove()
 {
     bool removed = false;
-    if (this != NULL)
+    if (!this->active)
+        // Already inactive. Nothing to remove.
+        return false;
+    if (this->ip == ip && this->port == (uint16_t)port && urlEquals(this->url, url) && tokenEquals(this->token, this->tokenLength, token, tokenLength))
     {
-        if (!this->active)
-            // Already inactive. Nothing to remove.
-            return false;
-        if (this->ip == ip && this->port == (uint16_t)port && urlEquals(this->url, url) && tokenEquals(this->token, this->tokenLength, token, tokenLength))
-        {
-            // Mark as inactive.
-            this->active = false;
-            removed = true;
-        }
+        // Mark as inactive.
+        this->active = false;
+        removed = true;
     }
 
     return removed;
