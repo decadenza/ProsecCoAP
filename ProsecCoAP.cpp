@@ -500,15 +500,6 @@ static uint8_t encodeUintOption(uint32_t value, uint8_t out[3])
     return 3;
 }
 
-Observer::Observer(IPAddress ip, int port, const uint8_t *token, int tokenLength)
-    : ip(ip), port(port), tokenLength(tokenLength), counter(0)
-{
-    if (this->tokenLength > 8)
-        this->tokenLength = 8;
-    if (this->tokenLength > 0 && token != NULL)
-        memcpy(this->token, token, this->tokenLength);
-}
-
 static bool urlEquals(const char *a, const char *b)
 {
     if (a == NULL || b == NULL)

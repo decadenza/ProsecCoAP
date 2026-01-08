@@ -261,24 +261,6 @@ public:
     };
 };
 
-/**
- * @brief The Observer class is used to manage CoAP observers.
- */
-class Observer
-{
-public:
-    IPAddress ip;
-    int port = 0;
-    uint8_t token[8];
-    int tokenLength = 0;
-    uint16_t counter = 0; // Will be used as message ID.
-
-    /**
-     * @brief Construct a new Observer object.
-     */
-    Observer(IPAddress ip, int port, const uint8_t *token, int tokenLength);
-};
-
 class Coap
 {
 private:
@@ -291,9 +273,9 @@ private:
     uint8_t *rxBuffer = NULL;
 
     /**
-     * Represents an observe entry in the observer array.
+     * Represents a CoAP observer.
      */
-    struct ObserveEntry
+    struct Observer
     {
         /**
          * @brief Whether this entry is in use.
@@ -323,11 +305,11 @@ private:
     /**
      * @brief Array of registered observers.
      *
-     * Preallocated array to hold observer entries.
+     * Preallocated array to hold observer entries at runtime.
      *
      * See also @ref COAP_MAX_OBSERVERS.
      */
-    ObserveEntry observers[COAP_MAX_OBSERVERS];
+    Observer observers[COAP_MAX_OBSERVERS];
 
     /**
      * @brief Send a CoAP packet to the specified IP.
