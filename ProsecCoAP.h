@@ -261,6 +261,59 @@ public:
     };
 };
 
+/**
+ * Represents a CoAP observer.
+ */
+class Observer
+{
+
+    friend class Coap; // Give full access to Coap class.
+
+private:
+    /**
+     * @brief Whether this entry is in use.
+     */
+    bool active = false;
+    /**
+     * @brief The IP address of the observer.
+     */
+    IPAddress ip;
+    /**
+     * @brief The port of the observer.
+     */
+    uint16_t port = 0;
+    /**
+     * @brief The token used by the observer.
+     */
+    uint8_t token[8] = {0};
+    uint8_t tokenLength = 0;
+    uint32_t observationSequentialNumber = 0;
+    unsigned long lastSeenMs = 0; // TODO: Implement cleaning up old observers.
+    /**
+     * @brief The URL being observed.
+     */
+    char url[COAP_MAX_OBSERVE_URL_LEN] = {0};
+
+public:
+    /**
+     * Remove the observer from the list of active observers.
+     *
+     * An observer can only be added from the Coap class (@ref Coap::addObserver).
+     * An observer can be removed either by the Coap class (@ref Coap::removeObserver) or
+     * by itself (@ref Observer::remove).
+     *
+     * @return true if the observer was removed successfully, false otherwise.
+     */
+    bool remove();
+
+    /**
+     * @brief Get the last seen time in milliseconds.
+     *
+     * Note that this value may wrap around after a long uptime.
+     */
+    unsigned long getLastSeenMs();
+};
+
 class Coap
 {
 private:
@@ -271,36 +324,6 @@ private:
     int coapBufferSize;
     uint8_t *txBuffer = NULL;
     uint8_t *rxBuffer = NULL;
-
-    /**
-     * Represents a CoAP observer.
-     */
-    struct Observer
-    {
-        /**
-         * @brief Whether this entry is in use.
-         */
-        bool active = false;
-        /**
-         * @brief The IP address of the observer.
-         */
-        IPAddress ip;
-        /**
-         * @brief The port of the observer.
-         */
-        uint16_t port = 0;
-        /**
-         * @brief The token used by the observer.
-         */
-        uint8_t token[8] = {0};
-        uint8_t tokenLength = 0;
-        uint32_t observationSequentialNumber = 0;
-        unsigned long lastSeenMs = 0; // TODO: Implement cleaning up old observers.
-        /**
-         * @brief The URL being observed.
-         */
-        char url[COAP_MAX_OBSERVE_URL_LEN] = {0};
-    };
 
     /**
      * @brief Array of registered observers.
@@ -359,17 +382,22 @@ public:
     /**
      * @brief Add a new observer for a specific URL.
      *
-     * @return true if the observer was added successfully, false otherwise.
+     * If the observer is already registered, the existing observer is returned.
+     *
+     * @param observer_out Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
+     * @return 0 if the observer was added successfully.
+     *         -1 if the url is invalid.
+     *         -2 if the observer table is full.
      */
-    bool addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
+    int addObserver(Observer *observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
-     * @brief Send an observe confirmation response to a client that has just registered.
+     * @brief Send an observe confirmation response to an observer.
      *
-     * To be used after a client has registered as an observer. It sends an empty ACK with the Observe option set to 0.
+     * To be used just after a client has registered as an observer. It sends an empty ACK with the Observe option set to 0.
      * This acknowledges the registration and avoids multiple requests from the client.
      */
-    uint16_t sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t messageId, const uint8_t *token, int tokenLength);
+    uint16_t sendObserveRegisterConfirmation(Observer *observer, uint16_t messageId);
 
     /**
      * @brief Remove an observer for a specific URL.

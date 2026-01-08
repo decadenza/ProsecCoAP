@@ -81,8 +81,11 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
     {
         if (observe_value == COAP_OBSERVE_VALUE_REGISTER)
         {
-            if (!coap.addObserver("subscribe", ip, port, packet.token, packet.tokenLength))
+            // Add a new observer in the table.
+            Observer *observer = NULL;
+            if (!coap.addObserver(observer, "subscribe", ip, port, packet.token, packet.tokenLength))
             {
+                // Observer could not be added.
                 coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
                 SERIAL_PRINTLN("Observer table full; refused");
                 return;
@@ -90,7 +93,7 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
             else
             {
                 // First confirm the subscription to the client, with no payload.
-                coap.sendObserveRegisterConfirmation(ip, port, packet.messageId, packet.token, packet.tokenLength);
+                coap.sendObserveRegisterConfirmation(observer, packet.messageId);
                 SERIAL_PRINTLN("Subscribed!");
             }
         }

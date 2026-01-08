@@ -518,26 +518,28 @@ static bool tokenEquals(const uint8_t *a, uint8_t alen, const uint8_t *b, uint8_
     return memcmp(a, b, alen) == 0;
 }
 
-bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
+int Coap::addObserver(Observer *observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
     if (url == NULL)
-        return false;
+        return -1; // Invalid URL.
     if (strlen(url) >= COAP_MAX_OBSERVE_URL_LEN)
-        return false;
+        return -1; // Invalid URL.
     if (tokenLength > 8)
-        return false;
+        return -1; // Invalid token.
 
     unsigned long now = millis();
 
+    // Check for active duplicates.
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
         if (!observers[i].active)
             continue;
         if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
-            // Duplicate observer, just update last seen time.
+            // Duplicate active observer, just update last seen time.
             observers[i].lastSeenMs = now;
-            return true;
+            observer_out = &observers[i];
+            return 0;
         }
     }
 
@@ -555,21 +557,22 @@ bool Coap::addObserver(const char *url, IPAddress ip, int port, const uint8_t *t
             observers[i].lastSeenMs = now;
             strncpy(observers[i].url, url, COAP_MAX_OBSERVE_URL_LEN - 1);
             observers[i].url[COAP_MAX_OBSERVE_URL_LEN - 1] = 0;
-            return true;
+            observer_out = &observers[i];
+            return 0;
         }
     }
 
-    return false;
+    return -2; // Full, could not add observer.
 }
 
-uint16_t Coap::sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t messageId, const uint8_t *token, int tokenLength)
+uint16_t Coap::sendObserveRegisterConfirmation(Observer *observer, uint16_t messageId)
 {
     CoapPacket packet;
 
     packet.type = COAP_ACK;   // ACK the registration.
     packet.code = COAP_EMPTY; // No payload. Refer to https://www.rfc-editor.org/rfc/rfc7252#section-5.2.2
-    packet.token = token;
-    packet.tokenLength = tokenLength;
+    packet.token = observer->token;
+    packet.tokenLength = observer->tokenLength;
     packet.payload = NULL;
     packet.payloadLength = 0;
     packet.optionCount = 0;
@@ -582,29 +585,49 @@ uint16_t Coap::sendObserveRegisterConfirmation(IPAddress ip, int port, uint16_t 
     uint8_t observeLen = encodeUintOption(0, observeBuf);
     packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
 
-    return this->sendPacket(packet, ip, port);
+    return this->sendPacket(packet, observer->ip, observer->port);
 }
 
 bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
     if (url == NULL)
         return false;
-    bool removed = false;
+
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
         if (!observers[i].active)
             continue;
         if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
-            observers[i].active = false;
-            observers[i].tokenLength = 0;
-            observers[i].observationSequentialNumber = 0;
-            observers[i].lastSeenMs = 0;
-            observers[i].url[0] = 0;
+            return observers[i].remove();
+        }
+    }
+
+    return false;
+}
+
+bool Observer::remove()
+{
+    bool removed = false;
+    if (this != NULL)
+    {
+        if (!this->active)
+            // Already inactive. Nothing to remove.
+            return false;
+        if (this->ip == ip && this->port == (uint16_t)port && urlEquals(this->url, url) && tokenEquals(this->token, this->tokenLength, token, tokenLength))
+        {
+            // Mark as inactive.
+            this->active = false;
             removed = true;
         }
     }
+
     return removed;
+}
+
+unsigned long Observer::getLastSeenMs()
+{
+    return this->lastSeenMs;
 }
 
 int Coap::notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type)
