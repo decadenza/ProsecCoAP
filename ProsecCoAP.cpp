@@ -38,7 +38,7 @@ bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
 
 Coap::Coap(
     UDP &udp,
-    int coapBufferSize /* default value is COAP_BUF_MAX_SIZE */
+    size_t coapBufferSize /* default value is COAP_BUF_MAX_SIZE */
 )
 {
     this->_udp = &udp;

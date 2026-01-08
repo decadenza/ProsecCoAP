@@ -75,7 +75,7 @@ typedef enum
 
 typedef enum
 {
-    COAP_EMPTY = (0, 0),
+    COAP_EMPTY = RESPONSE_CODE(0, 0),
     COAP_CREATED = RESPONSE_CODE(2, 1),
     COAP_DELETED = RESPONSE_CODE(2, 2),
     COAP_VALID = RESPONSE_CODE(2, 3),
@@ -321,7 +321,7 @@ private:
     CoapUri uri;
     CoapCallback responseHandler = NULL;
     int _port;
-    int coapBufferSize;
+    size_t coapBufferSize;
     uint8_t *txBuffer = NULL;
     uint8_t *rxBuffer = NULL;
 
@@ -368,7 +368,7 @@ public:
      */
     Coap(
         UDP &udp,
-        int coapBufferSize = COAP_BUF_MAX_SIZE);
+        size_t coapBufferSize = COAP_BUF_MAX_SIZE);
 
     /**
      * @brief Destroy the CoAP instance and free buffers.
