@@ -479,8 +479,9 @@ static uint8_t encodeUintOption(uint32_t value, uint8_t out[3])
 {
     if (value == 0)
     {
-        out[0] = 0;
-        return 1;
+        // Special case: zero is encoded as a zero-length option.
+        // https://datatracker.ietf.org/doc/html/rfc7252#section-3.2
+        return 0;
     }
     if (value <= 0xFF)
     {
@@ -629,7 +630,7 @@ int Coap::notifyObservers(const char *url, const char *payload, int payload_len,
         if (!urlEquals(observers[i].url, url))
             continue;
 
-        if (COAP_OBSERVER_LEASE_MS > 0 && (now - observers[i].lastSeenMs) > COAP_OBSERVER_LEASE_MS)
+        if (COAP_OBSERVER_LEASE_MS > 0 && (unsigned long)(now - observers[i].lastSeenMs) > COAP_OBSERVER_LEASE_MS)
         {
             observers[i].active = false;
             continue;
