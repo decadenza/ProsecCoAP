@@ -138,12 +138,26 @@ typedef enum
     COAP_APPLICATION_CBOR = 60
 } COAP_CONTENT_TYPE;
 
+/**
+ * @brief Represents a CoAP option.
+ *
+ * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+ */
 class CoapOption
 {
 public:
+    /**
+     * The CoAP option number.
+     */
     uint8_t number;
+    /**
+     * The length of the option.
+     */
     uint8_t length;
-    uint8_t *buffer;
+    /**
+     * The pointer to the option value.
+     */
+    uint8_t *value;
 };
 
 class CoapPacket

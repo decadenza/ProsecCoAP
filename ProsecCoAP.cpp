@@ -9,7 +9,7 @@ void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *opt_payload)
     }
     options[optionCount].number = number;
     options[optionCount].length = length;
-    options[optionCount].buffer = opt_payload;
+    options[optionCount].value = opt_payload;
 
     ++optionCount;
 }
@@ -25,7 +25,7 @@ bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
         uint32_t v = 0;
         for (uint8_t j = 0; j < options[i].length; j++)
         {
-            v = (v << 8) | options[i].buffer[j];
+            v = (v << 8) | options[i].value[j];
         }
         // Validate: only 0 (register) and 1 (cancel) are valid per RFC 7641.
         if (v > 1)
@@ -135,7 +135,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
             packetSize += 2;
         }
 
-        memcpy(p, packet.options[i].buffer, packet.options[i].length);
+        memcpy(p, packet.options[i].value, packet.options[i].length);
         p += packet.options[i].length;
         packetSize += packet.options[i].length + 1;
         running_delta = packet.options[i].number;
@@ -263,6 +263,11 @@ uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COA
     return this->sendPacket(packet, ip, port);
 }
 
+/**
+ * Parse the options according to specifications.
+ *
+ * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+ */
 int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen)
 {
     uint8_t *p = *buf;
@@ -316,7 +321,7 @@ int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf
     if ((p + 1 + len) > (*buf + buflen))
         return -1;
     option->number = delta + *running_delta;
-    option->buffer = p + 1;
+    option->value = p + 1;
     option->length = len;
     *buf = p + 1 + len;
     *running_delta += delta;
@@ -402,7 +407,7 @@ bool Coap::loop()
                 if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0)
                 {
                     char urlname[packet.options[i].length + 1];
-                    memcpy(urlname, packet.options[i].buffer, packet.options[i].length);
+                    memcpy(urlname, packet.options[i].value, packet.options[i].length);
                     urlname[packet.options[i].length] = 0;
                     if (url.length() > 0)
                         url += "/";
@@ -465,11 +470,11 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const ch
     packet.optionCount = 0;
     packet.messageId = messageId;
 
-    // if more options?
-    uint8_t optionBuffer[2] = {0};
-    optionBuffer[0] = ((uint16_t)type & 0xFF00) >> 8;
-    optionBuffer[1] = ((uint16_t)type & 0x00FF);
-    packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
+    // Adding Content-Format option.
+    uint8_t optionValue[2] = {0};
+    optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
+    optionValue[1] = ((uint16_t)type & 0x00FF);
+    packet.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
 
     return this->sendPacket(packet, ip, port);
 }
