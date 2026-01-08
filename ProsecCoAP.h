@@ -362,6 +362,9 @@ private:
 public:
     /**
      * @brief Construct a CoAP instance using the given UDP transport.
+     *
+     * @param udp The UDP transport to use for sending and receiving CoAP packets.
+     * @param coapBufferSize The size of the internal CoAP buffers. Default is @ref COAP_BUF_MAX_SIZE.
      */
     Coap(
         UDP &udp,
@@ -375,7 +378,7 @@ public:
     /**
      * @brief Notify all observers of a specific URL with a non-confirmable message.
      *
-     * @return Number of notifications sent successfully.
+     * @return Number of observers notified successfully.
      */
     int notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
 

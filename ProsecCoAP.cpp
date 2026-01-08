@@ -670,6 +670,7 @@ int Coap::notifyObservers(const char *url, const char *payload, int payload_len,
         optionBuffer[1] = ((uint16_t)type & 0x00FF);
         packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
 
+        // NOTE: A notification is like a CoAP response, so it carries no POST method.
         if (this->sendPacket(packet, observers[i].ip, observers[i].port) != 0)
             sent++;
     }
