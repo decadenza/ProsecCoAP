@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "ProsecCoAP.h"
 
-void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *opt_payload)
+void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *value)
 {
     if (optionCount >= COAP_MAX_OPTION_NUM)
     {
@@ -9,7 +9,7 @@ void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *opt_payload)
     }
     options[optionCount].number = number;
     options[optionCount].length = length;
-    options[optionCount].value = opt_payload;
+    options[optionCount].value = value;
 
     ++optionCount;
 }
@@ -79,7 +79,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
     uint16_t running_delta = 0;
     uint16_t packetSize = 0;
 
-    // make coap packet base header
+    // Coap packet base header.
     *p = 0x01 << 6;
     *p |= (packet.type & 0x03) << 4;
     *p++ |= (packet.tokenLength & 0x0F);
@@ -89,7 +89,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
     p = this->txBuffer + COAP_HEADER_SIZE;
     packetSize += 4;
 
-    // make token
+    // Add the token, if present and valid.
     if (packet.token != NULL && packet.tokenLength <= 0x0F)
     {
         memcpy(p, packet.token, packet.tokenLength);
@@ -97,7 +97,8 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
         packetSize += packet.tokenLength;
     }
 
-    // make option header
+    // Add option header according to specifications.
+    // https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
     for (int i = 0; i < packet.optionCount; i++)
     {
         uint32_t optdelta;
@@ -263,11 +264,6 @@ uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COA
     return this->sendPacket(packet, ip, port);
 }
 
-/**
- * Parse the options according to specifications.
- *
- * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
- */
 int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen)
 {
     uint8_t *p = *buf;

@@ -101,6 +101,11 @@ typedef enum
     COAP_PROXYING_NOT_SUPPORTED = RESPONSE_CODE(5, 5)
 } COAP_RESPONSE_CODE;
 
+/**
+ * CoAP Option Numbers Registry
+ *
+ * https://datatracker.ietf.org/doc/html/rfc7252#section-12.2
+ */
 typedef enum
 {
     COAP_IF_MATCH = 1,
@@ -117,7 +122,8 @@ typedef enum
     COAP_ACCEPT = 17,
     COAP_LOCATION_QUERY = 20,
     COAP_PROXY_URI = 35,
-    COAP_PROXY_SCHEME = 39
+    COAP_PROXY_SCHEME = 39,
+    COAP_SIZE1 = 60
 } COAP_OPTION_NUMBER;
 
 typedef enum
@@ -175,8 +181,14 @@ public:
 
     /**
      * @brief Add an option to the packet.
+     *
+     * The option is stored and will be later parsed when sending the packet.
+     *
+     * @param number The option number.
+     * @param length The length of the option value.
+     * @param value The pointer to the option value.
      */
-    void addOption(uint8_t number, uint8_t length, uint8_t *optPayload);
+    void addOption(uint8_t number, uint8_t length, uint8_t *value);
 
     /**
      * @brief Fetch the observe value (either 1 or 0).
@@ -307,10 +319,39 @@ private:
          */
         char url[COAP_MAX_OBSERVE_URL_LEN] = {0};
     };
+
+    /**
+     * @brief Array of registered observers.
+     *
+     * Preallocated array to hold observer entries.
+     *
+     * See also @ref COAP_MAX_OBSERVERS.
+     */
     ObserveEntry observers[COAP_MAX_OBSERVERS];
 
+    /**
+     * @brief Send a CoAP packet to the specified IP.
+     *
+     * It uses the default CoAP port, see @ref COAP_DEFAULT_PORT.
+     *
+     * @return The message ID of the sent packet.
+     */
     uint16_t sendPacket(CoapPacket &packet, IPAddress ip);
+
+    /**
+     * @brief Send a CoAP packet to the specified IP and port.
+     *
+     * @return The message ID of the sent packet.
+     */
     uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
+
+    /**
+     * Parse the options according to specifications.
+     *
+     * @return 0 in case of success, -1 on error.
+     *
+     * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+     */
     int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
 
 public:
