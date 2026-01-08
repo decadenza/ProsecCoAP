@@ -463,6 +463,16 @@ public:
     uint16_t put(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
 
     /**
+     * @brief Send a confirmable POST with null-terminated payload.
+     */
+    uint16_t post(IPAddress ip, int port, const char *url, const char *payload);
+
+    /**
+     * @brief Send a confirmable POST with explicit payload length.
+     */
+    uint16_t post(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
+
+    /**
      * @brief Send a CoAP request with optional payload.
      */
     uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
