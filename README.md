@@ -28,22 +28,10 @@ This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/
 Navigate to *File > Examples > ProsecCoAP* to get started with some basic examples.
 
 ### How to test
-The [examples](./examples) need CoAP server libcoap or microcoap server to work. 
-
-This is how to use the example with libcoap on Ubuntu Linux. You don't need to use CoAP server (request/response), simply follow these steps:
-
-```bash
-git clone https://github.com/obgm/libcoap 
-cd libcoap/
-./autogen.sh 
-./configure
-make
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.libs
-gcc -o coap-server ./examples/coap-server.c -I./include -I. -L.libs -lcoap-1 -DWITH_POSIX
-gcc -o coap-client ./examples/client.c ./examples/coap_list.c -I./include -I. -L.libs -lcoap-1 -DWITH_POSIX
-./coap-server
-```
-Next, start Arduino and check the request/response in the serial monitor.
+The [examples](./examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
+- Use two devices and use serial monitor.
+- Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
+- Use [libcoap](https://github.com/obgm/libcoap).
 
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
