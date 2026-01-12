@@ -1,0 +1,3 @@
+# Exclude generated documentation and extra files from language statistics
+extra/* linguist-vendored
+html/* linguist-vendored

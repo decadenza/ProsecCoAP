@@ -39,7 +39,6 @@ jobs:
         uses: actions/configure-pages@v4
 
       # 3. Upload Artifacts
-      # Ensure './docs' matches the 'OUTPUT_DIRECTORY' or 'HTML_OUTPUT' in your Doxyfile
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
