@@ -104,7 +104,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
         uint32_t optdelta;
         uint8_t len, delta;
 
-        if (packetSize + 5 + packet.options[i].length >= coapBufferSize)
+        if (packetSize + 5u + packet.options[i].length >= coapBufferSize)
         {
             return 0;
         }
@@ -340,7 +340,7 @@ int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf
 
 bool Coap::loop()
 {
-    int32_t packet_length = _udp->parsePacket();
+    uint32_t packet_length = _udp->parsePacket();
 
     while (packet_length > 0)
     {
