@@ -27,10 +27,10 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
 {
   Serial.println("[Light] ON/OFF");
 
-  // We expect one byte payload: "0" or "1"
+  // Expects one byte payload: "0" or "1" in ASCII.
   char p[2]; // Include space for null terminator
-  memcpy(p, packet.payload, packet.payloadLength);
-  p[packet.payloadLength] = '\0';
+  memcpy(p, packet.payload, 1);
+  p[1] = '\0';
 
   String message(p);
 
