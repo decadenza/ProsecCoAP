@@ -24,7 +24,9 @@
         "atmelsam",
         "atmelmegaavr",
         "ststm32",
+        "renesas-ra",
         "espressif8266",
-        "espressif32"
+        "espressif32",
+        "raspberrypi"
     ]
 }
