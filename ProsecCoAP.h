@@ -387,12 +387,12 @@ public:
      *
      * If the observer is already registered, the existing observer is returned.
      *
-     * @param observer_out Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
+    * @param observer_out Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
      * @return 0 if the observer was added successfully.
      *         -1 if the url is invalid.
      *         -2 if the observer table is full.
      */
-    int addObserver(Observer *observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
+    int addObserver(Observer **observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Send an observe confirmation response to an observer.

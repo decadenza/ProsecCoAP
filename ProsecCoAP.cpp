@@ -531,7 +531,7 @@ static bool tokenEquals(const uint8_t *a, uint8_t alen, const uint8_t *b, uint8_
     return memcmp(a, b, alen) == 0;
 }
 
-int Coap::addObserver(Observer *observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
+int Coap::addObserver(Observer **observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
     if (url == NULL)
         return -1; // Invalid URL.
@@ -539,6 +539,9 @@ int Coap::addObserver(Observer *observer_out, const char *url, IPAddress ip, int
         return -1; // Invalid URL.
     if (tokenLength > 8)
         return -1; // Invalid token.
+
+    if (observer_out)
+        *observer_out = NULL;
 
     unsigned long now = millis();
 
@@ -551,7 +554,8 @@ int Coap::addObserver(Observer *observer_out, const char *url, IPAddress ip, int
         {
             // Duplicate active observer, just update last seen time.
             observers[i].lastSeenMs = now;
-            observer_out = &observers[i];
+            if (observer_out)
+                *observer_out = &observers[i];
             return 0;
         }
     }
@@ -570,7 +574,8 @@ int Coap::addObserver(Observer *observer_out, const char *url, IPAddress ip, int
             observers[i].lastSeenMs = now;
             strncpy(observers[i].url, url, COAP_MAX_OBSERVE_URL_LEN - 1);
             observers[i].url[COAP_MAX_OBSERVE_URL_LEN - 1] = 0;
-            observer_out = &observers[i];
+            if (observer_out)
+                *observer_out = &observers[i];
             return 0;
         }
     }
