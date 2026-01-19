@@ -29,9 +29,9 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
   Serial.println("[Light] ON/OFF");
 
   // send response
-  char p[packet.payloadLength + 1];
-  memcpy(p, packet.payload, packet.payloadLength);
-  p[packet.payloadLength] = '\0';
+  char p[2]; // 1 character + null terminator
+  p[0] = packet.payload[0]; // Only the first character from the payload is considered here.
+  p[1] = '\0';
 
   String message(p);
 
@@ -57,7 +57,7 @@ void callback_response(CoapPacket &packet, IPAddress ip, int port)
 {
   Serial.println("[Coap Response got]");
 
-  char p[packet.payloadLength + 1];
+  char p[50]; // Max length of 49 + null terminator.
   memcpy(p, packet.payload, packet.payloadLength);
   p[packet.payloadLength] = '\0';
 
