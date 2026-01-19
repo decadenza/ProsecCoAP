@@ -415,12 +415,15 @@ bool Coap::loop()
             {
                 if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0)
                 {
-                    char urlname[packet.options[i].length + 1];
-                    memcpy(urlname, packet.options[i].value, packet.options[i].length);
-                    urlname[packet.options[i].length] = 0;
+                    if (packet.options[i].length > 0)
+                    {
+                        // Ignore empty URI_PATH segments.
+                        continue;
+                    }
                     if (url.length() > 0)
                         url += "/";
-                    url += (const char *)urlname;
+                    // Append the URI_PATH segment to the URL.
+                    url += String((const char *)packet.options[i].value, packet.options[i].length);
                 }
             }
 
