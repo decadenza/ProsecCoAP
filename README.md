@@ -46,6 +46,15 @@ The documentation will accesible from `./html/index.html`.
 ## Particle Photon, Core compatible
 Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
 
+## Release process
+A new version is released following these steps:
+1. Update [library.properties](library.properties) as required, using a new `vX.Y.Z` tag.
+2. Create the corresponding `vX.Y.Z` tag and a new release (for GitHub and Arduino library manager).
+3. Publish the new library to PlatformIO, running the following from the main project folder:
+```
+pio pkg publish .
+```
+
 ## Credits
 This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) by Hirotaka Niisato. Credits for all the orginal code go to the original contributors.
 
