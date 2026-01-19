@@ -29,7 +29,7 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
   Serial.println("[Light] ON/OFF");
 
   // send response
-  char p[2]; // 1 character + null terminator
+  char p[2];                // 1 character + null terminator
   p[0] = packet.payload[0]; // Only the first character from the payload is considered here.
   p[1] = '\0';
 
@@ -100,7 +100,9 @@ void loop()
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
   Serial.println("Send Request");
-  int msgid = coap.get(IPAddress(10, 0, 0, 1), 5683, "time"); // Set your own IP.
+  // Constantly send a GET request.
+  // Set your own IP to receive it.
+  coap.get(IPAddress(10, 0, 0, 1), 5683, "time");
 
   delay(1000);
   coap.loop();
