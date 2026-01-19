@@ -410,20 +410,16 @@ bool Coap::loop()
         {
 
             String url = "";
-            // call endpoint url function
+            url.reserve(64); // Pre-allocate memory to avoid fragmentation.
+
             for (int i = 0; i < packet.optionCount; i++)
             {
                 if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0)
                 {
-                    if (packet.options[i].length > 0)
-                    {
-                        // Ignore empty URI_PATH segments.
-                        continue;
-                    }
                     if (url.length() > 0)
                         url += "/";
                     // Append the URI_PATH segment to the URL.
-                    url += String((const char *)packet.options[i].value, packet.options[i].length);
+                    url += (const char *)packet.options[i].value, packet.options[i].length;
                 }
             }
 
