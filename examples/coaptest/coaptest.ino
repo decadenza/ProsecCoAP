@@ -20,11 +20,8 @@ void callback_response(CoapPacket &packet, IPAddress ip, int port)
 {
   Serial.println("[Coap Response got]");
 
-  char p[packet.payloadLength + 1];
-  memcpy(p, packet.payload, packet.payloadLength);
-  p[packet.payloadLength] = '\0';
-
-  Serial.println(p);
+  Serial.write((const char *)packet.payload, packet.payloadLength);
+  Serial.println(); // newline
 }
 
 void setup()
@@ -50,7 +47,7 @@ void loop()
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
   Serial.println("Send Request");
-  int msg_id = coap.get(IPAddress(10, 0, 0, 1), 5683, "time");
+  coap.get(IPAddress(10, 0, 0, 1), 5683, "time");
 
   delay(1000);
   coap.loop();

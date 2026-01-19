@@ -57,11 +57,8 @@ void callback_response(CoapPacket &packet, IPAddress ip, int port)
 {
   Serial.println("[Coap Response got]");
 
-  char p[50]; // Max length of 49 + null terminator.
-  memcpy(p, packet.payload, packet.payloadLength);
-  p[packet.payloadLength] = '\0';
-
-  Serial.println(p);
+  Serial.write((const char *)packet.payload, packet.payloadLength);
+  Serial.println(); // newline
 }
 
 void setup()

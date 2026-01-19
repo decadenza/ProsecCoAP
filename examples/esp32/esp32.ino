@@ -27,8 +27,8 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
 {
   Serial.println("[Light] ON/OFF");
 
-  // send response
-  char p[packet.payloadLength + 1];
+  // We expect one byte payload: "0" or "1"
+  char p[2]; // Include space for null terminator
   memcpy(p, packet.payload, packet.payloadLength);
   p[packet.payloadLength] = '\0';
 
@@ -56,11 +56,8 @@ void callback_response(CoapPacket &packet, IPAddress ip, int port)
 {
   Serial.println("[Coap Response got]");
 
-  char p[packet.payloadLength + 1];
-  memcpy(p, packet.payload, packet.payloadLength);
-  p[packet.payloadLength] = '\0';
-
-  Serial.println(p);
+  Serial.write((const char *)packet.payload, packet.payloadLength);
+  Serial.println(); // newline
 }
 
 void setup()
