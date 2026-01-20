@@ -97,8 +97,8 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
             }
             else
             {
-                // First confirm the subscription to the client, with no payload.
-                coap.sendObserveRegisterConfirmation(observer, packet.messageId);
+                // The loop will return the current representation of the resource
+                // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
                 SERIAL_PRINTLN("Subscribed!");
             }
         }
