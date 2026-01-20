@@ -128,8 +128,8 @@ typedef enum
 
 typedef enum
 {
-    COAP_OBSERVE_VALUE_REGISTER = 0, // https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
-    COAP_OBSERVE_VALUE_CANCEL = 1    // https://datatracker.ietf.org/doc/html/rfc7641#section-3.6
+    COAP_OBSERVE_VALUE_REGISTER = 0, // https://datatracker.ietf.org/doc/html/rfc7641#section-2
+    COAP_OBSERVE_VALUE_DEREGISTER = 1
 } COAP_OBSERVE_VALUE;
 
 typedef enum
@@ -387,7 +387,7 @@ public:
      *
      * If the observer is already registered, the existing observer is returned.
      *
-    * @param observer_out Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
+     * @param observer_out Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
      * @return 0 if the observer was added successfully.
      *         -1 if the url is invalid.
      *         -2 if the observer table is full.

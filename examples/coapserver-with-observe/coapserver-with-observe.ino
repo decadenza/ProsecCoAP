@@ -102,7 +102,7 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
                 SERIAL_PRINTLN("Subscribed!");
             }
         }
-        else if (observe_value == COAP_OBSERVE_VALUE_CANCEL)
+        else if (observe_value == COAP_OBSERVE_VALUE_DEREGISTER)
         {
             coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
             coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
