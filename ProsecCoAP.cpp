@@ -419,7 +419,7 @@ bool Coap::loop()
                     if (url.length() > 0)
                         url += "/";
                     // Append the URI_PATH segment to the URL.
-                    url += (const char *)packet.options[i].value, packet.options[i].length;
+                    url += (const char *)packet.options[i].value;
                 }
             }
 
@@ -530,12 +530,12 @@ static bool tokenEquals(const uint8_t *a, uint8_t alen, const uint8_t *b, uint8_
     return memcmp(a, b, alen) == 0;
 }
 
-int Coap::addObserver(Observer **observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
+int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
-    if (url == NULL)
-        return -1; // Invalid URL.
-    if (strlen(url) >= COAP_MAX_OBSERVE_URL_LEN)
-        return -1; // Invalid URL.
+    if (endpoint == NULL)
+        return -1; // Invalid endpoint.
+    if (strlen(endpoint) >= COAP_MAX_OBSERVE_ENDPOINT_LEN)
+        return -1; // Invalid endpoint.
     if (tokenLength > 8)
         return -1; // Invalid token.
 
@@ -549,7 +549,7 @@ int Coap::addObserver(Observer **observer_out, const char *url, IPAddress ip, in
     {
         if (!observers[i].active)
             continue;
-        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
+        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].endpoint, endpoint) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
             // Duplicate active observer, just update last seen time.
             observers[i].lastSeenMs = now;
@@ -571,8 +571,8 @@ int Coap::addObserver(Observer **observer_out, const char *url, IPAddress ip, in
                 memcpy(observers[i].token, token, tokenLength);
             observers[i].observationSequentialNumber = 0;
             observers[i].lastSeenMs = now;
-            strncpy(observers[i].url, url, COAP_MAX_OBSERVE_URL_LEN - 1);
-            observers[i].url[COAP_MAX_OBSERVE_URL_LEN - 1] = 0;
+            strncpy(observers[i].endpoint, endpoint, COAP_MAX_OBSERVE_ENDPOINT_LEN - 1);
+            observers[i].endpoint[COAP_MAX_OBSERVE_ENDPOINT_LEN - 1] = 0;
             if (observer_out)
                 *observer_out = &observers[i];
             return 0;
@@ -605,16 +605,16 @@ uint16_t Coap::sendObserveRegisterConfirmation(Observer *observer, uint16_t mess
     return this->sendPacket(packet, observer->ip, observer->port);
 }
 
-bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
+bool Coap::removeObserver(const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
-    if (url == NULL)
+    if (endpoint == NULL)
         return false;
 
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
     {
         if (!observers[i].active)
             continue;
-        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].url, url) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
+        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].endpoint, endpoint) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
         {
             return observers[i].remove();
         }
@@ -625,18 +625,12 @@ bool Coap::removeObserver(const char *url, IPAddress ip, int port, const uint8_t
 
 bool Observer::remove()
 {
-    bool removed = false;
     if (!this->active)
-        // Already inactive. Nothing to remove.
-        return false;
-    if (this->ip == ip && this->port == (uint16_t)port && urlEquals(this->url, url) && tokenEquals(this->token, this->tokenLength, token, tokenLength))
-    {
-        // Mark as inactive.
-        this->active = false;
-        removed = true;
-    }
+        return false; // Already inactive. Nothing to remove.
 
-    return removed;
+    // Mark as inactive.
+    this->active = false;
+    return true;
 }
 
 unsigned long Observer::getLastSeenMs()
@@ -644,9 +638,9 @@ unsigned long Observer::getLastSeenMs()
     return this->lastSeenMs;
 }
 
-int Coap::notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type)
+int Coap::notifyObservers(const char *observed_endpoint, const char *payload, int payload_len, COAP_CONTENT_TYPE type)
 {
-    if (url == NULL)
+    if (observed_endpoint == NULL)
         return 0;
     unsigned long now = millis();
     int sent = 0;
@@ -655,7 +649,7 @@ int Coap::notifyObservers(const char *url, const char *payload, int payload_len,
     {
         if (!observers[i].active)
             continue;
-        if (!urlEquals(observers[i].url, url))
+        if (!urlEquals(observers[i].endpoint, observed_endpoint))
             continue;
 
         if (COAP_OBSERVER_LEASE_MS > 0 && (unsigned long)(now - observers[i].lastSeenMs) > COAP_OBSERVER_LEASE_MS)

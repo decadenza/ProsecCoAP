@@ -5,7 +5,7 @@
  *
  * To test this example with the coap-client tool from libcoap:
  * ```
- * coap-client-notls -m get -s 60 coap://192.168.0.1/subscribe
+ * coap-client-notls -m get -s 60 coap://192.168.0.1/subscribe/
  * ```
  */
 #include <SPI.h>
@@ -64,8 +64,8 @@ void setup()
         SERIAL_PRINTLN("Ethernet shield/hardware not found. Check connections!");
         return;
     }
+    SERIAL_PRINTLN("OK");
 
-    SERIAL_PRINTLN("Setup echo endpoint");
     coap.server(endpoint_subscribe, "subscribe");
 
     // start coap server/client

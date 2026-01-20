@@ -49,8 +49,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef COAP_OBSERVER_LEASE_MS
 #define COAP_OBSERVER_LEASE_MS 60000UL
 #endif
-#ifndef COAP_MAX_OBSERVE_URL_LEN
-#define COAP_MAX_OBSERVE_URL_LEN 32
+#ifndef COAP_MAX_OBSERVE_ENDPOINT_LEN
+#define COAP_MAX_OBSERVE_ENDPOINT_LEN 32
 #endif
 #define COAP_DEFAULT_PORT 5683
 
@@ -290,9 +290,9 @@ private:
     uint32_t observationSequentialNumber = 0;
     unsigned long lastSeenMs = 0; // TODO: Implement cleaning up old observers.
     /**
-     * @brief The URL being observed.
+     * @brief The endpoint being observed.
      */
-    char url[COAP_MAX_OBSERVE_URL_LEN] = {0};
+    char endpoint[COAP_MAX_OBSERVE_ENDPOINT_LEN] = {0};
 
 public:
     /**
@@ -302,7 +302,7 @@ public:
      * An observer can be removed either by the Coap class (@ref Coap::removeObserver) or
      * by itself (@ref Observer::remove).
      *
-     * @return true if the observer was removed successfully, false otherwise.
+     * @return true if the observer was removed successfully, false if the observer was already inactive.
      */
     bool remove();
 
@@ -376,11 +376,20 @@ public:
     ~Coap();
 
     /**
-     * @brief Notify all observers of a specific URL with a non-confirmable message.
+     * @brief Notify all observers of a specific endpoint.
+     *
+     * This method sends a notification to all registered observers for the given endpoint.
+     * As per specifications, the notification includes the Observe option with a sequential number.
+     * The notification will be a non-confirmable message (COAP_NONCON).
+     *
+     * @param observed_endpoint The endpoint being observed.
+     * @param payload The payload to send to observers.
+     * @param payload_len The length of the payload.
+     * @param type The content type of the payload.
      *
      * @return Number of observers notified successfully.
      */
-    int notifyObservers(const char *url, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
+    int notifyObservers(const char *observed_endpoint, const char *payload, int payload_len, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Add a new observer for a specific URL.
@@ -388,11 +397,17 @@ public:
      * If the observer is already registered, the existing observer is returned.
      *
      * @param observer_out Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
+     * @param endpoint The endpoint to observe.
+     * @param ip The IP address of the observer.
+     * @param port The port of the observer.
+     * @param token The token used by the observer.
+     * @param tokenLength The length of the token.
+     *
      * @return 0 if the observer was added successfully.
      *         -1 if the url is invalid.
      *         -2 if the observer table is full.
      */
-    int addObserver(Observer **observer_out, const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
+    int addObserver(Observer **observer_out, const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Send an observe confirmation response to an observer.
@@ -403,9 +418,9 @@ public:
     uint16_t sendObserveRegisterConfirmation(Observer *observer, uint16_t messageId);
 
     /**
-     * @brief Remove an observer for a specific URL.
+     * @brief Remove an observer for a specific endpoint.
      */
-    bool removeObserver(const char *url, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
+    bool removeObserver(const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Start the server on the default port.
