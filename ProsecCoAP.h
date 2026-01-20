@@ -410,14 +410,6 @@ public:
     int addObserver(Observer **observer_out, const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);
 
     /**
-     * @brief Send an observe confirmation response to an observer.
-     *
-     * To be used just after a client has registered as an observer. It sends an empty ACK with the Observe option set to 0.
-     * This acknowledges the registration and avoids multiple requests from the client.
-     */
-    uint16_t sendObserveRegisterConfirmation(Observer *observer, uint16_t messageId);
-
-    /**
      * @brief Remove an observer for a specific endpoint.
      */
     bool removeObserver(const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength);

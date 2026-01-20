@@ -582,29 +582,6 @@ int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress i
     return -2; // Full, could not add observer.
 }
 
-uint16_t Coap::sendObserveRegisterConfirmation(Observer *observer, uint16_t messageId)
-{
-    CoapPacket packet;
-
-    packet.type = COAP_ACK;   // ACK the registration.
-    packet.code = COAP_EMPTY; // No payload. Refer to https://www.rfc-editor.org/rfc/rfc7252#section-5.2.2
-    packet.token = observer->token;
-    packet.tokenLength = observer->tokenLength;
-    packet.payload = NULL;
-    packet.payloadLength = 0;
-    packet.optionCount = 0;
-    packet.messageId = messageId;
-
-    // When registering a new observer, the observe option value is send back.
-    // https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
-    // The value will be the sequential number, hard coded to start from 0.
-    uint8_t observeBuf[3] = {0};
-    uint8_t observeLen = encodeUintOption(0, observeBuf);
-    packet.addOption(COAP_OBSERVE, observeLen, observeBuf);
-
-    return this->sendPacket(packet, observer->ip, observer->port);
-}
-
 bool Coap::removeObserver(const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
 {
     if (endpoint == NULL)

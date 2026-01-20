@@ -34,7 +34,6 @@ send	KEYWORD2
 notifyObservers	KEYWORD2
 addObserver	KEYWORD2
 removeObserver	KEYWORD2
-sendObserveRegisterConfirmation	KEYWORD2
 addOption	KEYWORD2
 getObserveValue	KEYWORD2
 add	KEYWORD2
