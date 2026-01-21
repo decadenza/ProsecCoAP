@@ -435,24 +435,24 @@ public:
     void server(CoapCallback c, String url) { uri.add(c, url); }
 
     /**
-     * @brief Send a basic acknowledgment with empty payload.
+     * @brief Send an Empty Message.
      */
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId);
+    uint16_t sendEmptyMessage(IPAddress ip, int port, uint16_t messageId);
 
     /**
      * @brief Send a text acknowledgment response.
      */
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload);
+    uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload);
 
     /**
      * @brief Send a typed acknowledgment response with explicit length.
      */
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength);
+    uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength);
 
     /**
      * @brief Send a fully customized acknowledgment response.
      */
-    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
+    uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
 
     /**
      * @brief Send a confirmable GET request.

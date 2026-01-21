@@ -142,7 +142,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
         running_delta = packet.options[i].number;
     }
 
-    // make payload
+    // Append the payload.
     if (packet.payloadLength > 0)
     {
         if ((packetSize + 1 + packet.payloadLength) >= coapBufferSize)
@@ -425,8 +425,8 @@ bool Coap::loop()
 
             if (!uri.find(url))
             {
-                sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageId, NULL, 0,
-                             COAP_NOT_FOUND, COAP_NONE, NULL, 0);
+                sendMessage(_udp->remoteIP(), _udp->remotePort(), packet.messageId, NULL, 0,
+                            COAP_NOT_FOUND, COAP_NONE, NULL, 0);
             }
             else
             {
@@ -438,7 +438,7 @@ bool Coap::loop()
         {
             // Received a message that requires acknowledgment.
             // Reply with an empty ACK.
-            sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageId);
+            sendEmptyMessage(_udp->remoteIP(), _udp->remotePort(), packet.messageId);
         }
 
         // next packet
@@ -448,23 +448,23 @@ bool Coap::loop()
     return true;
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId)
+uint16_t Coap::sendEmptyMessage(IPAddress ip, int port, uint16_t messageId)
 {
-    return this->sendResponse(ip, port, messageId, NULL, 0, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
+    return this->sendMessage(ip, port, messageId, NULL, 0, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload)
+uint16_t Coap::sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload)
 {
-    return this->sendResponse(ip, port, messageId, payload, strlen(payload), COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
+    return this->sendMessage(ip, port, messageId, payload, strlen(payload), COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength)
+uint16_t Coap::sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength)
 {
-    return this->sendResponse(ip, port, messageId, payload, payloadLength, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
+    return this->sendMessage(ip, port, messageId, payload, payloadLength, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
-                            COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
+uint16_t Coap::sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
+                           COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
 {
     // make packet
     CoapPacket packet;
