@@ -91,7 +91,7 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
             int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
             if (rc != 0 || observer == NULL)
             {
-                coap.sendMessage(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+                coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
                 SERIAL_PRINTLN("Observer could not be added!");
                 return;
             }
@@ -105,7 +105,7 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, int port)
         else if (observe_value == COAP_OBSERVE_VALUE_DEREGISTER)
         {
             coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
-            coap.sendMessage(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+            coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
             SERIAL_PRINTLN("Unsubscribed!");
         }
         // Else ignore.

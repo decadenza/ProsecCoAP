@@ -449,59 +449,57 @@ public:
     uint16_t sendEmptyMessage(IPAddress ip, int port, uint16_t messageId);
 
     /**
-     * @brief Send a text message.
+     * @brief Send a response with a payload.
      */
-    uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload);
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload);
 
     /**
-     * @brief Send a typed message with explicit length.
+     * @brief Send a response with payload and its explicit length.
      */
-    uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength);
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength);
 
     /**
-     * @brief Send a fully customized message.
-     *
-     * If the token is not NULL, the message is to be considered a response to a previous request.
+     * @brief Send a fully customized response.
      */
-    uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
+    uint16_t sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
 
     /**
      * @brief Send a confirmable GET request.
      */
-    uint16_t get(IPAddress ip, int port, const char *url);
+    uint16_t getRequest(IPAddress ip, int port, const char *url);
 
     /**
      * @brief Send a confirmable PUT with null-terminated payload.
      */
-    uint16_t put(IPAddress ip, int port, const char *url, const char *payload);
+    uint16_t putRequest(IPAddress ip, int port, const char *url, const char *payload);
 
     /**
      * @brief Send a confirmable PUT with explicit payload length.
      */
-    uint16_t put(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
+    uint16_t putRequest(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
 
     /**
      * @brief Send a confirmable POST with null-terminated payload.
      */
-    uint16_t post(IPAddress ip, int port, const char *url, const char *payload);
+    uint16_t postRequest(IPAddress ip, int port, const char *url, const char *payload);
 
     /**
      * @brief Send a confirmable POST with explicit payload length.
      */
-    uint16_t post(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
+    uint16_t postRequest(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength);
 
     /**
-     * @brief Send a CoAP request with optional payload.
+     * @brief Send a raw CoAP message.
      */
     uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
 
     /**
-     * @brief Send a CoAP request specifying the content format.
+     * @brief Send a raw CoAP message specifying the content format.
      */
     uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
 
     /**
-     * @brief Send a CoAP request with explicit message ID.
+     * @brief Send a raw CoAP message with explicit message ID.
      */
     uint16_t send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 

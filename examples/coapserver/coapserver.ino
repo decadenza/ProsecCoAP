@@ -43,12 +43,12 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
   if (LEDSTATE)
   {
     digitalWrite(LEDP, HIGH);
-    coap.sendMessage(ip, port, packet.messageId, "1");
+    coap.sendResponse(ip, port, packet.messageId, "1");
   }
   else
   {
     digitalWrite(LEDP, LOW);
-    coap.sendMessage(ip, port, packet.messageId, "0");
+    coap.sendResponse(ip, port, packet.messageId, "0");
   }
 }
 
@@ -99,7 +99,7 @@ void loop()
   Serial.println("Send Request");
   // Constantly send a GET request.
   // Set your own IP to receive it.
-  coap.get(IPAddress(10, 0, 0, 1), 5683, "time");
+  coap.getRequest(IPAddress(10, 0, 0, 1), 5683, "time");
 
   delay(1000);
   coap.loop();
