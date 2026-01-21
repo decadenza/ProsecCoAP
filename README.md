@@ -9,7 +9,7 @@ This library is a *partial* implementation of CoAP protocol ([RFC-7252](https://
 - request/respose semantics,
 - observe pattern.
 
-This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) and aims at providing:
+This library is a work in progress and aims at providing:
 - Clear documentation and ease of use.
 - A closer implementation of the ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)).
 
@@ -20,7 +20,6 @@ This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/
 3. Search for "ProsecCoAP" and install.
 
 ### Manual
-
 1. Download this source code branch as a zip file.
 2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
 
