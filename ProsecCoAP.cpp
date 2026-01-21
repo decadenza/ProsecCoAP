@@ -3,20 +3,20 @@
 
 void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *value)
 {
-    if (optionCount >= COAP_MAX_OPTION_NUM)
+    if (option_count >= COAP_MAX_OPTION_NUM)
     {
         return;
     }
-    options[optionCount].number = number;
-    options[optionCount].length = length;
-    options[optionCount].value = value;
+    options[option_count].number = number;
+    options[option_count].length = length;
+    options[option_count].value = value;
 
-    ++optionCount;
+    ++option_count;
 }
 
 bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
 {
-    for (int i = 0; i < optionCount; i++)
+    for (int i = 0; i < option_count; i++)
     {
         if (options[i].number != COAP_OBSERVE)
             continue;
@@ -62,7 +62,7 @@ bool Coap::start()
     return true;
 }
 
-bool Coap::start(int port)
+bool Coap::start(uint16_t port)
 {
     this->_udp->begin(port);
     return true;
@@ -73,7 +73,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip)
     return this->sendPacket(packet, ip, COAP_DEFAULT_PORT);
 }
 
-uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
+uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
     uint8_t *p = this->txBuffer;
     uint16_t running_delta = 0;
@@ -82,24 +82,24 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
     // Coap packet base header.
     *p = 0x01 << 6;
     *p |= (packet.type & 0x03) << 4;
-    *p++ |= (packet.tokenLength & 0x0F);
+    *p++ |= (packet.token_length & 0x0F);
     *p++ = packet.code;
-    *p++ = (packet.messageId >> 8);
-    *p++ = (packet.messageId & 0xFF);
+    *p++ = (packet.message_id >> 8);
+    *p++ = (packet.message_id & 0xFF);
     p = this->txBuffer + COAP_HEADER_SIZE;
     packetSize += 4;
 
     // Add the token, if present and valid.
-    if (packet.token != NULL && packet.tokenLength <= 0x0F)
+    if (packet.token != NULL && packet.token_length <= 0x0F)
     {
-        memcpy(p, packet.token, packet.tokenLength);
-        p += packet.tokenLength;
-        packetSize += packet.tokenLength;
+        memcpy(p, packet.token, packet.token_length);
+        p += packet.token_length;
+        packetSize += packet.token_length;
     }
 
     // Add option header according to specifications.
     // https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
-    for (int i = 0; i < packet.optionCount; i++)
+    for (int i = 0; i < packet.option_count; i++)
     {
         uint32_t optdelta;
         uint8_t len, delta;
@@ -143,68 +143,68 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
     }
 
     // Append the payload.
-    if (packet.payloadLength > 0)
+    if (packet.payload_length > 0)
     {
-        if ((packetSize + 1 + packet.payloadLength) >= coapBufferSize)
+        if ((packetSize + 1 + packet.payload_length) >= coapBufferSize)
         {
             return 0;
         }
         *p++ = 0xFF;
-        memcpy(p, packet.payload, packet.payloadLength);
-        packetSize += 1 + packet.payloadLength;
+        memcpy(p, packet.payload, packet.payload_length);
+        packetSize += 1 + packet.payload_length;
     }
 
     _udp->beginPacket(ip, port);
     _udp->write(this->txBuffer, packetSize);
     _udp->endPacket();
 
-    return packet.messageId;
+    return packet.message_id;
 }
 
-uint16_t Coap::getRequest(IPAddress ip, int port, const char *url)
+uint16_t Coap::getRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable)
 {
-    return this->send(ip, port, url, COAP_CON, COAP_GET, NULL, 0, NULL, 0);
+    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_GET, NULL, 0, NULL, 0);
 }
 
-uint16_t Coap::deleteRequest(IPAddress ip, int port, const char *url)
+uint16_t Coap::deleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable)
 {
-    return this->send(ip, port, url, COAP_CON, COAP_DELETE, NULL, 0, NULL, 0);
+    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_DELETE, NULL, 0, NULL, 0);
 }
 
-uint16_t Coap::putRequest(IPAddress ip, int port, const char *url, const char *payload)
+uint16_t Coap::putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, bool confirmable)
 {
-    return this->send(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
+    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
 }
 
-uint16_t Coap::putRequest(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength)
+uint16_t Coap::putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payload_length, bool confirmable)
 {
-    return this->send(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, payloadLength);
+    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, NULL, 0, (uint8_t *)payload, payload_length);
 }
 
-uint16_t Coap::postRequest(IPAddress ip, int port, const char *url, const char *payload)
+uint16_t Coap::postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, bool confirmable)
 {
-    return this->send(ip, port, url, COAP_CON, COAP_POST, NULL, 0, (uint8_t *)payload, strlen(payload));
+    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, NULL, 0, (uint8_t *)payload, strlen(payload));
 }
 
-uint16_t Coap::postRequest(IPAddress ip, int port, const char *url, const char *payload, size_t payloadLength)
+uint16_t Coap::postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payload_length, bool confirmable)
 {
-    return this->send(ip, port, url, COAP_CON, COAP_POST, NULL, 0, (uint8_t *)payload, payloadLength);
+    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, NULL, 0, (uint8_t *)payload, payload_length);
 }
 
 // Send CoAP request with payload, without specifying content type.
-uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength)
+uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t token_length, const uint8_t *payload, size_t payload_length)
 {
-    return this->send(ip, port, url, type, method, token, tokenLength, payload, payloadLength, COAP_NONE);
+    return this->send(ip, port, endpoint, type, method, token, token_length, payload, payload_length, COAP_NONE);
 }
 
 // Send CoAP request with payload and content type.
-uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType)
+uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t token_length, const uint8_t *payload, size_t payload_length, COAP_CONTENT_TYPE contentType)
 {
-    return this->send(ip, port, url, type, method, token, tokenLength, payload, payloadLength, contentType, rand());
+    return this->send(ip, port, endpoint, type, method, token, token_length, payload, payload_length, contentType, rand());
 }
 
 // Send a CoAP request with payload, content type and explicit message ID.
-uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId)
+uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t token_length, const uint8_t *payload, size_t payload_length, COAP_CONTENT_TYPE contentType, uint16_t message_id)
 {
 
     // make packet
@@ -213,11 +213,11 @@ uint16_t Coap::send(IPAddress ip, int port, const char *url, COAP_TYPE type, COA
     packet.type = type;
     packet.code = method;
     packet.token = token;
-    packet.tokenLength = tokenLength;
+    packet.token_length = token_length;
     packet.payload = payload;
-    packet.payloadLength = payloadLength;
-    packet.optionCount = 0;
-    packet.messageId = messageId;
+    packet.payload_length = payload_length;
+    packet.option_count = 0;
+    packet.message_id = message_id;
 
     // use URI_HOST UIR_PATH
     char ip_address[16] = "";
@@ -361,14 +361,14 @@ bool Coap::loop()
         }
 
         packet.type = (this->rxBuffer[0] & 0x30) >> 4;
-        packet.tokenLength = this->rxBuffer[0] & 0x0F;
+        packet.token_length = this->rxBuffer[0] & 0x0F;
         packet.code = this->rxBuffer[1];
-        packet.messageId = 0xFF00 & (this->rxBuffer[2] << 8);
-        packet.messageId |= 0x00FF & this->rxBuffer[3];
+        packet.message_id = 0xFF00 & (this->rxBuffer[2] << 8);
+        packet.message_id |= 0x00FF & this->rxBuffer[3];
 
-        if (packet.tokenLength == 0)
+        if (packet.token_length == 0)
             packet.token = NULL;
-        else if (packet.tokenLength <= 8)
+        else if (packet.token_length <= 8)
             packet.token = this->rxBuffer + 4;
         else
         {
@@ -377,12 +377,12 @@ bool Coap::loop()
         }
 
         // parse packet options/payload
-        if (COAP_HEADER_SIZE + packet.tokenLength < packet_length)
+        if (COAP_HEADER_SIZE + packet.token_length < packet_length)
         {
             int optionIndex = 0;
             uint16_t delta = 0;
             uint8_t *end = this->rxBuffer + packet_length;
-            uint8_t *p = this->rxBuffer + COAP_HEADER_SIZE + packet.tokenLength;
+            uint8_t *p = this->rxBuffer + COAP_HEADER_SIZE + packet.token_length;
             while (optionIndex < COAP_MAX_OPTION_NUM && p < end && *p != 0xFF)
             {
                 // packet.options[optionIndex];
@@ -390,16 +390,16 @@ bool Coap::loop()
                     return false;
                 optionIndex++;
             }
-            packet.optionCount = optionIndex;
+            packet.option_count = optionIndex;
             if (p < end && *p == 0xFF)
             {
                 packet.payload = p + 1;
-                packet.payloadLength = end - (p + 1);
+                packet.payload_length = end - (p + 1);
             }
             else
             {
                 packet.payload = NULL;
-                packet.payloadLength = 0;
+                packet.payload_length = 0;
             }
         }
 
@@ -414,28 +414,28 @@ bool Coap::loop()
         else
         {
 
-            String url = "";
-            url.reserve(64); // Pre-allocate memory to avoid fragmentation.
+            String path = "";
+            path.reserve(64); // Pre-allocate memory to avoid fragmentation.
 
-            for (int i = 0; i < packet.optionCount; i++)
+            for (int i = 0; i < packet.option_count; i++)
             {
                 if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0)
                 {
-                    if (url.length() > 0)
-                        url += "/";
+                    if (path.length() > 0)
+                        path += "/";
                     // Append the URI_PATH segment to the URL.
-                    url += (const char *)packet.options[i].value;
+                    path += (const char *)packet.options[i].value;
                 }
             }
 
-            if (!uri.find(url))
+            if (!uri.find(path))
             {
-                sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageId, NULL, 0,
+                sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.message_id, NULL, 0,
                              COAP_NOT_FOUND, COAP_NONE, NULL, 0);
             }
             else
             {
-                uri.find(url)(packet, _udp->remoteIP(), _udp->remotePort());
+                uri.find(path)(packet, _udp->remoteIP(), _udp->remotePort());
             }
         }
 
@@ -443,7 +443,7 @@ bool Coap::loop()
         {
             // Received a message that requires acknowledgment.
             // Reply with an empty ACK.
-            sendEmptyMessage(_udp->remoteIP(), _udp->remotePort(), packet.messageId);
+            sendEmptyMessage(_udp->remoteIP(), _udp->remotePort(), packet.message_id);
         }
 
         // next packet
@@ -453,23 +453,23 @@ bool Coap::loop()
     return true;
 }
 
-uint16_t Coap::sendEmptyMessage(IPAddress ip, int port, uint16_t messageId)
+uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port, uint16_t message_id)
 {
-    return this->sendResponse(ip, port, messageId, NULL, 0, COAP_EMPTY, COAP_NONE, NULL, 0);
+    return this->sendResponse(ip, port, message_id, NULL, 0, COAP_EMPTY, COAP_NONE, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload)
+uint16_t Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t message_id, const char *payload)
 {
-    return this->sendResponse(ip, port, messageId, payload, strlen(payload), COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
+    return this->sendResponse(ip, port, message_id, payload, strlen(payload), COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength)
+uint16_t Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t message_id, const char *payload, size_t payload_length)
 {
-    return this->sendResponse(ip, port, messageId, payload, payloadLength, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
+    return this->sendResponse(ip, port, message_id, payload, payload_length, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
-                            COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
+uint16_t Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t message_id, const char *payload, size_t payload_length,
+                            COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int token_length)
 {
     // Populate the packet data.
     CoapPacket packet;
@@ -477,11 +477,11 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageId, const ch
     packet.type = COAP_ACK;
     packet.code = COAP_CONTENT;
     packet.token = token;
-    packet.tokenLength = tokenLength;
+    packet.token_length = token_length;
     packet.payload = (uint8_t *)payload;
-    packet.payloadLength = payloadLength;
-    packet.optionCount = 0;
-    packet.messageId = messageId;
+    packet.payload_length = payload_length;
+    packet.option_count = 0;
+    packet.message_id = message_id;
 
     // Adding Content-Format option.
     uint8_t optionValue[2] = {0};
@@ -535,13 +535,13 @@ static bool tokenEquals(const uint8_t *a, uint8_t alen, const uint8_t *b, uint8_
     return memcmp(a, b, alen) == 0;
 }
 
-int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
+int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t token_length)
 {
     if (endpoint == NULL)
         return -1; // Invalid endpoint.
     if (strlen(endpoint) >= COAP_MAX_OBSERVE_ENDPOINT_LEN)
         return -1; // Invalid endpoint.
-    if (tokenLength > 8)
+    if (token_length > 8)
         return -1; // Invalid token.
 
     if (observer_out)
@@ -554,10 +554,10 @@ int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress i
     {
         if (!observers[i].active)
             continue;
-        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].endpoint, endpoint) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
+        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].endpoint, endpoint) && tokenEquals(observers[i].token, observers[i].token_length, token, token_length))
         {
             // Duplicate active observer, just update last seen time.
-            observers[i].lastSeenMs = now;
+            observers[i].last_seen_ms = now;
             if (observer_out)
                 *observer_out = &observers[i];
             return 0;
@@ -571,11 +571,11 @@ int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress i
             observers[i].active = true;
             observers[i].ip = ip;
             observers[i].port = (uint16_t)port;
-            observers[i].tokenLength = tokenLength;
-            if (tokenLength > 0 && token != NULL)
-                memcpy(observers[i].token, token, tokenLength);
-            observers[i].observationSequentialNumber = 0;
-            observers[i].lastSeenMs = now;
+            observers[i].token_length = token_length;
+            if (token_length > 0 && token != NULL)
+                memcpy(observers[i].token, token, token_length);
+            observers[i].observation_sequential_number = 0;
+            observers[i].last_seen_ms = now;
             strncpy(observers[i].endpoint, endpoint, COAP_MAX_OBSERVE_ENDPOINT_LEN - 1);
             observers[i].endpoint[COAP_MAX_OBSERVE_ENDPOINT_LEN - 1] = 0;
             if (observer_out)
@@ -587,7 +587,7 @@ int Coap::addObserver(Observer **observer_out, const char *endpoint, IPAddress i
     return -2; // Full, could not add observer.
 }
 
-bool Coap::removeObserver(const char *endpoint, IPAddress ip, int port, const uint8_t *token, uint8_t tokenLength)
+bool Coap::removeObserver(const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t token_length)
 {
     if (endpoint == NULL)
         return false;
@@ -596,7 +596,7 @@ bool Coap::removeObserver(const char *endpoint, IPAddress ip, int port, const ui
     {
         if (!observers[i].active)
             continue;
-        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].endpoint, endpoint) && tokenEquals(observers[i].token, observers[i].tokenLength, token, tokenLength))
+        if (observers[i].ip == ip && observers[i].port == (uint16_t)port && urlEquals(observers[i].endpoint, endpoint) && tokenEquals(observers[i].token, observers[i].token_length, token, token_length))
         {
             return observers[i].remove();
         }
@@ -617,7 +617,7 @@ bool Observer::remove()
 
 unsigned long Observer::getLastSeenMs()
 {
-    return this->lastSeenMs;
+    return this->last_seen_ms;
 }
 
 int Coap::notifyObservers(const char *observed_endpoint, const char *payload, int payload_len, COAP_CONTENT_TYPE type)
@@ -634,7 +634,7 @@ int Coap::notifyObservers(const char *observed_endpoint, const char *payload, in
         if (!urlEquals(observers[i].endpoint, observed_endpoint))
             continue;
 
-        if (COAP_OBSERVER_LEASE_MS > 0 && (unsigned long)(now - observers[i].lastSeenMs) > COAP_OBSERVER_LEASE_MS)
+        if (COAP_OBSERVER_LEASE_MS > 0 && (unsigned long)(now - observers[i].last_seen_ms) > COAP_OBSERVER_LEASE_MS)
         {
             observers[i].active = false;
             continue;
@@ -643,14 +643,14 @@ int Coap::notifyObservers(const char *observed_endpoint, const char *payload, in
         CoapPacket packet;
         packet.type = COAP_NONCON;
         packet.code = COAP_CONTENT;
-        packet.token = observers[i].tokenLength ? observers[i].token : NULL;
-        packet.tokenLength = observers[i].tokenLength;
+        packet.token = observers[i].token_length ? observers[i].token : NULL;
+        packet.token_length = observers[i].token_length;
         packet.payload = (uint8_t *)payload;
-        packet.payloadLength = payload_len;
-        packet.optionCount = 0;
-        packet.messageId = rand();
+        packet.payload_length = payload_len;
+        packet.option_count = 0;
+        packet.message_id = rand();
 
-        uint32_t observe_sequence = ++observers[i].observationSequentialNumber;
+        uint32_t observe_sequence = ++observers[i].observation_sequential_number;
         uint8_t observeBuf[3] = {0};
         uint8_t observeLen = encodeUintOption(observe_sequence, observeBuf);
         packet.addOption(COAP_OBSERVE, observeLen, observeBuf);

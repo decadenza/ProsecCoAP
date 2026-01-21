@@ -45,7 +45,11 @@ The documentation will accesible from `./html/index.html`.
 ## Particle Photon, Core compatible
 Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
 
-## Release process
+## Contributing
+- Use feature branches.
+- Write code following [Google C++ coding style](https://google.github.io/styleguide/cppguide.html).
+
+## Release process memo
 A new version is released following these steps:
 1. Update [library.properties](library.properties) as required, using a new `vX.Y.Z` tag.
 2. Create the corresponding `vX.Y.Z` tag and a new release (for GitHub and Arduino library manager). The logs for the Arduino library manager bot can be checked [here](https://downloads.arduino.cc/libraries/logs/github.com/decadenza/ProsecCoAP/).

@@ -6,10 +6,10 @@ const char *ssid = "your-ssid";
 const char *password = "your-password";
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port);
+void callback_response(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // CoAP server endpoint url callback
-void callback_light(CoapPacket &packet, IPAddress ip, int port);
+void callback_light(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
 // other initialize is "Coap coap(Udp, 512);"
@@ -23,7 +23,7 @@ Coap coap(udp);
 bool LEDSTATE;
 
 // CoAP server endpoint URL
-void callback_light(CoapPacket &packet, IPAddress ip, int port)
+void callback_light(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Light] ON/OFF");
 
@@ -42,21 +42,21 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
   if (LEDSTATE)
   {
     digitalWrite(9, HIGH);
-    coap.sendResponse(ip, port, packet.messageId, "1");
+    coap.sendResponse(ip, port, packet.message_id, "1");
   }
   else
   {
     digitalWrite(9, LOW);
-    coap.sendResponse(ip, port, packet.messageId, "0");
+    coap.sendResponse(ip, port, packet.message_id, "0");
   }
 }
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port)
+void callback_response(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Coap Response got]");
 
-  Serial.write((const char *)packet.payload, packet.payloadLength);
+  Serial.write((const char *)packet.payload, packet.payload_length);
   Serial.println(); // newline
 }
 
