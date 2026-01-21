@@ -469,6 +469,11 @@ public:
     uint16_t getRequest(IPAddress ip, int port, const char *url);
 
     /**
+     * @brief Send a confirmable DELETE request.
+     */
+    uint16_t deleteRequest(IPAddress ip, int port, const char *url);
+
+    /**
      * @brief Send a confirmable PUT with null-terminated payload.
      */
     uint16_t putRequest(IPAddress ip, int port, const char *url, const char *payload);

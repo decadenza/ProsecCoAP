@@ -166,6 +166,11 @@ uint16_t Coap::getRequest(IPAddress ip, int port, const char *url)
     return this->send(ip, port, url, COAP_CON, COAP_GET, NULL, 0, NULL, 0);
 }
 
+uint16_t Coap::deleteRequest(IPAddress ip, int port, const char *url)
+{
+    return this->send(ip, port, url, COAP_CON, COAP_DELETE, NULL, 0, NULL, 0);
+}
+
 uint16_t Coap::putRequest(IPAddress ip, int port, const char *url, const char *payload)
 {
     return this->send(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
