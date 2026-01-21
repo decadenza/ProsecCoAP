@@ -450,7 +450,7 @@ bool Coap::loop()
 
 uint16_t Coap::sendEmptyMessage(IPAddress ip, int port, uint16_t messageId)
 {
-    return this->sendMessage(ip, port, messageId, NULL, 0, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
+    return this->sendMessage(ip, port, messageId, NULL, 0, COAP_EMPTY, COAP_NONE, NULL, 0);
 }
 
 uint16_t Coap::sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload)
@@ -466,7 +466,7 @@ uint16_t Coap::sendMessage(IPAddress ip, int port, uint16_t messageId, const cha
 uint16_t Coap::sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength,
                            COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
 {
-    // make packet
+    // Populate the packet data.
     CoapPacket packet;
 
     packet.type = COAP_ACK;

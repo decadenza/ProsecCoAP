@@ -435,22 +435,33 @@ public:
     void server(CoapCallback c, String url) { uri.add(c, url); }
 
     /**
-     * @brief Send an Empty Message.
+     * @brief Send an empty message.
+     *
+     * According to the protocol, an "Empty Message" is a message with a Code of 0.00;
+     * neither a request nor a response. An Empty message only contains the 4-byte header.
+     *
+     * @param ip The IP address to send the message to.
+     * @param port The port to send the message to.
+     * @param messageId The message ID for the empty message. This must match the message ID
+     *                  of the message being acknowledged, or be a new message ID if initiating
+     *                  a new message.
      */
     uint16_t sendEmptyMessage(IPAddress ip, int port, uint16_t messageId);
 
     /**
-     * @brief Send a text acknowledgment response.
+     * @brief Send a text message.
      */
     uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload);
 
     /**
-     * @brief Send a typed acknowledgment response with explicit length.
+     * @brief Send a typed message with explicit length.
      */
     uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength);
 
     /**
-     * @brief Send a fully customized acknowledgment response.
+     * @brief Send a fully customized message.
+     *
+     * If the token is not NULL, the message is to be considered a response to a previous request.
      */
     uint16_t sendMessage(IPAddress ip, int port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
 
