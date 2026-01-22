@@ -247,8 +247,6 @@ CoapPacket *CoapConfirmableOutgoingMessageQueue::next(unsigned long time)
         return NULL; // Queue is empty
     }
 
-    CoapPacket *packetToReturn = NULL;
-
     for (size_t i = 0; i < _currentSize; i++)
     {
         size_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
@@ -690,7 +688,7 @@ static bool tokenEquals(const uint8_t *a, uint8_t aLength, const uint8_t *b, uin
     return memcmp(a, b, aLength) == 0;
 }
 
-int Coap::addObserver(Observer **observerOut, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+int Coap::addObserver(CoapObserver **observerOut, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
 {
     if (endpoint == NULL)
         return -1; // Invalid endpoint.
