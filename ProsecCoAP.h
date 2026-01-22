@@ -205,13 +205,6 @@ public:
     COAP_OBSERVE_VALUE getObserveValue();
 };
 
-#if defined(ESP8266) || defined(ESP32)
-#include <functional>
-typedef std::function<void(CoapPacket &, IPAddress, uint16_t)> CoapCallback;
-#else
-typedef void (*CoapCallback)(CoapPacket &, IPAddress, uint16_t);
-#endif
-
 /**
  * @brief Register for CoAP callbacks and their associated URI paths.
  */
@@ -243,6 +236,13 @@ public:
      */
     CoapCallback find(String path);
 };
+
+#if defined(ESP8266) || defined(ESP32)
+#include <functional>
+typedef std::function<uint16_t(CoapPacket &, IPAddress, uint16_t)> CoapSendCallback;
+#else
+typedef uint16_t (*CoapSendCallback)(CoapPacket &, IPAddress, uint16_t);
+#endif
 
 /**
  * Represents a CoAP observer.
