@@ -213,6 +213,11 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return 0;
 }
 
+CoapConfirmableOutgoingMessageQueue::getRandomTimeout()
+{
+    return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
+}
+
 CoapConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
 {
     if (_currentSize >= COAP_MAX_CONFIRMABLE_MESSAGES)
@@ -220,8 +225,8 @@ CoapConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
         return -1; // Queue full
     }
     _packet[_tail] = packet;
-    _nextRetransmissionTimeInterval[_tail] = 0; // First transmission is immediate (in the loop()).
-    _attempts[_tail] = 0;
+    _retransmissionAttempts[_tail] = 0;                          //
+    _nextRetransmissionTimeInterval[_tail] = getRandomTimeout(); // Timeout will be considered only after first transmission.
     _tail = (_tail + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
     _currentSize++;
     return 0; // Success
@@ -229,6 +234,7 @@ CoapConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
 
 CoapConfirmableOutgoingMessageQueue::reset()
 {
+    _lastCheckTime = 0;
     _head = 0;
     _tail = 0;
     _currentSize = 0;
@@ -241,33 +247,35 @@ CoapConfirmableOutgoingMessageQueue::next(unsigned long time)
         return NULL; // Queue is empty
     }
 
+    CoapPacket *packetToReturn = NULL;
+
     for (usize_t i = 0; i < _currentSize; i++)
     {
         usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
+
         if (time >= _nextRetransmissionTimeInterval[index])
         {
-            // Packet is due for transmission.
-            _attempts[index]++;
-            if (_attempts[index] > COAP_MAX_RETRANSMIT)
-            {
-                // Max attempts reached, remove from queue.
-                // Shift head forward.
-                _head = (_head + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
-                _currentSize--;
-                continue; // Check the next message at the new head pointer.
-            }
-            else
-            {
-                // Return packet for retransmission.
-                // Schedule next retransmission time. The first
-                unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _attempts[index] - 1);
-                _nextRetransmissionTimeInterval[index] = time + timeout;
-                return &_packet[index]; // Return pointer to the packet for retransmission.
-            }
+            // // Packet is due for transmission.
+            // if (_retransmissionAttempts[index] >= COAP_MAX_RETRANSMIT)
+            // {
+            //     // Max attempts reached, remove from queue.
+            //     // Shift head forward.
+            //     _head = (_head + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
+            //     _currentSize--;
+            //     continue; // Continue to check the next message at the new head pointer.
+            // }
+            // else
+            // {
+            //     _retransmissionAttempts[index]++;
+            //     // Double the retransmission time interval and return the packet.
+            //     _nextRetransmissionTimeInterval[index] *= 2;
+            //     return &_packet[index]; // Return pointer to the packet for retransmission.
+            // }
         }
     }
 
-    return packet;
+    // Nothing to retransmit at this time.
+    return NULL;
 }
 
 uint16_t
@@ -401,13 +409,11 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
 
     if (packet.code == COAP_CON)
     {
-        // TODO: Append the packet to the send queue.
+        this->_confirmableMessageQueue.add(packet);
     }
-    else
-    {
-        // Packet is not confirmable, fire and forget.
-        this->sendPacket(packet, ip, port);
-    }
+
+    // When packet is not confirmable, fire and forget.
+    this->sendPacket(packet, ip, port);
 
     return messageId;
 }
@@ -486,8 +492,8 @@ int Coap::processOutgoingConfirmableMessages()
         //     // sendPacket(_packet[index], ...); // Fill in destination IP and port as needed.
 
         //     // Update for next retransmission.
-        //     _attempts[index]++;
-        //     if (_attempts[index] > COAP_MAX_RETRANSMIT)
+        //     _retransmissionAttempts[index]++;
+        //     if (_retransmissionAttempts[index] > COAP_MAX_RETRANSMIT)
         //     {
         //         // Max attempts reached, remove from queue.
         //         // (Assuming remove is implemented)
@@ -495,7 +501,7 @@ int Coap::processOutgoingConfirmableMessages()
         //     }
         //     else
         //     {
-        //         unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _attempts[index] - 1);
+        //         unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _retransmissionAttempts[index] - 1);
         //         _nextRetransmissionTimeInterval[index] = millis() + timeout;
         //     }
         // }

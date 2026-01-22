@@ -58,9 +58,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
 
 // SECTION CoAP transmission parameters https://datatracker.ietf.org/doc/html/rfc7252#section-4.8
-#define COAP_ACK_TIMEOUT_MS 2000UL
-#define COAP_ACK_RANDOM_FACTOR 1.5
-#define COAP_MAX_RETRANSMIT 4
+constexpr unsigned long COAP_ACK_MIN_TIMEOUT_MS = 2000UL;
+constexpr float COAP_ACK_RANDOM_FACTOR = 1.5f;
+// The maximum ACK timeout is derived from the minimum timeout and the random factor.
+constexpr unsigned long COAP_ACK_MAX_TIMEOUT_MS = static_cast<unsigned long>(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR);
+constexpr usize_t COAP_MAX_RETRANSMIT = 4;
 // !SECTION
 
 /**
@@ -317,12 +319,14 @@ public:
 class CoapConfirmableOutgoingMessageQueue
 {
 private:
+    // Record the last time packets were checked for (re)transmission.
+    unsigned long _lastCheckTime = 0;
     // Store for outgoing confirmable messages.
     CoapPacket _packet[COAP_MAX_CONFIRMABLE_MESSAGES]{};
     // Next scheduled retransmission time for each message.
     unsigned long _nextRetransmissionTimeInterval[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
     // Attempt count for each message.
-    unsigned short _attempts[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
+    unsigned short _retransmissionAttempts[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
 
     // The head will always point to the oldest message.
     usize_t _head = 0;
@@ -331,6 +335,14 @@ private:
     usize_t _currentSize = 0;
 
 public:
+    /**
+     * @brief Generate the random initial timeout between
+     * COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS.
+     *
+     * @return The random timeout in milliseconds.
+     */
+    unsigned long getRandomTimeout();
+
     /**
       @brief Add a new packet to the outgoing queue.
 
