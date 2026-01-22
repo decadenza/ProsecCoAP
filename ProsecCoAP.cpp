@@ -249,9 +249,9 @@ CoapConfirmableOutgoingMessageQueue::next(unsigned long time)
 
     CoapPacket *packetToReturn = NULL;
 
-    for (usize_t i = 0; i < _currentSize; i++)
+    for (size_t i = 0; i < _currentSize; i++)
     {
-        usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
+        size_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
 
         if (time >= _nextRetransmissionTimeInterval[index])
         {
@@ -482,9 +482,9 @@ int Coap::parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buff
 int Coap::processOutgoingConfirmableMessages()
 {
     unsigned long currentTime = millis();
-    for (usize_t i = 0; i < this->_confirmableMessageQueue._currentSize; i++)
+    for (size_t i = 0; i < this->_confirmableMessageQueue._currentSize; i++)
     {
-        // usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
+        // size_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
         // if (currentTime >= _nextRetransmissionTimeInterval[index])
         // {
         //     // Transmit the packet.

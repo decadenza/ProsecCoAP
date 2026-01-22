@@ -62,7 +62,7 @@ constexpr unsigned long COAP_ACK_MIN_TIMEOUT_MS = 2000UL;
 constexpr float COAP_ACK_RANDOM_FACTOR = 1.5f;
 // The maximum ACK timeout is derived from the minimum timeout and the random factor.
 constexpr unsigned long COAP_ACK_MAX_TIMEOUT_MS = static_cast<unsigned long>(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR);
-constexpr usize_t COAP_MAX_RETRANSMIT = 4;
+constexpr size_t COAP_MAX_RETRANSMIT = 4;
 // !SECTION
 
 /**
@@ -329,10 +329,10 @@ private:
     unsigned short _retransmissionAttempts[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
 
     // The head will always point to the oldest message.
-    usize_t _head = 0;
+    size_t _head = 0;
     // The tail will always point to the next free slot.
-    usize_t _tail = 0;
-    usize_t _currentSize = 0;
+    size_t _tail = 0;
+    size_t _currentSize = 0;
 
 public:
     /**
@@ -369,7 +369,7 @@ public:
      * @return NULL if no packet needs to be transmitted or the queue is empty.
      */
     CoapPacket *next(unsigned long time);
-}
+};
 
 class Coap
 {
