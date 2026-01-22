@@ -295,7 +295,7 @@ public:
      *
      * An observer can only be added from the Coap class (@ref Coap::addObserver).
      * An observer can be removed either by the Coap class (@ref Coap::removeObserver) or
-     * by itself (@ref Observer::remove).
+     * by itself (@ref CoapObserver::remove).
      *
      * @return true if the observer was removed successfully, false if the observer was already inactive.
      */

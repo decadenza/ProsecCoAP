@@ -785,7 +785,7 @@ bool Coap::removeObserver(const char *endpoint, IPAddress ip, uint16_t port, con
     return false;
 }
 
-bool Observer::remove()
+bool CoapObserver::remove()
 {
     if (!this->_active)
         return false; // Already inactive. Nothing to remove.
@@ -795,7 +795,7 @@ bool Observer::remove()
     return true;
 }
 
-unsigned long Observer::getLastSeenMs()
+unsigned long CoapObserver::getLastSeenMs()
 {
     return this->_lastSeenMs;
 }
