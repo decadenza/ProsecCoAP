@@ -476,30 +476,76 @@ public:
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t getRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable = true);
+    /**
+     * @brief Send a confirmable GET request.
+     *
+     * This overload defaults to a confirmable request, matching the protocol's
+     * expectation for reliability. Use the variant with the confirmable flag to
+     * explicitly send a non-confirmable request when desired.
+     */
+    uint16_t getRequest(IPAddress ip, uint16_t port, const char *endpoint);
+
+    /**
+     * @brief Send a GET request with explicit confirmable flag.
+     */
+    uint16_t getRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
 
     /**
      * @brief Send a DELETE request.
      *
      * @see getRequest.
      */
-    uint16_t deleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable = true);
+    /**
+     * @brief Send a confirmable DELETE request.
+     */
+    uint16_t deleteRequest(IPAddress ip, uint16_t port, const char *endpoint);
 
     /**
-     * @brief Send a confirmable PUT request with a payload.
+     * @brief Send a DELETE request with explicit confirmable flag.
+     */
+    uint16_t deleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
+
+    /**
+     * @brief Send a confirmable PUT request.
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
      * @param payload The payload to send.
-     * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
+     * @param payloadLength The length of the payload.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, bool confirmable = true);
+    uint16_t putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
 
     /**
-     * @brief Send a confirmable PUT with explicit payload and corresponding length.
+     * @brief Send a PUT request with explicit confirmable flag.
+     *
+     * @param ip The IP address of the recipient.
+     * @param port The port of the recipient.
+     * @param endpoint The endpoint to request.
+     * @param payload The payload to send.
+     * @param payloadLength The length of the payload.
+     *
+     * @return The message ID of the request that was sent.
+     */
+    uint16_t putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
+
+    /**
+     * @brief Send a confirmable POST request.
+     *
+     * @param ip The IP address of the recipient.
+     * @param port The port of the recipient.
+     * @param endpoint The endpoint to request.
+     * @param payload The payload to send.
+     * @param payloadLength The length of the payload.
+     *
+     * @return The message ID of the request that was sent.
+     */
+    uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
+
+    /**
+     * @brief Send a POST request with explicit confirmable flag.
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
@@ -510,34 +556,7 @@ public:
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable = true);
-
-    /**
-     * @brief Send a confirmable POST with null-terminated payload.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
-     * @param payload The payload to send.
-     * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, bool confirmable = true);
-
-    /**
-     * @brief Send a confirmable POST with explicit payload length.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
-     * @param payload The payload to send.
-     * @param payloadLength The length of the payload.
-     * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable = true);
+    uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a raw CoAP message.

@@ -205,9 +205,19 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return packet.messageId;
 }
 
+uint16_t Coap::getRequest(IPAddress ip, uint16_t port, const char *endpoint)
+{
+    return this->getRequest(ip, port, endpoint, true);
+}
+
 uint16_t Coap::getRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable)
 {
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_GET, NULL, 0, NULL, 0);
+}
+
+uint16_t Coap::deleteRequest(IPAddress ip, uint16_t port, const char *endpoint)
+{
+    return this->deleteRequest(ip, port, endpoint, true);
 }
 
 uint16_t Coap::deleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable)
@@ -215,9 +225,9 @@ uint16_t Coap::deleteRequest(IPAddress ip, uint16_t port, const char *endpoint, 
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_DELETE, NULL, 0, NULL, 0);
 }
 
-uint16_t Coap::putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, bool confirmable)
+uint16_t Coap::putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength)
 {
-    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
+    return this->putRequest(ip, port, endpoint, payload, payloadLength, true);
 }
 
 uint16_t Coap::putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable)
@@ -225,9 +235,9 @@ uint16_t Coap::putRequest(IPAddress ip, uint16_t port, const char *endpoint, con
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, NULL, 0, (uint8_t *)payload, payloadLength);
 }
 
-uint16_t Coap::postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, bool confirmable)
+uint16_t Coap::postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength)
 {
-    return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, NULL, 0, (uint8_t *)payload, strlen(payload));
+    return this->postRequest(ip, port, endpoint, payload, payloadLength, true);
 }
 
 uint16_t Coap::postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable)
@@ -251,7 +261,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId)
 {
 
-    // make packet
+    // Build the packet.
     CoapPacket packet;
 
     packet.type = type;
@@ -263,7 +273,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
     packet.optionCount = 0;
     packet.messageId = messageId;
 
-    // use URI_HOST UIR_PATH
+    // Populate COAP_URI_HOST option.
     char ipAddress[16] = "";
     sprintf(ipAddress, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     packet.addOption(COAP_URI_HOST, strlen(ipAddress), (uint8_t *)ipAddress);
@@ -278,7 +288,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
     bool hasQuery = false;
     for (size_t i = 0; i < strlen(endpoint); i++)
     {
-        // The reserved characters "/"  "?"  "&"
+        // Handle reserved characters "/", "?" and "&".
         if (endpoint[i] == '/')
         {
             packet.addOption(COAP_URI_PATH, i - idx, (uint8_t *)(endpoint + idx)); // one URI_PATH (terminated by '/')
