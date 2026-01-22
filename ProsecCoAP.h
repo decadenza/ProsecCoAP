@@ -57,6 +57,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
 
+// SECTION CoAP transmission parameters https://datatracker.ietf.org/doc/html/rfc7252#section-4.8
+#define COAP_ACK_TIMEOUT_MS 2000UL
+#define COAP_ACK_RANDOM_FACTOR 1.5
+#define COAP_MAX_RETRANSMIT 4
+// !SECTION
 typedef enum
 {
     COAP_CON = 0,
