@@ -416,10 +416,17 @@ bool Coap::loop()
             {
                 if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0)
                 {
+                    // Append the URI_PATH segment to the URL, if needed.
                     if (url.length() > 0)
+                    {
                         url += "/";
-                    // Append the URI_PATH segment to the URL.
-                    url += (const char *)packet.options[i].value;
+                    }
+
+                    // Directly append the bytes to the String object
+                    for (size_t j = 0; j < packet.options[i].length; j++)
+                    {
+                        url += (char)packet.options[i].value[j];
+                    }
                 }
             }
 
