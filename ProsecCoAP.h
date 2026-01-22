@@ -322,16 +322,18 @@ private:
      *
      * It uses the default CoAP port, see @ref COAP_DEFAULT_PORT.
      *
-     * @return The message ID of the sent packet.
+     * @return 0 if the packet was sent correctly.
+     * @return -1 if the packet could not be sent.
      */
-    uint16_t sendPacket(CoapPacket &packet, IPAddress ip);
+    int sendPacket(CoapPacket &packet, IPAddress ip);
 
     /**
      * @brief Send a CoAP packet to the specified IP and port.
      *
-     * @return The message ID of the sent packet.
+     * @return 0 if the packet was sent correctly.
+     * @return -1 if the packet could not be sent.
      */
-    uint16_t sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port);
+    int sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port);
 
     /**
      * Parse the options according to specifications.
@@ -370,7 +372,8 @@ public:
      * @param payloadLength The length of the payload.
      * @param type The content type of the payload.
      *
-     * @return Number of _observers notified successfully.
+     * @return Number of observers notified successfully.
+     * @return -1 if an error occurred.
      */
     int notifyObservers(const char *observedEndpoint, const char *payload, int payloadLength, COAP_CONTENT_TYPE type);
 

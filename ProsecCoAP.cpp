@@ -112,12 +112,12 @@ bool Coap::start(uint16_t port)
     return true;
 }
 
-uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip)
+int Coap::sendPacket(CoapPacket &packet, IPAddress ip)
 {
     return this->sendPacket(packet, ip, COAP_DEFAULT_PORT);
 }
 
-uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
+int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
     uint8_t *p = this->_txBuffer;
     uint16_t runningDelta = 0;
@@ -150,7 +150,8 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
 
         if (packetSize + 5u + packet.options[i].length >= _coapBufferSize)
         {
-            return 0;
+            // Buffer overflow.
+            return -1;
         }
         optionDelta = packet.options[i].number - runningDelta;
         COAP_OPTION_DELTA(optionDelta, &delta);
@@ -191,7 +192,8 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     {
         if ((packetSize + 1 + packet.payloadLength) >= _coapBufferSize)
         {
-            return 0;
+            // Buffer overflow.
+            return -1;
         }
         *p++ = 0xFF;
         memcpy(p, packet.payload, packet.payloadLength);
@@ -202,7 +204,8 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     _udp->write(this->_txBuffer, packetSize);
     _udp->endPacket();
 
-    return packet.messageId;
+    // Successful transmission.
+    return 0;
 }
 
 uint16_t Coap::sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint)
@@ -333,7 +336,8 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
         packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
     }
 
-    return this->sendPacket(packet, ip, port);
+    // TODO: Append the packet to the send queue.
+    return messageId;
 }
 
 int Coap::parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buffer, size_t bufferLength)
@@ -399,6 +403,8 @@ int Coap::parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buff
 
 bool Coap::loop()
 {
+    // TODO: Send pending outgoing packets.
+
     uint32_t packetLength = _udp->parsePacket();
 
     while (packetLength > 0)
@@ -515,23 +521,23 @@ bool Coap::loop()
     return true;
 }
 
-uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port, uint16_t messageId)
+int Coap::sendEmptyMessage(IPAddress ip, uint16_t port, uint16_t messageId)
 {
     return this->sendResponse(ip, port, messageId, NULL, 0, COAP_EMPTY, COAP_NONE, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload)
+int Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload)
 {
     return this->sendResponse(ip, port, messageId, payload, strlen(payload), COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength)
+int Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength)
 {
     return this->sendResponse(ip, port, messageId, payload, payloadLength, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
 }
 
-uint16_t Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength,
-                            COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
+int Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength,
+                       COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
 {
     // Populate the packet data.
     CoapPacket packet;
@@ -696,7 +702,7 @@ unsigned long Observer::getLastSeenMs()
 int Coap::notifyObservers(const char *observedEndpoint, const char *payload, int payloadLength, COAP_CONTENT_TYPE type)
 {
     if (observedEndpoint == NULL)
-        return 0;
+        return -1;
     unsigned long now = millis();
     int sent = 0;
 
@@ -734,7 +740,7 @@ int Coap::notifyObservers(const char *observedEndpoint, const char *payload, int
         packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
 
         // NOTE: A notification is like a CoAP response, so it carries no POST method.
-        if (this->sendPacket(packet, _observers[i]._ip, _observers[i]._port) != 0)
+        if (this->sendPacket(packet, _observers[i]._ip, _observers[i]._port) == 0) // 0 means success
             sent++;
     }
     return sent;
