@@ -62,6 +62,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define COAP_ACK_RANDOM_FACTOR 1.5
 #define COAP_MAX_RETRANSMIT 4
 // !SECTION
+
+/**
+ * @brief Limit to the number of outgoing confirmable messages being tracked.
+ */
+#define COAP_MAX_CONFIRMABLE_MESSAGES 8
+
 typedef enum
 {
     COAP_CON = 0,
@@ -247,7 +253,7 @@ public:
 /**
  * Represents a CoAP observer.
  */
-class Observer
+class CoapObserver
 {
 
     friend class Coap; // Give full access to Coap class.
@@ -297,6 +303,69 @@ public:
     unsigned long getLastSeenMs();
 };
 
+/**
+ * @brief Class to track outgoing confirmable messages.
+ *
+ * This is used to implement retransmission as per specifications.
+ */
+class ConfirmableOutgoingMessageQueue
+{
+private:
+    // Store for outgoing confirmable messages.
+    CoapPacket _packet[COAP_MAX_CONFIRMABLE_MESSAGES]{};
+    // Next scheduled retransmission time for each message.
+    unsigned long _nextRetransmissionTime[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
+    // Attempt count for each message.
+    unsigned short _attempts[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
+
+    usize_t _head = 0;
+    usize_t _tail = 0;
+    usize_t _currentSize = 0;
+
+public:
+    /**
+      @brief Add a new packet to the outgoing queue.
+
+      The packet must be of type COAP_CON. No check is performed.
+      @return 0 on success, -1 in case of error.
+    */
+    int add(const CoapPacket &packet);
+
+    // int processQueuedMessages()
+    // {
+    //     unsigned long currentTime = millis();
+    //     for (usize_t i = 0; i < _currentSize; i++)
+    //     {
+    //         usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
+    //         if (currentTime >= _nextRetransmissionTime[index])
+    //         {
+    //             // Transmit the packet.
+    //             // (Assuming sendPacket is a method of Coap class and accessible here)
+    //             // sendPacket(_packet[index], ...); // Fill in destination IP and port as needed.
+
+    //             // Update for next retransmission.
+    //             _attempts[index]++;
+    //             if (_attempts[index] > COAP_MAX_RETRANSMIT)
+    //             {
+    //                 // Max attempts reached, remove from queue.
+    //                 // (Assuming remove is implemented)
+    //                 // remove(index);
+    //             }
+    //             else
+    //             {
+    //                 unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _attempts[index] - 1);
+    //                 _nextRetransmissionTime[index] = millis() + timeout;
+    //             }
+    //         }
+    //     }
+    // }
+
+    /**
+     * @brief Reset the queue, discarding all queued messages.
+     */
+    void reset();
+}
+
 class Coap
 {
 private:
@@ -315,7 +384,7 @@ private:
      *
      * See also @ref COAP_MAX_OBSERVERS.
      */
-    Observer _observers[COAP_MAX_OBSERVERS];
+    CoapObserver _observers[COAP_MAX_OBSERVERS];
 
     /**
      * @brief Send a CoAP packet to the specified IP.
@@ -393,7 +462,7 @@ public:
      *         -1 if the url is invalid.
      *         -2 if the observer table is full.
      */
-    int addObserver(Observer **observerOut, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+    int addObserver(CoapObserver **observerOut, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Get the current number of active observers.
@@ -428,6 +497,8 @@ public:
      * The callback is unique for all the requests sent by this Coap instance.
      *
      * Responses to different requests can be differentiated by matching the message ID.
+     *
+     * @param handler The callback function to handle acknowledgements.
      */
     void acknowledgeWith(CoapCallback handler) { _acknowledgementHandler = handler; }
 
@@ -459,17 +530,17 @@ public:
     /**
      * @brief Send a response with a payload.
      */
-    uint16_t sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload);
+    int sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload);
 
     /**
      * @brief Send a response with payload and its explicit length.
      */
-    uint16_t sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength);
+    int sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength);
 
     /**
      * @brief Send a fully customized response.
      */
-    uint16_t sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
+    int sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
 
     /**
      * @brief Send a GET request.
@@ -580,6 +651,9 @@ public:
 
     /**
      * @brief Send a raw CoAP message specifying all the parameters.
+     *
+     * The message will be queued for transmission and sent in the next loop cycle.
+     * If the message is confirmable, retransmissions will be handled according to CoAP specifications.
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 

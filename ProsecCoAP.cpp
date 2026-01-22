@@ -208,7 +208,29 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return 0;
 }
 
-uint16_t Coap::sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint)
+ConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
+{
+    if (_currentSize >= COAP_MAX_CONFIRMABLE_MESSAGES)
+    {
+        return -1; // Queue full
+    }
+    _packet[_tail] = packet;
+    _nextRetransmissionTime[_tail] = millis(); // First transmission is immediate.
+    _attempts[_tail] = 0;
+    _tail = (_tail + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
+    _currentSize++;
+    return 0; // Success
+}
+
+ConfirmableOutgoingMessageQueue::reset()
+{
+    _head = 0;
+    _tail = 0;
+    _currentSize = 0;
+}
+
+uint16_t
+Coap::sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint)
 {
     return this->sendGetRequest(ip, port, endpoint, true);
 }
@@ -336,7 +358,16 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
         packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
     }
 
-    // TODO: Append the packet to the send queue.
+    if (packet.code == COAP_CON)
+    {
+        // TODO: Append the packet to the send queue.
+    }
+    else
+    {
+        // Packet is not confirmable, fire and forget.
+        this->sendPacket(packet, ip, port);
+    }
+
     return messageId;
 }
 

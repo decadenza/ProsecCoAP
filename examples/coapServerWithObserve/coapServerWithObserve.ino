@@ -85,7 +85,7 @@ void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
     if (observeValue == COAP_OBSERVE_VALUE_REGISTER)
     {
         // Add a new observer in the table.
-        Observer *observer = NULL;
+        CoapObserver *observer = NULL;
         int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
         if (rc != 0 || observer == NULL)
         {
