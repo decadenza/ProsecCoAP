@@ -450,9 +450,9 @@ bool Coap::loop()
         if (packet.type == COAP_ACK)
         {
             // call response function
-            if (responseHandler)
+            if (acknowledgementHandler)
             {
-                responseHandler(packet, _udp->remoteIP(), _udp->remotePort());
+                acknowledgementHandler(packet, _udp->remoteIP(), _udp->remotePort());
             }
         }
         else

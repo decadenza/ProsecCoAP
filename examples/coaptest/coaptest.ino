@@ -33,10 +33,10 @@ void setup()
   Serial.print(Ethernet.localIP());
   Serial.println();
 
-  // client response callback.
-  // this endpoint is single callback.
+  // Handler acknowledgment responses.
+  // This is a single handler for all ACK responses.
   Serial.println("Setup Response Callback");
-  coap.response(callbackResponse);
+  coap.acknowledgeWith(callbackResponse);
 
   // start coap server/client
   coap.start();

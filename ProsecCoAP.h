@@ -305,7 +305,7 @@ class Coap
 private:
     UDP *_udp;
     CoapRegister _register;
-    CoapCallback responseHandler = NULL;
+    CoapCallback acknowledgementHandler = NULL;
     int _port;
     size_t _coapBufferSize;
     uint8_t *_txBuffer = NULL;
@@ -418,11 +418,13 @@ public:
     /**
      * @brief Set the unique response callback for acknowledgements.
      *
-     * The response callback is invoked when an ACK message is received,
+     * The response handler is invoked when an ACK message is received,
      * allowing the application to handle the acknowledgement.
      * The callback is unique for all the requests sent by this Coap instance.
+     *
+     * Responses to different requests can be differentiated by matching the message ID.
      */
-    void response(CoapCallback c) { responseHandler = c; }
+    void acknowledgeWith(CoapCallback handler) { acknowledgementHandler = handler; }
 
     /**
      * @brief Register a server callback for a URI path.
