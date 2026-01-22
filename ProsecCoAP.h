@@ -416,7 +416,11 @@ public:
     bool start(uint16_t port);
 
     /**
-     * @brief Set the response callback for acknowledgements.
+     * @brief Set the unique response callback for acknowledgements.
+     *
+     * The response callback is invoked when an ACK message is received,
+     * allowing the application to handle the acknowledgement.
+     * The callback is unique for all the requests sent by this Coap instance.
      */
     void response(CoapCallback c) { responseHandler = c; }
 
