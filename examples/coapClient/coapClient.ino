@@ -9,14 +9,14 @@ byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress dev_ip(10, 0, 0, 99); // Set your own.
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
+void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
 
 // UDP and CoAP class
 EthernetUDP Udp;
 Coap coap(Udp);
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackResponse(CoapPacket &packet, IPAddress, uint16_t)
 {
   Serial.println("[Coap Response got]");
 

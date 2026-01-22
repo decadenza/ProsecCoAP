@@ -6,7 +6,7 @@ const char *ssid = "your-ssid";
 const char *password = "your-password";
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
+void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
 
 // CoAP server endpoint url callback
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
@@ -52,7 +52,7 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
 }
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackResponse(CoapPacket &packet, IPAddress, uint16_t)
 {
   Serial.println("[Coap Response got]");
 
