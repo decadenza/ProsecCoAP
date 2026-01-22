@@ -229,39 +229,39 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
         Author: @YelloooBlue
     */
 
-    // Parse url.
+    // Parse endpoint.
     size_t idx = 0;
     bool hasQuery = false;
-    for (size_t i = 0; i < strlen(url); i++)
+    for (size_t i = 0; i < strlen(endpoint); i++)
     {
         // The reserved characters "/"  "?"  "&"
-        if (url[i] == '/')
+        if (endpoint[i] == '/')
         {
-            packet.addOption(COAP_URI_PATH, i - idx, (uint8_t *)(url + idx)); // one URI_PATH (terminated by '/')
+            packet.addOption(COAP_URI_PATH, i - idx, (uint8_t *)(endpoint + idx)); // one URI_PATH (terminated by '/')
             idx = i + 1;
         }
-        else if (url[i] == '?' && !hasQuery)
+        else if (endpoint[i] == '?' && !hasQuery)
         {
-            packet.addOption(COAP_URI_PATH, i - idx, (uint8_t *)(url + idx)); // the last URI_PATH (between / and ?)
-            hasQuery = true;                                                  // now start to parse the query
+            packet.addOption(COAP_URI_PATH, i - idx, (uint8_t *)(endpoint + idx)); // the last URI_PATH (between / and ?)
+            hasQuery = true;                                                       // now start to parse the query
             idx = i + 1;
         }
-        else if (url[i] == '&' && hasQuery)
+        else if (endpoint[i] == '&' && hasQuery)
         {
-            packet.addOption(COAP_URI_QUERY, i - idx, (uint8_t *)(url + idx)); // one URI_QUERY (terminated by '&')
+            packet.addOption(COAP_URI_QUERY, i - idx, (uint8_t *)(endpoint + idx)); // one URI_QUERY (terminated by '&')
             idx = i + 1;
         }
     }
 
-    if (idx <= strlen(url))
+    if (idx <= strlen(endpoint))
     {
         if (hasQuery)
         {
-            packet.addOption(COAP_URI_QUERY, strlen(url) - idx, (uint8_t *)(url + idx)); // the last URI_QUERY (between &/? and the end)
+            packet.addOption(COAP_URI_QUERY, strlen(endpoint) - idx, (uint8_t *)(endpoint + idx)); // the last URI_QUERY (between &/? and the end)
         }
         else
         {
-            packet.addOption(COAP_URI_PATH, strlen(url) - idx, (uint8_t *)(url + idx)); // the last URI_PATH (between / and the end)
+            packet.addOption(COAP_URI_PATH, strlen(endpoint) - idx, (uint8_t *)(endpoint + idx)); // the last URI_PATH (between / and the end)
         }
     }
 
