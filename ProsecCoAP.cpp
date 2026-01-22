@@ -45,15 +45,18 @@ CoapRegister::CoapRegister()
     }
 }
 
-void CoapRegister::add(CoapCallback callback, String path)
+int CoapRegister::add(CoapCallback callback, String path)
 {
     // Check if the path is already registered, and update the callback if so.
     for (int i = 0; i < COAP_MAX_CALLBACK; i++)
+    {
         if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
         {
             _callbacks[i] = callback;
-            return;
+            return 1; // Updated existing callback
         }
+    }
+
     // Otherwise, add a new callback at the first available slot.
     for (int i = 0; i < COAP_MAX_CALLBACK; i++)
     {
@@ -61,9 +64,11 @@ void CoapRegister::add(CoapCallback callback, String path)
         {
             _callbacks[i] = callback;
             _uriPaths[i] = path;
-            return;
+            return 0; // Successfully added new callback
         }
     }
+
+    return -1; // No space available
 }
 
 CoapCallback CoapRegister::find(String path)

@@ -225,11 +225,17 @@ public:
 
     /**
      * @brief Register or update a callback for a URL path.
+     *
+     * @return 0 if callback was added successfully (new entry)
+     * @return 1 if callback was updated (overwriting existing entry)
+     * @return -1 if callback could not be added (no space available)
      */
-    void add(CoapCallback callback, String path);
+    int add(CoapCallback callback, String path);
 
     /**
      * @brief Find a callback bound to a URI path.
+     *
+     * @return The callback if found, NULL otherwise.
      */
     CoapCallback find(String path);
 };
@@ -409,8 +415,14 @@ public:
 
     /**
      * @brief Register a server callback for a URI path.
+     *
+     * @param callback The callback function to handle requests.
+     * @param path The URI path to bind the callback to.
+     *
+     * @return 1 if the callback was updated, 0 if added successfully.
+     *        -1 if callback could not be added.
      */
-    void server(CoapCallback callback, String path) { _register.add(callback, path); }
+    int server(CoapCallback callback, String path) { return _register.add(callback, path); }
 
     /**
      * @brief Send an empty message.
