@@ -9,18 +9,18 @@ byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress dev_ip(10, 0, 0, 99); // Set your own.
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, uint16_t port);
+void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
 EthernetUDP Udp;
 Coap coap(Udp);
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Coap Response got]");
 
-  Serial.write((const char *)packet.payload, packet.payload_length);
+  Serial.write((const char *)packet.payload, packet.payloadLength);
   Serial.println(); // newline
 }
 
@@ -36,7 +36,7 @@ void setup()
   // client response callback.
   // this endpoint is single callback.
   Serial.println("Setup Response Callback");
-  coap.response(callback_response);
+  coap.response(callbackResponse);
 
   // start coap server/client
   coap.start();

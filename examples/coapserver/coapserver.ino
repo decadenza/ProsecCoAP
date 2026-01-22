@@ -11,10 +11,10 @@ byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress dev_ip(10, 0, 0, 99); // Set your own.
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, uint16_t port);
+void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // CoAP server endpoint url callback
-void callback_light(CoapPacket &packet, IPAddress ip, uint16_t port);
+void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
 EthernetUDP Udp;
@@ -24,7 +24,7 @@ Coap coap(Udp);
 bool LEDSTATE;
 
 // CoAP server endpoint URL
-void callback_light(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Light] ON/OFF");
 
@@ -43,21 +43,21 @@ void callback_light(CoapPacket &packet, IPAddress ip, uint16_t port)
   if (LEDSTATE)
   {
     digitalWrite(LEDP, HIGH);
-    coap.sendResponse(ip, port, packet.message_id, "1");
+    coap.sendResponse(ip, port, packet.messageId, "1");
   }
   else
   {
     digitalWrite(LEDP, LOW);
-    coap.sendResponse(ip, port, packet.message_id, "0");
+    coap.sendResponse(ip, port, packet.messageId, "0");
   }
 }
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Coap Response got]");
 
-  Serial.write((const char *)packet.payload, packet.payload_length);
+  Serial.write((const char *)packet.payload, packet.payloadLength);
   Serial.println(); // newline
 }
 
@@ -81,12 +81,12 @@ void setup()
   //      coap.server(callback_env, "env/temp");
   //      coap.server(callback_env, "env/humidity");
   Serial.println("Setup Callback Light");
-  coap.server(callback_light, "light");
+  coap.server(callbackLight, "light");
 
   // client response callback.
   // this endpoint is single callback.
   Serial.println("Setup Response Callback");
-  coap.response(callback_response);
+  coap.response(callbackResponse);
 
   // start coap server/client
   coap.start();

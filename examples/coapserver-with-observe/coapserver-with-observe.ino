@@ -47,7 +47,7 @@ byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC addres
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 
 // Declarations.
-void endpoint_subscribe(CoapPacket &packet, IPAddress ip, uint16_t port);
+void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 void setup()
 {
@@ -66,7 +66,7 @@ void setup()
     }
     SERIAL_PRINTLN("OK");
 
-    coap.server(endpoint_subscribe, "subscribe");
+    coap.server(endpointSubscribe, "subscribe");
 
     // start coap server/client
     coap.start();
@@ -78,7 +78,7 @@ void setup()
     SERIAL_PRINTLN("Initialisation completed");
 }
 
-void endpoint_subscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
+void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
 
     COAP_OBSERVE_VALUE observe_value;
@@ -88,10 +88,10 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
         {
             // Add a new observer in the table.
             Observer *observer = NULL;
-            int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.token_length);
+            int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
             if (rc != 0 || observer == NULL)
             {
-                coap.sendResponse(ip, port, packet.message_id, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.token_length);
+                coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
                 SERIAL_PRINTLN("Observer could not be added!");
                 return;
             }
@@ -104,8 +104,8 @@ void endpoint_subscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
         }
         else if (observe_value == COAP_OBSERVE_VALUE_DEREGISTER)
         {
-            coap.removeObserver("subscribe", ip, port, packet.token, packet.token_length);
-            coap.sendResponse(ip, port, packet.message_id, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.token_length);
+            coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
+            coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
             SERIAL_PRINTLN("Unsubscribed!");
         }
         // Else ignore.
@@ -124,9 +124,9 @@ void send_notification()
 {
     char payload[6]; // Max 5 digits for uint16_t + 1 for null terminator '\0'
     sprintf(payload, "%u", 42);
-    int payload_len = strlen(payload);
+    int payloadLength = strlen(payload);
 
-    if (coap.notifyObservers("subscribe", payload, payload_len, COAP_APPLICATION_OCTET_STREAM) > 0)
+    if (coap.notifyObservers("subscribe", payload, payloadLength, COAP_APPLICATION_OCTET_STREAM) > 0)
     {
         SERIAL_PRINTLN("Notified!");
     }
