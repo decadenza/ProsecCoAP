@@ -580,6 +580,8 @@ public:
 
     /**
      * @brief Process incoming packets and dispatch handlers.
+     *
+     * This method should be called regularly in the main loop to handle incoming CoAP packets.
      */
     bool loop();
 };
