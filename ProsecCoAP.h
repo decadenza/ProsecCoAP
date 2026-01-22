@@ -264,8 +264,6 @@ public:
     {
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
         {
-            Serial.println("[find] Checking: " + _uriPaths[i] + " against " + path);
-            Serial.println("[find] Result: " + String(_uriPaths[i].equals(path) ? "true" : "false"));
             if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
                 return _callbacks[i];
         }
