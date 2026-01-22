@@ -245,7 +245,7 @@ uint16_t Coap::postRequest(IPAddress ip, uint16_t port, const char *endpoint, co
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, NULL, 0, (uint8_t *)payload, payloadLength);
 }
 
-// Send CoAP request with payload, without specifying content type.
+// Send CoAP request with payload but without specifying content type.
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength)
 {
     return this->send(ip, port, endpoint, type, method, token, tokenLength, payload, payloadLength, COAP_NONE);
@@ -257,7 +257,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
     return this->send(ip, port, endpoint, type, method, token, tokenLength, payload, payloadLength, contentType, rand());
 }
 
-// Send a CoAP request with payload, content type and explicit message ID.
+// Send a CoAP request with full specification.
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId)
 {
 

@@ -559,7 +559,12 @@ public:
     uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
 
     /**
-     * @brief Send a raw CoAP message.
+     * @brief Send a raw CoAP message without specifying content type.
+     *
+     * Specifying content type is not compulsory and can be inferred from the applications.
+     * * @see https://datatracker.ietf.org/doc/html/rfc7252#section-5.5.1
+     *
+     * To send a message with content type, use the overload with the contentType parameter.
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
 
@@ -569,7 +574,7 @@ public:
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
 
     /**
-     * @brief Send a raw CoAP message with explicit message ID.
+     * @brief Send a raw CoAP message specifying all the parameters.
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 
