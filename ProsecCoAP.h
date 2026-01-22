@@ -205,10 +205,7 @@ public:
     COAP_OBSERVE_VALUE getObserveValue();
 };
 
-#if defined(ESP8266)
-#include <functional>
-typedef std::function<void(CoapPacket &, IPAddress, uint16_t)> CoapCallback;
-#elif defined(ESP32)
+#if defined(ESP8266) || defined(ESP32)
 #include <functional>
 typedef std::function<void(CoapPacket &, IPAddress, uint16_t)> CoapCallback;
 #else
