@@ -36,6 +36,46 @@ bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
     return false;
 }
 
+CoapRegister::CoapRegister()
+{
+    for (int i = 0; i < COAP_MAX_CALLBACK; i++)
+    {
+        _uriPaths[i] = "";
+        _callbacks[i] = NULL;
+    }
+}
+
+void CoapRegister::add(CoapCallback callback, String path)
+{
+    // Check if the path is already registered, and update the callback if so.
+    for (int i = 0; i < COAP_MAX_CALLBACK; i++)
+        if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
+        {
+            _callbacks[i] = callback;
+            return;
+        }
+    // Otherwise, add a new callback at the first available slot.
+    for (int i = 0; i < COAP_MAX_CALLBACK; i++)
+    {
+        if (_callbacks[i] == NULL)
+        {
+            _callbacks[i] = callback;
+            _uriPaths[i] = path;
+            return;
+        }
+    }
+}
+
+CoapCallback CoapRegister::find(String path)
+{
+    for (int i = 0; i < COAP_MAX_CALLBACK; i++)
+    {
+        if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
+            return _callbacks[i];
+    }
+    return NULL;
+}
+
 Coap::Coap(
     UDP &udp,
     size_t coapBufferSize /* default value is COAP_BUF_MAX_SIZE */

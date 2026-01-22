@@ -221,54 +221,17 @@ public:
     /**
      * @brief Create an empty URI callback registry.
      */
-    CoapRegister()
-    {
-        for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-        {
-            _uriPaths[i] = "";
-            _callbacks[i] = NULL;
-        }
-    };
+    CoapRegister();
 
     /**
      * @brief Register or update a callback for a URL path.
-     *
-     * // TODO: Return error as -1 if no space is available.
-     * // TODO: Move to cpp file.
      */
-    void add(CoapCallback callback, String path)
-    {
-        // Check if the path is already registered, and update the callback if so.
-        for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-            if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
-            {
-                _callbacks[i] = callback;
-                return;
-            }
-        // Otherwise, add a new callback at the first available slot.
-        for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-        {
-            if (_callbacks[i] == NULL)
-            {
-                _callbacks[i] = callback;
-                _uriPaths[i] = path;
-                return;
-            }
-        }
-    };
+    void add(CoapCallback callback, String path);
 
     /**
      * @brief Find a callback bound to a URI path.
      */
-    CoapCallback find(String path)
-    {
-        for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-        {
-            if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
-                return _callbacks[i];
-        }
-        return NULL;
-    };
+    CoapCallback find(String path);
 };
 
 /**
