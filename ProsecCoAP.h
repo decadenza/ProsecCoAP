@@ -305,7 +305,7 @@ class Coap
 private:
     UDP *_udp;
     CoapRegister _register;
-    CoapCallback acknowledgementHandler = NULL;
+    CoapCallback _acknowledgementHandler = NULL;
     int _port;
     size_t _coapBufferSize;
     uint8_t *_txBuffer = NULL;
@@ -424,7 +424,7 @@ public:
      *
      * Responses to different requests can be differentiated by matching the message ID.
      */
-    void acknowledgeWith(CoapCallback handler) { acknowledgementHandler = handler; }
+    void acknowledgeWith(CoapCallback handler) { _acknowledgementHandler = handler; }
 
     /**
      * @brief Register a server callback for a URI path.

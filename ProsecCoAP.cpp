@@ -449,10 +449,10 @@ bool Coap::loop()
 
         if (packet.type == COAP_ACK)
         {
-            // call response function
-            if (acknowledgementHandler)
+            // Handle acknowledgment packets with acknowledgment handler, if set.
+            if (_acknowledgementHandler)
             {
-                acknowledgementHandler(packet, _udp->remoteIP(), _udp->remotePort());
+                _acknowledgementHandler(packet, _udp->remoteIP(), _udp->remotePort());
             }
         }
         else
