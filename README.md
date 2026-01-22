@@ -46,8 +46,12 @@ The documentation will accesible from `./html/index.html`.
 Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
 
 ## Contributing
-- Use feature branches.
-- Write code following [Google C++ coding style](https://google.github.io/styleguide/cppguide.html).
+Contributions are welcome. You may contribute by:
+- Opening issues to report bugs or ask for missing features.
+- Make pull requests.
+
+Code must be documented using [Doxygen](https://www.doxygen.nl/manual/docblocks.html).
+Please write code following the [Arduino Style Guide](https://docs.arduino.cc/learn/contributions/arduino-library-style-guide/) as much as possible.
 
 ## Release process memo
 A new version is released following these steps:
