@@ -214,8 +214,8 @@ typedef void (*CoapCallback)(CoapPacket &, IPAddress, uint16_t);
 class CoapRegister
 {
 private:
-    String uriPaths[COAP_MAX_CALLBACK];
-    CoapCallback callbacks[COAP_MAX_CALLBACK];
+    String _uriPaths[COAP_MAX_CALLBACK];
+    CoapCallback _callbacks[COAP_MAX_CALLBACK];
 
 public:
     /**
@@ -225,28 +225,33 @@ public:
     {
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
         {
-            uriPaths[i] = "";
-            callbacks[i] = NULL;
+            _uriPaths[i] = "";
+            _callbacks[i] = NULL;
         }
     };
 
     /**
-     * @brief Register or update a callback for a URL.
+     * @brief Register or update a callback for a URL path.
+     *
+     * // TODO: Return error as -1 if no space is available.
+     * // TODO: Move to cpp file.
      */
-    void add(CoapCallback call, String path)
+    void add(CoapCallback callback, String path)
     {
+        // Check if the path is already registered, and update the callback if so.
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-            if (callbacks[i] != NULL && uriPaths[i].equals(path))
+            if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
             {
-                callbacks[i] = call;
+                _callbacks[i] = callback;
                 return;
             }
+        // Otherwise, add a new callback at the first available slot.
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
         {
-            if (callbacks[i] == NULL)
+            if (_callbacks[i] == NULL)
             {
-                callbacks[i] = call;
-                uriPaths[i] = path;
+                _callbacks[i] = callback;
+                _uriPaths[i] = path;
                 return;
             }
         }
@@ -258,8 +263,12 @@ public:
     CoapCallback find(String path)
     {
         for (int i = 0; i < COAP_MAX_CALLBACK; i++)
-            if (callbacks[i] != NULL && uriPaths[i].equals(path))
-                return callbacks[i];
+        {
+            Serial.println("[find] Checking: " + _uriPaths[i] + " against " + path);
+            Serial.println("[find] Result: " + String(_uriPaths[i].equals(path) ? "true" : "false"));
+            if (_callbacks[i] != NULL && _uriPaths[i].equals(path))
+                return _callbacks[i];
+        }
         return NULL;
     };
 };
@@ -413,6 +422,11 @@ public:
     int addObserver(Observer **observerOut, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
     /**
+     * @brief Get the current number of active observers.
+     */
+    unsigned int getObserverCount();
+
+    /**
      * @brief Remove an observer for a specific endpoint.
      */
     bool removeObserver(const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
@@ -433,7 +447,7 @@ public:
     void response(CoapCallback c) { responseHandler = c; }
 
     /**
-     * @brief Register a server callback for a URI.
+     * @brief Register a server callback for a URI path.
      */
     void server(CoapCallback callback, String path) { _register.add(callback, path); }
 

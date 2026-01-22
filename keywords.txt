@@ -33,6 +33,7 @@ put	KEYWORD2
 send	KEYWORD2
 notifyObservers	KEYWORD2
 addObserver	KEYWORD2
+getObserverCount KEYWORD2
 removeObserver	KEYWORD2
 addOption	KEYWORD2
 getObserveValue	KEYWORD2

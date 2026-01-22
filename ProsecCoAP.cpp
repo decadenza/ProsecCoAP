@@ -424,17 +424,20 @@ bool Coap::loop()
                     if (path.length() > 0)
                         path += "/";
                     // Append the URI_PATH segment to the URL.
-                    path += (const char *)packet.options[i].value;
+                    path.concat((const char *)packet.options[i].value, packet.options[i].length);
                 }
             }
 
             if (!_register.find(path))
             {
+                Serial.println("[CoapRegister] Not found: " + path);
+                // Send a 4.04 Not Found response (https://datatracker.ietf.org/doc/html/rfc7252#section-2.2).
                 sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageId, NULL, 0,
                              COAP_NOT_FOUND, COAP_NONE, NULL, 0);
             }
             else
             {
+                Serial.println("[CoapRegister] Found: " + path);
                 _register.find(path)(packet, _udp->remoteIP(), _udp->remotePort());
             }
         }
@@ -585,6 +588,17 @@ int Coap::addObserver(Observer **observerOut, const char *endpoint, IPAddress ip
     }
 
     return -2; // Full, could not add observer.
+}
+
+unsigned int Coap::getObserverCount()
+{
+    unsigned int count = 0;
+    for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
+    {
+        if (_observers[i]._active)
+            count++;
+    }
+    return count;
 }
 
 bool Coap::removeObserver(const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
