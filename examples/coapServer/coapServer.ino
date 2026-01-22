@@ -99,7 +99,7 @@ void loop()
   Serial.println("Send Request");
   // Constantly send a GET request.
   // Set your own IP to receive it.
-  coap.getRequest(IPAddress(10, 0, 0, 1), 5683, "time");
+  coap.sendGetRequest(IPAddress(10, 0, 0, 1), 5683, "time");
 
   delay(1000);
   coap.loop();

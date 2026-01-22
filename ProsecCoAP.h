@@ -483,27 +483,27 @@ public:
      * expectation for reliability. Use the variant with the confirmable flag to
      * explicitly send a non-confirmable request when desired.
      */
-    uint16_t getRequest(IPAddress ip, uint16_t port, const char *endpoint);
+    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint);
 
     /**
      * @brief Send a GET request with explicit confirmable flag.
      */
-    uint16_t getRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
+    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
 
     /**
      * @brief Send a DELETE request.
      *
-     * @see getRequest.
+     * @see sendGetRequest.
      */
     /**
      * @brief Send a confirmable DELETE request.
      */
-    uint16_t deleteRequest(IPAddress ip, uint16_t port, const char *endpoint);
+    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *endpoint);
 
     /**
      * @brief Send a DELETE request with explicit confirmable flag.
      */
-    uint16_t deleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
+    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
 
     /**
      * @brief Send a confirmable PUT request.
@@ -516,7 +516,7 @@ public:
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
+    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
 
     /**
      * @brief Send a PUT request with explicit confirmable flag.
@@ -529,7 +529,7 @@ public:
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t putRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
+    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a confirmable POST request.
@@ -542,7 +542,7 @@ public:
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
+    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
 
     /**
      * @brief Send a POST request with explicit confirmable flag.
@@ -556,7 +556,7 @@ public:
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t postRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
+    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a raw CoAP message without specifying content type.
