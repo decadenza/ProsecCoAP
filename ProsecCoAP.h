@@ -158,6 +158,12 @@ typedef enum
 } COAP_CONTENT_TYPE;
 
 /**
+ * @brief Generate a random message ID.
+ * @return A random 16-bit message ID.
+ */
+uint16_t getRandomMessageId();
+
+/**
  * @brief Represents a CoAP option.
  *
  * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
@@ -308,17 +314,19 @@ public:
  *
  * This is used to implement retransmission as per specifications.
  */
-class ConfirmableOutgoingMessageQueue
+class CoapConfirmableOutgoingMessageQueue
 {
 private:
     // Store for outgoing confirmable messages.
     CoapPacket _packet[COAP_MAX_CONFIRMABLE_MESSAGES]{};
     // Next scheduled retransmission time for each message.
-    unsigned long _nextRetransmissionTime[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
+    unsigned long _nextRetransmissionTimeInterval[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
     // Attempt count for each message.
     unsigned short _attempts[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
 
+    // The head will always point to the oldest message.
     usize_t _head = 0;
+    // The tail will always point to the next free slot.
     usize_t _tail = 0;
     usize_t _currentSize = 0;
 
@@ -331,39 +339,24 @@ public:
     */
     int add(const CoapPacket &packet);
 
-    // int processQueuedMessages()
-    // {
-    //     unsigned long currentTime = millis();
-    //     for (usize_t i = 0; i < _currentSize; i++)
-    //     {
-    //         usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
-    //         if (currentTime >= _nextRetransmissionTime[index])
-    //         {
-    //             // Transmit the packet.
-    //             // (Assuming sendPacket is a method of Coap class and accessible here)
-    //             // sendPacket(_packet[index], ...); // Fill in destination IP and port as needed.
-
-    //             // Update for next retransmission.
-    //             _attempts[index]++;
-    //             if (_attempts[index] > COAP_MAX_RETRANSMIT)
-    //             {
-    //                 // Max attempts reached, remove from queue.
-    //                 // (Assuming remove is implemented)
-    //                 // remove(index);
-    //             }
-    //             else
-    //             {
-    //                 unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _attempts[index] - 1);
-    //                 _nextRetransmissionTime[index] = millis() + timeout;
-    //             }
-    //         }
-    //     }
-    // }
-
     /**
      * @brief Reset the queue, discarding all queued messages.
      */
     void reset();
+
+    /**
+     * @brief Get the next packet that needs to be transmitted.
+     *
+     * @param time The reference timestamp in milliseconds.
+     *
+     * Finds the first packet that exceed the reference timestamp. The packet attempt count is incremented.
+     * The packet is removed from the queue if the maximum number of retransmissions has been reached.
+     * The maximum number of retransmissions is defined by @ref COAP_MAX_RETRANSMIT.
+     *
+     * @return Pointer to the next CoapPacket to transmit.
+     * @return NULL if no packet needs to be transmitted or the queue is empty.
+     */
+    CoapPacket *next(unsigned long time);
 }
 
 class Coap
@@ -376,6 +369,7 @@ private:
     size_t _coapBufferSize;
     uint8_t *_txBuffer = NULL;
     uint8_t *_rxBuffer = NULL;
+    CoapConfirmableOutgoingMessageQueue _confirmableMessageQueue;
 
     /**
      * @brief Array of registered _observers.
@@ -656,6 +650,18 @@ public:
      * If the message is confirmable, retransmissions will be handled according to CoAP specifications.
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
+
+    /**
+     * @brief Process outgoing confirmable messages for retransmission.
+     *
+     * This method checks the queue of outgoing confirmable messages and
+     * retransmits any messages that are due for retransmission according to
+     * CoAP specifications.
+     *
+     * @return The number of messages transmitted.
+     * @return -1 if an error occurred.
+     */
+    int processOutgoingConfirmableMessages();
 
     /**
      * @brief Process incoming packets and dispatch handlers.

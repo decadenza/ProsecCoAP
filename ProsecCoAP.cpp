@@ -1,6 +1,11 @@
 #include "Arduino.h"
 #include "ProsecCoAP.h"
 
+uint16_t getRandomMessageId()
+{
+    return (uint16_t)random(1, 0xFFFF);
+}
+
 void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *value)
 {
     if (optionCount >= COAP_MAX_OPTION_NUM)
@@ -208,25 +213,61 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return 0;
 }
 
-ConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
+CoapConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
 {
     if (_currentSize >= COAP_MAX_CONFIRMABLE_MESSAGES)
     {
         return -1; // Queue full
     }
     _packet[_tail] = packet;
-    _nextRetransmissionTime[_tail] = millis(); // First transmission is immediate.
+    _nextRetransmissionTimeInterval[_tail] = 0; // First transmission is immediate (in the loop()).
     _attempts[_tail] = 0;
     _tail = (_tail + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
     _currentSize++;
     return 0; // Success
 }
 
-ConfirmableOutgoingMessageQueue::reset()
+CoapConfirmableOutgoingMessageQueue::reset()
 {
     _head = 0;
     _tail = 0;
     _currentSize = 0;
+}
+
+CoapConfirmableOutgoingMessageQueue::next(unsigned long time)
+{
+    if (_currentSize == 0)
+    {
+        return NULL; // Queue is empty
+    }
+
+    for (usize_t i = 0; i < _currentSize; i++)
+    {
+        usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
+        if (time >= _nextRetransmissionTimeInterval[index])
+        {
+            // Packet is due for transmission.
+            _attempts[index]++;
+            if (_attempts[index] > COAP_MAX_RETRANSMIT)
+            {
+                // Max attempts reached, remove from queue.
+                // Shift head forward.
+                _head = (_head + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
+                _currentSize--;
+                continue; // Check the next message at the new head pointer.
+            }
+            else
+            {
+                // Return packet for retransmission.
+                // Schedule next retransmission time. The first
+                unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _attempts[index] - 1);
+                _nextRetransmissionTimeInterval[index] = time + timeout;
+                return &_packet[index]; // Return pointer to the packet for retransmission.
+            }
+        }
+    }
+
+    return packet;
 }
 
 uint16_t
@@ -279,7 +320,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
 // Send CoAP request with payload and content type.
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType)
 {
-    return this->send(ip, port, endpoint, type, method, token, tokenLength, payload, payloadLength, contentType, rand());
+    return this->send(ip, port, endpoint, type, method, token, tokenLength, payload, payloadLength, contentType, getRandomMessageId());
 }
 
 // Send a CoAP request with full specification.
@@ -430,6 +471,35 @@ int Coap::parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buff
     *runningDelta += delta;
 
     return 0;
+}
+
+int Coap::processOutgoingConfirmableMessages()
+{
+    unsigned long currentTime = millis();
+    for (usize_t i = 0; i < this->_confirmableMessageQueue._currentSize; i++)
+    {
+        // usize_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
+        // if (currentTime >= _nextRetransmissionTimeInterval[index])
+        // {
+        //     // Transmit the packet.
+        //     // (Assuming sendPacket is a method of Coap class and accessible here)
+        //     // sendPacket(_packet[index], ...); // Fill in destination IP and port as needed.
+
+        //     // Update for next retransmission.
+        //     _attempts[index]++;
+        //     if (_attempts[index] > COAP_MAX_RETRANSMIT)
+        //     {
+        //         // Max attempts reached, remove from queue.
+        //         // (Assuming remove is implemented)
+        //         // remove(index);
+        //     }
+        //     else
+        //     {
+        //         unsigned long timeout = COAP_ACK_TIMEOUT_MS * pow(COAP_ACK_RANDOM_FACTOR, _attempts[index] - 1);
+        //         _nextRetransmissionTimeInterval[index] = millis() + timeout;
+        //     }
+        // }
+    }
 }
 
 bool Coap::loop()
@@ -758,7 +828,7 @@ int Coap::notifyObservers(const char *observedEndpoint, const char *payload, int
         packet.payload = (uint8_t *)payload;
         packet.payloadLength = payloadLength;
         packet.optionCount = 0;
-        packet.messageId = rand();
+        packet.messageId = getRandomMessageId();
 
         uint32_t observeSequence = ++_observers[i]._observationSequentialNumber;
         uint8_t observeBuf[3] = {0};
