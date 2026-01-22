@@ -14,14 +14,14 @@ void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *value)
     ++optionCount;
 }
 
-bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
+COAP_OBSERVE_VALUE CoapPacket::getObserveValue()
 {
     for (int i = 0; i < optionCount; i++)
     {
         if (options[i].number != COAP_OBSERVE)
             continue;
         if (options[i].length > 3)
-            return false;
+            return COAP_OBSERVE_VALUE_INVALID; // Invalid length for observe option.
         uint32_t v = 0;
         for (uint8_t j = 0; j < options[i].length; j++)
         {
@@ -29,11 +29,10 @@ bool CoapPacket::getObserveValue(COAP_OBSERVE_VALUE &value)
         }
         // Validate: only 0 (register) and 1 (cancel) are valid per RFC 7641.
         if (v > 1)
-            return false; // Invalid observe value.
-        value = (COAP_OBSERVE_VALUE)v;
-        return true;
+            return COAP_OBSERVE_VALUE_INVALID; // Invalid observe value.
+        return (COAP_OBSERVE_VALUE)v;
     }
-    return false;
+    return COAP_OBSERVE_VALUE_NOT_FOUND; // Observe option not found.
 }
 
 CoapRegister::CoapRegister()
@@ -464,16 +463,19 @@ bool Coap::loop()
 
             for (int i = 0; i < packet.optionCount; i++)
             {
-                // Append the URI_PATH segment to the URL, if needed.
-                if (path.length() > 0)
+                if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0)
                 {
-                    path += "/";
-                }
+                    // Append the URI_PATH segment to the URL, if needed.
+                    if (path.length() > 0)
+                    {
+                        path += "/";
+                    }
 
-                // Directly append the bytes to the String object
-                for (size_t j = 0; j < packet.options[i].length; j++)
-                {
-                    path += (char)packet.options[i].value[j];
+                    // Directly append the bytes to the String object. Using reserved memory makes this quick.
+                    for (size_t j = 0; j < packet.options[i].length; j++)
+                    {
+                        path += (char)packet.options[i].value[j];
+                    }
                 }
             }
 

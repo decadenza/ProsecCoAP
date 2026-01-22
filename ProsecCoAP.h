@@ -128,7 +128,9 @@ typedef enum
 
 typedef enum
 {
-    COAP_OBSERVE_VALUE_REGISTER = 0, // https://datatracker.ietf.org/doc/html/rfc7641#section-2
+    COAP_OBSERVE_VALUE_INVALID = -2,   // Observe value invalid (fallback, out of standard).
+    COAP_OBSERVE_VALUE_NOT_FOUND = -1, // Observe value not found (fallback, out of standard).
+    COAP_OBSERVE_VALUE_REGISTER = 0,   // https://datatracker.ietf.org/doc/html/rfc7641#section-2
     COAP_OBSERVE_VALUE_DEREGISTER = 1
 } COAP_OBSERVE_VALUE;
 
@@ -191,11 +193,11 @@ public:
     void addOption(uint8_t number, uint8_t length, uint8_t *value);
 
     /**
-     * @brief Fetch the observe value (either 1 or 0).
+     * @brief Fetch the observe value from the packet.
      *
-     * @return true if the observe option is present and value retrieved successfully, false otherwise.
+     * @return The observe value if the observe option is present, @see COAP_OBSERVE_VALUE.
      */
-    bool getObserveValue(COAP_OBSERVE_VALUE &value);
+    COAP_OBSERVE_VALUE getObserveValue();
 };
 
 #if defined(ESP8266)

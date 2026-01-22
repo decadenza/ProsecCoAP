@@ -79,47 +79,48 @@ void setup()
 
 void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
-
-    COAP_OBSERVE_VALUE observe_value;
-    if (packet.getObserveValue(observe_value))
+    SERIAL_PRINTLN("CALLED!");
+    COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
+    
+    if (observeValue == COAP_OBSERVE_VALUE_REGISTER)
     {
-        if (observe_value == COAP_OBSERVE_VALUE_REGISTER)
+        // Add a new observer in the table.
+        Observer *observer = NULL;
+        int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
+        if (rc != 0 || observer == NULL)
         {
-            // Add a new observer in the table.
-            Observer *observer = NULL;
-            int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
-            if (rc != 0 || observer == NULL)
-            {
-                coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
-                SERIAL_PRINTLN("Observer could not be added!");
-                return;
-            }
-            else
-            {
-                // The loop will return the current representation of the resource
-                // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
-                SERIAL_PRINTLN("Subscribed!");
-            }
+            coap.sendResponse(ip, port, packet.messageId, "busy", strlen("busy"), COAP_SERVICE_UNAVAILABLE, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+            SERIAL_PRINTLN("Observer could not be added!");
+            return;
         }
-        else if (observe_value == COAP_OBSERVE_VALUE_DEREGISTER)
+        else
         {
-            coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
-            coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
-            SERIAL_PRINTLN("Unsubscribed!");
+            // The loop will return the current representation of the resource
+            // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
+            SERIAL_PRINTLN("Subscribed!");
         }
-        // Else ignore.
     }
+    else if (observeValue == COAP_OBSERVE_VALUE_DEREGISTER)
+    {
+        coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
+        coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+        SERIAL_PRINTLN("Unsubscribed!");
+    }
+    else {
+      SERIAL_PRINT("Missing/invalid observe value: ");
+      SERIAL_PRINTLN(observeValue);
+      }
 }
 
 void loop()
 {
-    coap.loop(); // Keeps connection alive.
+    coap.loop(); // Process coap requests.
 
-    send_notification();
+    sendNotification();
 }
 
 // Demo notification with gibberish data.
-void send_notification()
+void sendNotification()
 {
     char payload[6]; // Max 5 digits for uint16_t + 1 for null terminator '\0'
     sprintf(payload, "%u", 42);
