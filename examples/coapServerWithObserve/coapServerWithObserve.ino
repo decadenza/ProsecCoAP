@@ -81,7 +81,7 @@ void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
     SERIAL_PRINTLN("CALLED!");
     COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
-    
+
     if (observeValue == COAP_OBSERVE_VALUE_REGISTER)
     {
         // Add a new observer in the table.
@@ -103,13 +103,14 @@ void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
     else if (observeValue == COAP_OBSERVE_VALUE_DEREGISTER)
     {
         coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
-        coap.sendResponse(ip, port, packet.messageId, "unsubscribed", strlen("unsubscribed"), COAP_CONTENT, COAP_TEXT_PLAIN, packet.token, packet.tokenLength);
+        coap.sendEmptyMessage(ip, port, packet.messageId, packet.token, packet.tokenLength);
         SERIAL_PRINTLN("Unsubscribed!");
     }
-    else {
-      SERIAL_PRINT("Missing/invalid observe value: ");
-      SERIAL_PRINTLN(observeValue);
-      }
+    else
+    {
+        SERIAL_PRINT("Missing/invalid observe value: ");
+        SERIAL_PRINTLN(observeValue);
+    }
 }
 
 void loop()

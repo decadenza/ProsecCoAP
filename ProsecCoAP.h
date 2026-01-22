@@ -399,6 +399,11 @@ public:
 
     /**
      * @brief Remove an observer for a specific endpoint.
+     *
+     * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
+     * after a GET request for deregistration, the server should send a response to the client.
+     * For an empty acknowledgment, use @ref sendEmptyMessage. If a response with payload is needed,
+     * use @ref sendResponse.
      */
     bool removeObserver(const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
