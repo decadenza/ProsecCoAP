@@ -27,7 +27,6 @@
 #define SERIAL_PRINTLN(x) Serial.println(x)
 #define SERIAL_WRITE(x) Serial.write(x)
 #else
-// Define the macros as empty (no-op) when debugging is disabled
 #define SERIAL_BEGIN(baud)
 #define SERIAL_WHILE_WAIT
 #define SERIAL_PRINT(x)
@@ -103,7 +102,7 @@ void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
     else if (observeValue == COAP_OBSERVE_VALUE_DEREGISTER)
     {
         coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
-        coap.sendEmptyMessage(ip, port, packet.messageId, packet.token, packet.tokenLength);
+        coap.sendEmptyMessage(ip, port, packet.messageId);
         SERIAL_PRINTLN("Unsubscribed!");
     }
     else
