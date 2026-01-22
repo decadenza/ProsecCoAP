@@ -68,10 +68,9 @@ void setup()
 
     coap.server(endpointSubscribe, "subscribe");
 
-    // start coap server/client
+    // Start coap server.
     coap.start();
 
-    SERIAL_PRINTLN("Server OK");
     SERIAL_PRINT("Server listening on ");
     SERIAL_PRINTLN(Ethernet.localIP());
 
