@@ -37,7 +37,7 @@ To manually build documentation from the main folder, run:
 ```
 doxygen
 ```
-The documentation will accesible from `./html/index.html`.
+The documentation will be accesible from `./html/index.html`.
 
 ## Particle Photon, Core compatible
 Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
