@@ -14,11 +14,13 @@ This library is a **work in progress**. Although CoAP request/response pattern a
 ### From Arduino IDE Library Manager
 1. Open the *Sketch* menu in the IDE.
 2. Navigate to *Include Library > Manage Libraries*.
-3. Search for "ProsecCoAP" and install.
+3. Install the "Ethernet by Arduino" library, if not already installed.
+4. Search for "ProsecCoAP" and install.
 
 ### Manual
-1. Download this source code branch as a zip file.
-2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
+1. Install the "Ethernet by Arduino" library, if not already installed.
+2. Download this source code branch as a zip file.
+3. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
 
 ## Getting started
 Navigate to *File > Examples > ProsecCoAP* to get started with some basic examples.

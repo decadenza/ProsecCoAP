@@ -29,8 +29,8 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
   Serial.println("[Light] ON/OFF");
 
   // send response
-  char p[2];                // 1 character + null terminator
-  p[0] = packet.payload[0]; // Only the first character from the payload is considered here.
+  char p[2];                                // 1 character + null terminator
+  p[0] = ((const char *)packet.payload)[0]; // Only the first character from the payload is considered here.
   p[1] = '\0';
 
   String message(p);
@@ -43,12 +43,12 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
   if (LEDSTATE)
   {
     digitalWrite(LEDP, HIGH);
-    coap.sendResponse(packet, COAP_CONTENT, "1", 2, COAP_TEXT_PLAIN);
+    coap.sendResponse(ip, port, packet, COAP_CONTENT, "1", 2, COAP_TEXT_PLAIN);
   }
   else
   {
     digitalWrite(LEDP, LOW);
-    coap.sendResponse(packet, COAP_CONTENT, "0", 2, COAP_TEXT_PLAIN);
+    coap.sendResponse(ip, port, packet, COAP_CONTENT, "0", 2, COAP_TEXT_PLAIN);
   }
 }
 

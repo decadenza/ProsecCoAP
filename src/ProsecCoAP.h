@@ -194,7 +194,7 @@ public:
     uint8_t code = 0;
     const uint8_t *token = NULL;
     uint8_t tokenLength = 0;
-    const uint8_t *payload = NULL;
+    const void *payload = NULL;
     size_t payloadLength = 0;
     uint16_t messageId = 0;
     uint8_t optionCount = 0;
@@ -450,7 +450,7 @@ public:
      * @return Number of observers notified successfully.
      * @return -1 if an error occurred.
      */
-    int notifyObservers(const char *observedEndpoint, const char *payload, int payloadLength, COAP_CONTENT_TYPE type);
+    int notifyObservers(const char *observedEndpoint, const void *payload, int payloadLength, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Add a new observer for a specific URL.
@@ -480,8 +480,7 @@ public:
      *
      * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
      * after a GET request for deregistration, the server should send a response to the client.
-     * For an empty acknowledgment, use @ref sendEmptyMessage. If a response with payload is needed,
-     * use @ref sendResponse.
+     * @see sendResponse.
      */
     bool removeObserver(const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
@@ -534,19 +533,21 @@ public:
     /**
      * @brief Send a response.
      *
-     * Starting from the request packet, it converts it into a response packet with the given response code
+     * Starting from the request packet, it *converts* it into a response packet with the given response code
      * and payload data.
      *
+     * @param ip The IP address of the recipient.
+     * @param port The port of the recipient.
      * @param requestPacket The packet to which the response corresponds.
      * @param code The response code to send.
      *        From it, the IP, port, message ID and token are inferred.
-     * @param payload The payload to send. It must correspond to the specified content type.
+     * @param payload The pointer to the payload to send. It must correspond to the specified content type.
      * @param payloadLength The length of the payload. For empty payloads, set to 0. For string payloads, the length should include the null terminator.
      * @param type The content type of the payload.
      *
      * @return 0 on success, -1 on failure.
      */
-    int sendResponse(CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const char *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    int sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Send a GET request.
@@ -593,12 +594,12 @@ public:
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
-     * @param payload The payload to send.
+     * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
+    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength);
 
     /**
      * @brief Send a PUT request with explicit confirmable flag.
@@ -606,12 +607,12 @@ public:
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
-     * @param payload The payload to send.
+     * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
+    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a confirmable POST request.
@@ -619,12 +620,12 @@ public:
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
-     * @param payload The payload to send.
+     * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength);
+    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength);
 
     /**
      * @brief Send a POST request with explicit confirmable flag.
@@ -632,13 +633,13 @@ public:
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
-     * @param payload The payload to send.
+     * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload.
      * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable);
+    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a raw CoAP message without specifying content type.

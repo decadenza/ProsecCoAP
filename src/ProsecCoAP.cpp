@@ -298,22 +298,22 @@ uint16_t Coap::sendDeleteRequest(IPAddress ip, uint16_t port, const char *endpoi
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_DELETE, NULL, 0, NULL, 0);
 }
 
-uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength)
+uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength)
 {
     return this->sendPutRequest(ip, port, endpoint, payload, payloadLength, true);
 }
 
-uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable)
+uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength, bool confirmable)
 {
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, NULL, 0, (uint8_t *)payload, payloadLength);
 }
 
-uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength)
+uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength)
 {
     return this->sendPostRequest(ip, port, endpoint, payload, payloadLength, true);
 }
 
-uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const char *payload, size_t payloadLength, bool confirmable)
+uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength, bool confirmable)
 {
     return this->send(ip, port, endpoint, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, NULL, 0, (uint8_t *)payload, payloadLength);
 }
@@ -583,7 +583,7 @@ bool Coap::loop()
             if (!_register.find(path))
             {
                 // Send a 4.04 Not Found response (https://datatracker.ietf.org/doc/html/rfc7252#section-2.2).
-                sendResponse(packet, COAP_NOT_FOUND, NULL, 0, COAP_NONE);
+                sendResponse(_udp->remoteIP(), _udp->remotePort(), packet, COAP_NOT_FOUND, NULL, 0, COAP_NONE);
             }
             else
             {
@@ -595,7 +595,7 @@ bool Coap::loop()
         {
             // Received a message that requires acknowledgment.
             // Reply with an empty ACK.
-            sendEmptyMessage(_udp->remoteIP(), _udp->remotePort(), packet.messageId);
+            sendEmptyMessage(_udp->remoteIP(), _udp->remotePort());
         }
 
         // next packet
@@ -620,7 +620,7 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
     return this->sendPacket(packet, ip, port);
 }
 
-int Coap::sendResponse(CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const char *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
+int Coap::sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
 {
     // Convert the request packet into a response packet.
     requestPacket.type = COAP_ACK;
@@ -780,7 +780,7 @@ unsigned long CoapObserver::getLastSeenMs()
     return this->_lastSeenMs;
 }
 
-int Coap::notifyObservers(const char *observedEndpoint, const char *payload, int payloadLength, COAP_CONTENT_TYPE type)
+int Coap::notifyObservers(const char *observedEndpoint, const void *payload, int payloadLength, COAP_CONTENT_TYPE type)
 {
     if (observedEndpoint == NULL)
         return -1;
