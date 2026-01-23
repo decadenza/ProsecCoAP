@@ -542,7 +542,7 @@ public:
      * @param code The response code to send.
      *        From it, the IP, port, message ID and token are inferred.
      * @param payload The pointer to the payload to send. It must correspond to the specified content type.
-     * @param payloadLength The length of the payload. For empty payloads, set to 0. For string payloads, the length should include the null terminator.
+     * @param payloadLength The length of the payload. For empty payloads, set to 0. For string payloads, the length should not include the null terminator.
      * @param type The content type of the payload.
      *
      * @return 0 on success, -1 on failure.
@@ -595,7 +595,7 @@ public:
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
      * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload.
+     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      *
      * @return The message ID of the request that was sent.
      */
@@ -608,7 +608,7 @@ public:
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
      * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload.
+     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      *
      * @return The message ID of the request that was sent.
      */
@@ -621,7 +621,7 @@ public:
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
      * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload.
+     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      *
      * @return The message ID of the request that was sent.
      */
@@ -634,7 +634,7 @@ public:
      * @param port The port of the recipient.
      * @param endpoint The endpoint to request.
      * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload.
+     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
      *
      * @return The message ID of the request that was sent.
@@ -648,11 +648,25 @@ public:
      * * @see https://datatracker.ietf.org/doc/html/rfc7252#section-5.5.1
      *
      * To send a message with content type, use the overload with the contentType parameter.
+     *
+     * @param ip The IP address of the recipient.
+     * @param port The port of the recipient.
+     * @param endpoint The endpoint to request.
+     * @param type The CoAP message type (confirmable, non-confirmable, etc
+     * @param method The CoAP method (GET, POST, etc).
+     * @param token The pointer to the token to use.
+     * @param tokenLength The length of the token.
+     * @param payload The pointer to the payload to send.
+     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
+     * @return The message ID of the request that was sent.
+     *
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
 
     /**
      * @brief Send a raw CoAP message specifying the content format.
+     *
+     * @see send without contentType for more details.
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
 
@@ -661,6 +675,8 @@ public:
      *
      * The message will be queued for transmission and sent in the next loop cycle.
      * If the message is confirmable, retransmissions will be handled according to CoAP specifications.
+     *
+     * @see send without contentType for more details.
      */
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 
