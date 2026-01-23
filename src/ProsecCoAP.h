@@ -527,26 +527,26 @@ public:
      *
      * @param ip The IP address to send the message to.
      * @param port The port to send the message to.
-     * @param messageId The message ID for the empty message. This must match the message ID
-     *                   of the message being acknowledged, or be a new message ID if initiating
-     *                   a new message.
+     * @return The message ID used for the empty message.
      */
-    uint16_t sendEmptyMessage(IPAddress ip, uint16_t port, uint16_t messageId);
+    uint16_t sendEmptyMessage(IPAddress ip, uint16_t port);
 
     /**
-     * @brief Send a response with a payload.
+     * @brief Send a response.
+     *
+     * Starting from the request packet, it converts it into a response packet with the given response code
+     * and payload data.
+     *
+     * @param requestPacket The packet to which the response corresponds.
+     * @param code The response code to send.
+     *        From it, the IP, port, message ID and token are inferred.
+     * @param payload The payload to send. It must correspond to the specified content type.
+     * @param payloadLength The length of the payload. For empty payloads, set to 0. For string payloads, the length should include the null terminator.
+     * @param type The content type of the payload.
+     *
+     * @return 0 on success, -1 on failure.
      */
-    int sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload);
-
-    /**
-     * @brief Send a response with payload and its explicit length.
-     */
-    int sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength);
-
-    /**
-     * @brief Send a fully customized response.
-     */
-    int sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength);
+    int sendResponse(CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const char *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Send a GET request.

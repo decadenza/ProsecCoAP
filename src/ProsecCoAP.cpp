@@ -583,8 +583,7 @@ bool Coap::loop()
             if (!_register.find(path))
             {
                 // Send a 4.04 Not Found response (https://datatracker.ietf.org/doc/html/rfc7252#section-2.2).
-                sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageId, NULL, 0,
-                             COAP_NOT_FOUND, COAP_NONE, NULL, 0);
+                sendResponse(packet, COAP_NOT_FOUND, NULL, 0, COAP_NONE);
             }
             else
             {
@@ -606,44 +605,40 @@ bool Coap::loop()
     return true;
 }
 
-uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port, uint16_t messageId)
+uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
 {
-    return this->sendResponse(ip, port, messageId, NULL, 0, COAP_EMPTY, COAP_NONE, NULL, 0);
-}
-
-int Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload)
-{
-    return this->sendResponse(ip, port, messageId, payload, strlen(payload), COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
-}
-
-int Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength)
-{
-    return this->sendResponse(ip, port, messageId, payload, payloadLength, COAP_CONTENT, COAP_TEXT_PLAIN, NULL, 0);
-}
-
-int Coap::sendResponse(IPAddress ip, uint16_t port, uint16_t messageId, const char *payload, size_t payloadLength,
-                       COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, const uint8_t *token, int tokenLength)
-{
-    (void)code; // unused parameter
-    // Populate the packet data.
     CoapPacket packet;
-
     packet.type = COAP_ACK;
-    packet.code = COAP_CONTENT;
-    packet.token = token;
-    packet.tokenLength = tokenLength;
-    packet.payload = (uint8_t *)payload;
-    packet.payloadLength = payloadLength;
+    packet.code = COAP_EMPTY;
+    packet.token = NULL;
+    packet.tokenLength = 0;
+    packet.payload = NULL;
+    packet.payloadLength = 0;
     packet.optionCount = 0;
-    packet.messageId = messageId;
+    packet.messageId = getRandomMessageId();
+
+    return this->sendPacket(packet, ip, port);
+}
+
+int Coap::sendResponse(CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const char *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
+{
+    // Convert the request packet into a response packet.
+    requestPacket.type = COAP_ACK;
+    requestPacket.code = code;
+    requestPacket.payload = payload;
+    requestPacket.payloadLength = payloadLength;
+    // Token remains the same of the request.
+    // Message ID remains the same of the request.
+    // Options will be cleared and re-added as needed.
+    requestPacket.optionCount = 0; // Any pre-existing options will be ignored by the sendPacket function.
 
     // Adding Content-Format option.
     uint8_t optionValue[2] = {0};
     optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
     optionValue[1] = ((uint16_t)type & 0x00FF);
-    packet.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+    requestPacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
 
-    return this->sendPacket(packet, ip, port);
+    return this->sendPacket(requestPacket, ip, port);
 }
 
 static uint8_t encodeUintOption(uint32_t value, uint8_t out[3])

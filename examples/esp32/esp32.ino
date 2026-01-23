@@ -42,12 +42,12 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
   if (LEDSTATE)
   {
     digitalWrite(9, HIGH);
-    coap.sendResponse(ip, port, packet.messageId, "1");
+    coap.sendResponse(packet, COAP_CONTENT, "1", 2, COAP_TEXT_PLAIN);
   }
   else
   {
     digitalWrite(9, LOW);
-    coap.sendResponse(ip, port, packet.messageId, "0");
+    coap.sendResponse(packet, COAP_CONTENT, "0", 2, COAP_TEXT_PLAIN);
   }
 }
 
