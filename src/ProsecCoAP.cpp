@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "ProsecCoAP.h"
+#include "utility/helpers.h"
 
 uint16_t getRandomMessageId()
 {

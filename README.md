@@ -8,7 +8,7 @@ Documentation is available at [https://decadenza.github.io/ProsecCoAP/](https://
 This library is an implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)).
 It aims at implementing all the compulsory functionalities of the protocol, maintaining the execution lightweight and clearly documenting its API. 
 
-This library is a **work in progress**. Although CoAP request/response pattern and observe pattern are implemented, specific functionalities may be delivered in future releases. Please open an issue to request any missing functionality or report bugs.
+This library is a **work in progress**. Although CoAP request/response pattern and observe pattern are implemented, specific functionalities may be delivered in future releases. Please open an issue to request missing functionalities or report bugs.
 
 ## How to install
 ### From Arduino IDE Library Manager
