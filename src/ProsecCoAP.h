@@ -519,10 +519,13 @@ public:
     int server(CoapCallback callback, String path) { return _register.add(callback, path); }
 
     /**
-     * @brief Send an empty message.
+     * @brief Send a confirmable empty message.
+     *
+     * This may be used as CoAP ping.
      *
      * According to the protocol, an "Empty Message" is a message with a Code of 0.00;
      * neither a request nor a response. An Empty message only contains the 4-byte header.
+     * An empty message is always confirmable (COAP_CON). Non confirmable empty messages cannot be sent.
      *
      * @param ip The IP address to send the message to.
      * @param port The port to send the message to.

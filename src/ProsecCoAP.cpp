@@ -611,9 +611,9 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
     packet.type = COAP_ACK;
     packet.code = COAP_EMPTY;
     packet.token = NULL;
-    packet.tokenLength = 0;
-    packet.payload = NULL;
-    packet.payloadLength = 0;
+    packet.tokenLength = 0; // The Token Length field MUST be set to 0.
+    the Message ID field.packet.payload = NULL;
+    packet.payloadLength = 0; // No payload.
     packet.optionCount = 0;
     packet.messageId = getRandomMessageId();
 
