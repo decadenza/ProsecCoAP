@@ -235,38 +235,6 @@ typedef void (*CoapCallback)(CoapPacket &, IPAddress, uint16_t);
 class Coap; // Forward declaration.
 
 /**
- * @brief Register for CoAP callbacks and their associated URI paths.
- */
-class CoapRegister
-{
-private:
-    String _uriPaths[COAP_MAX_CALLBACK];
-    CoapCallback _callbacks[COAP_MAX_CALLBACK];
-
-public:
-    /**
-     * @brief Create an empty URI callback registry.
-     */
-    CoapRegister();
-
-    /**
-     * @brief Register or update a callback for a URL path.
-     *
-     * @return 0 if callback was added successfully (new entry)
-     * @return 1 if callback was updated (overwriting existing entry)
-     * @return -1 if callback could not be added (no space available)
-     */
-    int add(CoapCallback callback, String path);
-
-    /**
-     * @brief Find a callback bound to a URI path.
-     *
-     * @return The callback if found, NULL otherwise.
-     */
-    CoapCallback find(String path);
-};
-
-/**
  * @brief A CoAP observer.
  *
  * A CoAP observer represents a client that has registered to observe a specific resource on the server.
@@ -323,6 +291,38 @@ public:
 
 namespace detail
 {
+
+    /**
+     * @brief Register for CoAP callbacks and their associated URI paths.
+     */
+    class CoapRegister
+    {
+    private:
+        String _uriPaths[COAP_MAX_CALLBACK];
+        CoapCallback _callbacks[COAP_MAX_CALLBACK];
+
+    public:
+        /**
+         * @brief Create an empty URI callback registry.
+         */
+        CoapRegister();
+
+        /**
+         * @brief Register or update a callback for a URL path.
+         *
+         * @return 0 if callback was added successfully (new entry)
+         * @return 1 if callback was updated (overwriting existing entry)
+         * @return -1 if callback could not be added (no space available)
+         */
+        int add(CoapCallback callback, String path);
+
+        /**
+         * @brief Find a callback bound to a URI path.
+         *
+         * @return The callback if found, NULL otherwise.
+         */
+        CoapCallback find(String path);
+    };
 
     /**
      * @brief An item in the retransmission queue.
@@ -411,7 +411,7 @@ class Coap
 
 private:
     UDP *_udp;
-    CoapRegister _register;
+    detail::CoapRegister _register;
     CoapCallback _acknowledgementHandler = NULL;
     int _port;
     size_t _coapBufferSize;

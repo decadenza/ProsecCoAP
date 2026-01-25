@@ -41,7 +41,7 @@ COAP_OBSERVE_VALUE CoapPacket::getObserveValue()
     return COAP_OBSERVE_VALUE_NOT_FOUND; // Observe option not found.
 }
 
-CoapRegister::CoapRegister()
+detail::CoapRegister::CoapRegister()
 {
     for (int i = 0; i < COAP_MAX_CALLBACK; i++)
     {
@@ -50,7 +50,7 @@ CoapRegister::CoapRegister()
     }
 }
 
-int CoapRegister::add(CoapCallback callback, String path)
+int detail::CoapRegister::add(CoapCallback callback, String path)
 {
     // Check if the path is already registered, and update the callback if so.
     for (int i = 0; i < COAP_MAX_CALLBACK; i++)
@@ -76,7 +76,7 @@ int CoapRegister::add(CoapCallback callback, String path)
     return -1; // No space available
 }
 
-CoapCallback CoapRegister::find(String path)
+CoapCallback detail::CoapRegister::find(String path)
 {
     for (int i = 0; i < COAP_MAX_CALLBACK; i++)
     {
