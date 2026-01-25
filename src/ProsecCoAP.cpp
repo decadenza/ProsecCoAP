@@ -214,67 +214,68 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return 0;
 }
 
-unsigned long CoapConfirmableOutgoingMessageQueue::getRandomTimeout()
+unsigned long CoapRetrasmissionQueue::getRandomTimeout()
 {
     return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
 }
 
-int CoapConfirmableOutgoingMessageQueue::add(const CoapPacket &packet)
+int CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &packet)
 {
-    if (_currentSize >= COAP_MAX_CONFIRMABLE_MESSAGES)
+    // REVIEW: There may be a more efficient way to handle the retrasmission queue. Maybe a linked list?
+    for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
-        return -1; // Queue full
-    }
-    _packet[_tail] = packet;
-    _retransmissionAttempts[_tail] = 0;                          //
-    _nextRetransmissionTimeInterval[_tail] = getRandomTimeout(); // Timeout will be considered only after first transmission.
-    _tail = (_tail + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
-    _currentSize++;
-    return 0; // Success
-}
-
-void CoapConfirmableOutgoingMessageQueue::reset()
-{
-    _lastCheckTime = 0;
-    _head = 0;
-    _tail = 0;
-    _currentSize = 0;
-}
-
-CoapPacket *CoapConfirmableOutgoingMessageQueue::next(unsigned long time)
-{
-    if (_currentSize == 0)
-    {
-        return NULL; // Queue is empty
-    }
-
-    for (size_t i = 0; i < _currentSize; i++)
-    {
-        size_t index = (_head + i) % COAP_MAX_CONFIRMABLE_MESSAGES;
-
-        if (time >= _nextRetransmissionTimeInterval[index])
+        CoapRetrasmissionItem *item = &_items[i];
+        if (item->attempts >= COAP_MAX_RETRANSMIT)
         {
-            // // Packet is due for transmission.
-            // if (_retransmissionAttempts[index] >= COAP_MAX_RETRANSMIT)
-            // {
-            //     // Max attempts reached, remove from queue.
-            //     // Shift head forward.
-            //     _head = (_head + 1) % COAP_MAX_CONFIRMABLE_MESSAGES;
-            //     _currentSize--;
-            //     continue; // Continue to check the next message at the new head pointer.
-            // }
-            // else
-            // {
-            //     _retransmissionAttempts[index]++;
-            //     // Double the retransmission time interval and return the packet.
-            //     _nextRetransmissionTimeInterval[index] *= 2;
-            //     return &_packet[index]; // Return pointer to the packet for retransmission.
-            // }
+            // Found an empty slot.
+            // Setting attempts to 0 to mark it as active.
+            *item = {ip, port, packet, 0, millis() + getRandomTimeout()}; // Schedule first retransmission expiry timestamp.
+            return 0;                                                     // Success
+        }
+    }
+    return -1; // Queue full. Cannot schedule more retrasmissions.
+}
+
+void CoapRetrasmissionQueue::reset()
+{
+    for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
+    {
+        _items[i].attempts = COAP_MAX_RETRANSMIT; // Mark all items as inactive.
+    }
+}
+
+int CoapRetrasmissionQueue::process()
+{
+    unsigned long now = millis();
+    for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
+    {
+        CoapRetrasmissionItem *item = &_items[i];
+        if (item->attempts < COAP_MAX_RETRANSMIT && now >= item->nextAttemptTime)
+        {
+            // Packet needs retransmission.
+            this->sendPacket(item->packet, item->ip, item->port);
+            item->attempts++;                                 // When this reaches COAP_MAX_RETRANSMIT, the item is considered expired and the slot considered free.
+            item->nextAttemptTime = now + getRandomTimeout(); // Schedule next retransmission time. // FIXME: Not exponential backoff yet.
         }
     }
 
     // Nothing to retransmit at this time.
-    return NULL;
+    return 0;
+}
+
+int CoapRetrasmissionQueue::markItemAsReceived(uint16_t messageId)
+{
+    for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
+    {
+        CoapRetrasmissionItem *item = &_items[i];
+        if (item->packet.messageId == messageId)
+        {
+            // Found the item, mark as received by setting attempts to COAP_MAX_RETRANSMIT.
+            item->attempts = COAP_MAX_RETRANSMIT;
+            return 0; // Success
+        }
+    }
+    return -1; // Item not found.
 }
 
 uint16_t
@@ -408,10 +409,14 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
 
     if (packet.code == COAP_CON)
     {
+        // Add to confirmable message queue for possible retransmission handling.
+        // REVIEW: Not checking the return value.
+        // If the queue is full, the packet will still be sent but no retransmission will be performed.
         this->_confirmableMessageQueue.add(packet);
     }
+    // else, the packet is not confirmable (fire and forget).
 
-    // When packet is not confirmable, fire and forget.
+    // In any case, send the packet.
     this->sendPacket(packet, ip, port);
 
     return messageId;
@@ -478,18 +483,9 @@ int Coap::parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buff
     return 0;
 }
 
-int Coap::processOutgoingConfirmableMessages()
-{
-    unsigned long currentTime = millis();
-    (void)currentTime; // unused parameter
-    // TODO: Implement confirmable message retransmission logic
-    return 0;
-}
-
 bool Coap::loop()
 {
-    // TODO: Send pending outgoing packets.
-
+    // SECTION Process incoming packets
     uint32_t packetLength = _udp->parsePacket();
 
     while (packetLength > 0)
@@ -550,7 +546,10 @@ bool Coap::loop()
 
         if (packet.type == COAP_ACK)
         {
-            // Handle acknowledgment packets with acknowledgment handler, if set.
+            // First, mark the message as received in the retransmission queue (if present).
+            this->_confirmableMessageQueue.markItemAsReceived(packet.messageId);
+
+            // Pass the packet to the acknowledgment handler, if set.
             if (_acknowledgementHandler)
             {
                 _acknowledgementHandler(packet, _udp->remoteIP(), _udp->remotePort());
@@ -601,6 +600,9 @@ bool Coap::loop()
         // next packet
         packetLength = _udp->parsePacket();
     }
+
+    // SECTION Process pending retransmissions
+    this->_confirmableMessageQueue.process();
 
     return true;
 }

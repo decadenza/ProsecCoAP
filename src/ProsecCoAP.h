@@ -57,19 +57,22 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
 
-// SECTION CoAP transmission parameters https://datatracker.ietf.org/doc/html/rfc7252#section-4.8
+// SECTION CoAP retransmission parameters
+// Minimum ACK timeout in milliseconds. See RFC 7252, Section 4.8.
 constexpr unsigned long COAP_ACK_MIN_TIMEOUT_MS = 2000UL;
+// ACK timeout random factor as per RFC 7252, Section 4.8.
 constexpr float COAP_ACK_RANDOM_FACTOR = 1.5f;
-// The maximum ACK timeout is derived from the minimum timeout and the random factor.
+// The maximum ACK timeout is derived from the minimum timeout and the random factor, see https://datatracker.ietf.org/doc/html/rfc7252#section-4.8
 constexpr unsigned long COAP_ACK_MAX_TIMEOUT_MS = static_cast<unsigned long>(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR);
+// The maximum number of retransmission attempts for confirmable messages.
 constexpr size_t COAP_MAX_RETRANSMIT = 4;
+// The maximum number of confirmable messages that can be tracked for retransmission.
+constexpr size_t COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE = 4;
 // !SECTION
 
 /**
  * @brief Limit to the number of outgoing confirmable messages being tracked.
  */
-#define COAP_MAX_CONFIRMABLE_MESSAGES 8
-
 typedef enum
 {
     COAP_CON = 0,
@@ -311,28 +314,32 @@ public:
     unsigned long getLastSeenMs();
 };
 
+// An item in the retransmission queue.
+struct CoapRetrasmissionItem
+{
+    // Destination IP address.
+    IPAddress ip;
+    // Destination port.
+    uint16_t port = 0;
+    // The packet that needs to be retransmitted.
+    CoapPacket packet;
+    // Count of retransmission attempts.
+    // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
+    unsigned short attempts = COAP_MAX_RETRANSMIT;
+    // Next scheduled attempt time.
+    unsigned long nextAttemptDelta = 0;
+};
+
 /**
  * @brief Class to track outgoing confirmable messages.
  *
- * This is used to implement retransmission as per specifications.
+ * This is used by @ref Coap::loop to implement retransmission as per specifications.
  */
-class CoapConfirmableOutgoingMessageQueue
+class CoapRetrasmissionQueue
 {
 private:
-    // Record the last time packets were checked for (re)transmission.
-    unsigned long _lastCheckTime = 0;
-    // Store for outgoing confirmable messages.
-    CoapPacket _packet[COAP_MAX_CONFIRMABLE_MESSAGES]{};
-    // Next scheduled retransmission time for each message.
-    unsigned long _nextRetransmissionTimeInterval[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
-    // Attempt count for each message.
-    unsigned short _retransmissionAttempts[COAP_MAX_CONFIRMABLE_MESSAGES]{0};
-
-    // The head will always point to the oldest message.
-    size_t _head = 0;
-    // The tail will always point to the next free slot.
-    size_t _tail = 0;
-    size_t _currentSize = 0;
+    // Store packets for outgoing confirmable retransmissions.
+    CoapRetrasmissionItem _items[COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE]{}; // NOTE: Initialised items will have attempts = COAP_MAX_RETRANSMIT;
 
 public:
     /**
@@ -346,10 +353,11 @@ public:
     /**
       @brief Add a new packet to the outgoing queue.
 
-      The packet must be of type COAP_CON. No check is performed.
-      @return 0 on success, -1 in case of error.
+      The packet *must* be of type COAP_CON.
+
+      @return 0 on success, -1 in case of queue full.
     */
-    int add(const CoapPacket &packet);
+    int add(IPAddress ip, uint16_t port, const CoapPacket &packet);
 
     /**
      * @brief Reset the queue, discarding all queued messages.
@@ -357,18 +365,26 @@ public:
     void reset();
 
     /**
-     * @brief Get the next packet that needs to be transmitted.
+     * @brief Retransmit confirmable packets for requests that exceeded the timeout.
      *
-     * @param time The reference timestamp in milliseconds.
+     * @param time The current timestamp in milliseconds.
      *
-     * Finds the first packet that exceed the reference timestamp. The packet attempt count is incremented.
-     * The packet is removed from the queue if the maximum number of retransmissions has been reached.
-     * The maximum number of retransmissions is defined by @ref COAP_MAX_RETRANSMIT.
+     * The packets that exceeded the @ref COAP_MAX_RETRANSMIT number of attempts, will be discarded.
      *
-     * @return Pointer to the next CoapPacket to transmit.
-     * @return NULL if no packet needs to be transmitted or the queue is empty.
+     * @return The number of packets retransmitted. 0 if none were retransmitted.
+     * @return -1 if an error occurred.
      */
-    CoapPacket *next(unsigned long time);
+    int process(unsigned long time);
+
+    /**
+     * @brief Mark an item as received.
+     *
+     * If the messageId exists, the corresponding item in the queue will be marked as received.
+     *
+     * @return 0 if the item was found and marked as received.
+     * @return -1 if the item was not found.
+     */
+    int markItemAsReceived(uint16_t messageId);
 };
 
 class Coap
@@ -381,7 +397,7 @@ private:
     size_t _coapBufferSize;
     uint8_t *_txBuffer = NULL;
     uint8_t *_rxBuffer = NULL;
-    CoapConfirmableOutgoingMessageQueue _confirmableMessageQueue;
+    CoapRetrasmissionQueue _confirmableMessageQueue;
 
     /**
      * @brief Array of registered _observers.
@@ -684,21 +700,12 @@ public:
     uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 
     /**
-     * @brief Process outgoing confirmable messages for retransmission.
-     *
-     * This method checks the queue of outgoing confirmable messages and
-     * retransmits any messages that are due for retransmission according to
-     * CoAP specifications.
-     *
-     * @return The number of messages transmitted.
-     * @return -1 if an error occurred.
-     */
-    int processOutgoingConfirmableMessages();
-
-    /**
      * @brief Process incoming packets and dispatch handlers.
      *
-     * This method should be called regularly in the main loop to handle incoming CoAP packets.
+     * This method should be called regularly in the main loop.
+     * It checks for incoming CoAP packets, processes them, and dispatches
+     * them to the appropriate registered handlers.
+     * It also deals with retransmissions of confirmable messages.
      */
     bool loop();
 };
