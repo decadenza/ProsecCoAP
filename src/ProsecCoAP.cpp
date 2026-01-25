@@ -214,17 +214,17 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return 0;
 }
 
-unsigned long CoapRetrasmissionQueue::getRandomTimeout()
+unsigned long detail::CoapRetrasmissionQueue::getRandomTimeout()
 {
     return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
 }
 
-int CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &packet)
+int detail::CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &packet)
 {
     // REVIEW: There may be a more efficient way to handle the retrasmission queue. Maybe a linked list?
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
-        CoapRetrasmissionItem *item = &_items[i];
+        detail::CoapRetrasmissionItem *item = &_items[i];
         if (item->attempts >= COAP_MAX_RETRANSMIT)
         {
             // Found an empty slot.
@@ -240,7 +240,7 @@ int CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &p
     return -1; // Queue full. Cannot schedule more retrasmissions.
 }
 
-void CoapRetrasmissionQueue::reset()
+void detail::CoapRetrasmissionQueue::reset()
 {
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
@@ -248,13 +248,13 @@ void CoapRetrasmissionQueue::reset()
     }
 }
 
-int CoapRetrasmissionQueue::process(Coap &coapInstance)
+int detail::CoapRetrasmissionQueue::process(Coap &coapInstance)
 {
     unsigned long now = millis();
     int retransmitted = 0;
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
-        CoapRetrasmissionItem *item = &_items[i];
+        detail::CoapRetrasmissionItem *item = &_items[i];
         if (item->attempts < COAP_MAX_RETRANSMIT && now >= item->nextAttemptDeadline)
         {
             // Packet needs retransmission.
@@ -271,11 +271,11 @@ int CoapRetrasmissionQueue::process(Coap &coapInstance)
     return retransmitted;
 }
 
-int CoapRetrasmissionQueue::markItemAsReceived(uint16_t messageId)
+int detail::CoapRetrasmissionQueue::markItemAsReceived(uint16_t messageId)
 {
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
-        CoapRetrasmissionItem *item = &_items[i];
+        detail::CoapRetrasmissionItem *item = &_items[i];
         if (item->packet.messageId == messageId)
         {
             // Found the item, mark as received by setting attempts to COAP_MAX_RETRANSMIT.

@@ -321,88 +321,93 @@ public:
     unsigned long getLastSeenMs();
 };
 
-/**
- * @brief An item in the retransmission queue.
- */
-struct CoapRetrasmissionItem
+namespace detail
 {
-    // Count of retransmission attempts done.
-    // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
-    unsigned short attempts = COAP_MAX_RETRANSMIT;
-    // Next scheduled attempt deadline.
-    unsigned long nextAttemptDeadline = 0;
-    // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
-    unsigned long timeoutInterval = 0;
-    // Destination IP address.
-    IPAddress ip;
-    // Destination port.
-    uint16_t port = 0;
-    // The packet that needs to be retransmitted.
-    CoapPacket packet;
-};
 
-/**
- * @brief Class to track outgoing confirmable messages.
- *
- * This is used by @ref Coap::loop to implement retransmission as per specifications.
- */
-class CoapRetrasmissionQueue
-{
-private:
-    // Store packets for outgoing confirmable retransmissions.
-    CoapRetrasmissionItem _items[COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE]{}; // NOTE: Initialised items will have attempts = COAP_MAX_RETRANSMIT;
-public:
     /**
-     * @brief Generate the random initial timeout between
-     * COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS.
-     *
-     * @return The random timeout in milliseconds.
+     * @brief An item in the retransmission queue.
      */
-    unsigned long getRandomTimeout();
+    struct CoapRetrasmissionItem
+    {
+        // Count of retransmission attempts done.
+        // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
+        unsigned short attempts = COAP_MAX_RETRANSMIT;
+        // Next scheduled attempt deadline.
+        unsigned long nextAttemptDeadline = 0;
+        // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
+        unsigned long timeoutInterval = 0;
+        // Destination IP address.
+        IPAddress ip;
+        // Destination port.
+        uint16_t port = 0;
+        // The packet that needs to be retransmitted.
+        CoapPacket packet;
+    };
 
     /**
-      @brief Add a new packet to the outgoing queue.
-
-      The packet *must* be of type COAP_CON.
-
-      @return 0 on success, -1 in case of queue full.
-    */
-    int add(IPAddress ip, uint16_t port, const CoapPacket &packet);
-
-    /**
-     * @brief Reset the queue, discarding all queued messages.
+     * @brief Class to track outgoing confirmable messages.
+     *
+     * This is used by @ref Coap::loop to implement retransmission as per specifications.
      */
-    void reset();
+    class CoapRetrasmissionQueue
+    {
+    private:
+        // Store packets for outgoing confirmable retransmissions.
+        CoapRetrasmissionItem _items[COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE]{}; // NOTE: Initialised items will have attempts = COAP_MAX_RETRANSMIT;
+    public:
+        /**
+         * @brief Generate the random initial timeout between
+         * COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS.
+         *
+         * @return The random timeout in milliseconds.
+         */
+        unsigned long getRandomTimeout();
 
-    /**
-     * @brief Retransmit confirmable packets for requests that exceeded the timeout.
-     *
-     * @param coapInstance The running Coap instance.
-     *
-     * The packets that exceeded the @ref COAP_MAX_RETRANSMIT number of attempts, will be discarded.
-     *
-     * @return The number of packets retransmitted. 0 if none were retransmitted.
-     * @return -1 if an error occurred.
-     */
-    int process(Coap &coapInstance);
+        /**
+          @brief Add a new packet to the outgoing queue.
 
-    /**
-     * @brief Mark an item as received.
-     *
-     * If the messageId exists, the corresponding item in the queue will be marked as received.
-     *
-     * @return 0 if the item was found and marked as received.
-     * @return -1 if the item was not found.
-     */
-    int markItemAsReceived(uint16_t messageId);
-};
+          The packet *must* be of type COAP_CON.
+
+          @return 0 on success, -1 in case of queue full.
+        */
+        int add(IPAddress ip, uint16_t port, const CoapPacket &packet);
+
+        /**
+         * @brief Reset the queue, discarding all queued messages.
+         */
+        void reset();
+
+        /**
+         * @brief Retransmit confirmable packets for requests that exceeded the timeout.
+         *
+         * @param coapInstance The running Coap instance.
+         *
+         * The packets that exceeded the @ref COAP_MAX_RETRANSMIT number of attempts, will be discarded.
+         *
+         * @return The number of packets retransmitted. 0 if none were retransmitted.
+         * @return -1 if an error occurred.
+         */
+        int process(Coap &coapInstance);
+
+        /**
+         * @brief Mark an item as received.
+         *
+         * If the messageId exists, the corresponding item in the queue will be marked as received.
+         *
+         * @return 0 if the item was found and marked as received.
+         * @return -1 if the item was not found.
+         */
+        int markItemAsReceived(uint16_t messageId);
+    };
+
+} // namespace detail
 
 /**
  * @brief The CoAP main instance.
  */
 class Coap
 {
-    friend class CoapRetrasmissionQueue; // Allow access to sendPacket.
+    friend class detail::CoapRetrasmissionQueue; // Allow access to sendPacket.
 
 private:
     UDP *_udp;
@@ -412,7 +417,7 @@ private:
     size_t _coapBufferSize;
     uint8_t *_txBuffer = NULL;
     uint8_t *_rxBuffer = NULL;
-    CoapRetrasmissionQueue _confirmableMessageQueue;
+    detail::CoapRetrasmissionQueue _confirmableMessageQueue;
 
     /**
      * @brief Array of registered _observers.
