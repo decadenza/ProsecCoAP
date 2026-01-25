@@ -1,7 +1,7 @@
 /**
  * @file helpers.h
  *
- * @brief This header file contains utility helper functions and definitions not meant to be part of the public API.
+ * @brief This header file contains utility helper functions.
  *
  * This software is released under the MIT License.
  * Copyright (c) 2026 Pasquale Lafiosca

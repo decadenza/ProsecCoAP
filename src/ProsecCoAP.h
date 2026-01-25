@@ -27,6 +27,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define __PROSECCOAP_H__
 
 #include "Udp.h"
+
+/**
+ * @defgroup Constants
+ * @brief CoAP constants.
+ * @{
+ */
+
 #ifndef COAP_MAX_CALLBACK
 #define COAP_MAX_CALLBACK 10
 #endif
@@ -162,11 +169,21 @@ typedef enum
     COAP_APPLICATION_CBOR = 60
 } COAP_CONTENT_TYPE;
 
+/** @} */ // End of Constants group
+
+/**
+ * @defgroup Functions
+ * @brief CoAP functions.
+ * @{
+ */
+
 /**
  * @brief Generate a random message ID.
  * @return A random 16-bit message ID.
  */
-uint16_t getRandomMessageId();
+uint16_t CoapGetRandomMessageId();
+
+/** @} */ // End of Functions group
 
 /**
  * @brief Represents a CoAP option.
@@ -289,6 +306,14 @@ public:
     unsigned long getLastSeenMs();
 };
 
+/**
+ * @cond INTERNAL
+ * @namespace detail
+ * @brief Namespace for internal CoAP functions.
+ *
+ * Objects in this namespace are not intended to be used directly by the user.
+ *
+ */
 namespace detail
 {
 
@@ -400,10 +425,14 @@ namespace detail
         int markItemAsReceived(uint16_t messageId);
     };
 
-} // namespace detail
+}
+/**
+ * namespace detail
+ *  @endcond
+ * */
 
 /**
- * @brief The CoAP main instance.
+ * @brief The main CoAP instance.
  */
 class Coap
 {
@@ -536,6 +565,8 @@ public:
      * The response handler is invoked when an ACK message is received,
      * allowing the application to handle the acknowledgement.
      * The callback is unique for all the requests sent by this Coap instance.
+     *
+     * Note that transmission ACK are also received internally by the retrasmission queue.
      *
      * Responses to different requests can be differentiated by matching the message ID.
      *

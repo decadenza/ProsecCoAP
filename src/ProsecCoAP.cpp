@@ -2,7 +2,7 @@
 #include "ProsecCoAP.h"
 #include "utility/helpers.h"
 
-uint16_t getRandomMessageId()
+uint16_t CoapGetRandomMessageId()
 {
     return (uint16_t)random(1, 0xFFFF);
 }
@@ -336,7 +336,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
 // Send CoAP request with payload and content type.
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType)
 {
-    return this->send(ip, port, endpoint, type, method, token, tokenLength, payload, payloadLength, contentType, getRandomMessageId());
+    return this->send(ip, port, endpoint, type, method, token, tokenLength, payload, payloadLength, contentType, CoapGetRandomMessageId());
 }
 
 // Send a CoAP request with full specification.
@@ -625,7 +625,7 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
     packet.payload = NULL;
     packet.payloadLength = 0; // No payload.
     packet.optionCount = 0;
-    packet.messageId = getRandomMessageId();
+    packet.messageId = CoapGetRandomMessageId();
 
     return this->sendPacket(packet, ip, port);
 }
@@ -818,7 +818,7 @@ int Coap::notifyObservers(const char *observedEndpoint, const void *payload, int
         packet.payload = (uint8_t *)payload;
         packet.payloadLength = payloadLength;
         packet.optionCount = 0;
-        packet.messageId = getRandomMessageId();
+        packet.messageId = CoapGetRandomMessageId();
 
         uint32_t observeSequence = ++_observers[i]._observationSequentialNumber;
         uint8_t observeBuf[3] = {0};
