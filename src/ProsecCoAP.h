@@ -190,6 +190,9 @@ public:
     uint8_t *value;
 };
 
+/**
+ * @brief A CoAP packet.
+ */
 class CoapPacket
 {
 public:
@@ -264,7 +267,9 @@ public:
 };
 
 /**
- * Represents a CoAP observer.
+ * @brief A CoAP observer.
+ *
+ * A CoAP observer represents a client that has registered to observe a specific resource on the server.
  */
 class CoapObserver
 {
@@ -316,20 +321,24 @@ public:
     unsigned long getLastSeenMs();
 };
 
-// An item in the retransmission queue.
+/**
+ * @brief An item in the retransmission queue.
+ */
 struct CoapRetrasmissionItem
 {
+    // Count of retransmission attempts done.
+    // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
+    unsigned short attempts = COAP_MAX_RETRANSMIT;
+    // Next scheduled attempt deadline.
+    unsigned long nextAttemptDeadline = 0;
+    // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
+    unsigned long timeoutInterval = 0;
     // Destination IP address.
     IPAddress ip;
     // Destination port.
     uint16_t port = 0;
     // The packet that needs to be retransmitted.
     CoapPacket packet;
-    // Count of retransmission attempts.
-    // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
-    unsigned short attempts = COAP_MAX_RETRANSMIT;
-    // Next scheduled attempt time.
-    unsigned long nextAttemptTime = 0;
 };
 
 /**
@@ -342,7 +351,6 @@ class CoapRetrasmissionQueue
 private:
     // Store packets for outgoing confirmable retransmissions.
     CoapRetrasmissionItem _items[COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE]{}; // NOTE: Initialised items will have attempts = COAP_MAX_RETRANSMIT;
-
 public:
     /**
      * @brief Generate the random initial timeout between
@@ -389,6 +397,9 @@ public:
     int markItemAsReceived(uint16_t messageId);
 };
 
+/**
+ * @brief The CoAP main instance.
+ */
 class Coap
 {
     friend class CoapRetrasmissionQueue; // Allow access to sendPacket.

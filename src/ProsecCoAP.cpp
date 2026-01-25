@@ -228,11 +228,12 @@ int CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &p
         if (item->attempts >= COAP_MAX_RETRANSMIT)
         {
             // Found an empty slot.
+            item->attempts = 0;                                           // Set to 0 to mark it as active.
+            item->timeoutInterval = getRandomTimeout();                   // Select the base timeout interval.
+            item->nextAttemptDeadline = millis() + item->timeoutInterval; // Schedule first attempt deadline.
             item->ip = ip;
             item->port = port;
             item->packet = packet;
-            item->attempts = 0; // Setting attempts to 0 to mark it as active.
-            item->nextAttemptTime = millis() + getRandomTimeout();
             return 0; // Success
         }
     }
@@ -254,15 +255,15 @@ int CoapRetrasmissionQueue::process(Coap &coapInstance)
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
         CoapRetrasmissionItem *item = &_items[i];
-        if (item->attempts < COAP_MAX_RETRANSMIT && now >= item->nextAttemptTime)
+        if (item->attempts < COAP_MAX_RETRANSMIT && now >= item->nextAttemptDeadline)
         {
             // Packet needs retransmission.
             if (coapInstance.sendPacket(item->packet, item->ip, item->port) < 0)
             {
                 return -1; // Error occurred while sending packet.
             }
-            item->attempts++;                                 // When this reaches COAP_MAX_RETRANSMIT, the item is considered expired and the slot considered free.
-            item->nextAttemptTime = now + getRandomTimeout(); // Schedule next retransmission time. // FIXME: Not exponential backoff yet.
+            item->attempts++;                                                          // When this reaches COAP_MAX_RETRANSMIT, the item is considered expired and the slot considered free.
+            item->nextAttemptDeadline = now + item->timeoutInterval << item->attempts; // Set next retransmission deadline, see https://datatracker.ietf.org/doc/html/rfc7252#section-4.2.
             retransmitted++;
         }
     }
