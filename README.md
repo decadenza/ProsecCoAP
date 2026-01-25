@@ -11,21 +11,32 @@ It aims at implementing all the compulsory functionalities of the protocol, main
 This library is a **work in progress**. Although CoAP request/response pattern and observe pattern are implemented, specific functionalities may be delivered in future releases. Please open an issue to request missing functionalities or report bugs.
 
 ## How to install
-### From Arduino IDE Library Manager
+### Pre-requirements and dependencies
+For the examples to compile and work correctly, please ensure to have all the necessary boards installed.
+
+In addition, these libraries are needed:
+- `Ethernet` by Arduino
+- `WiFi` by Arduino
+
+### Install from Arduino IDE Library Manager
 1. Open the *Sketch* menu in the IDE.
 2. Navigate to *Include Library > Manage Libraries*.
-3. Install the "Ethernet by Arduino" library, if not already installed.
-4. Search for "ProsecCoAP" and install.
+3. Search for "ProsecCoAP" and install.
 
-### Manual
-1. Install the "Ethernet by Arduino" library, if not already installed.
-2. Download this source code branch as a zip file.
-3. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
+### Manual install
+1. Download this source code branch as a zip file.
+2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
 
 ## Getting started
 Navigate to *File > Examples > ProsecCoAP* to get started with some basic examples.
 
 ### How to test
+#### Verify compile errors and warnings
+To quickly verify a successfull build process for multiple boards: 
+1. Install [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation/).
+2. Run `make`.
+
+#### Functional tests
 The [examples](./examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
 - Use two devices and use serial monitor.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
