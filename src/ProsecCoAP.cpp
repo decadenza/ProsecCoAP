@@ -228,9 +228,12 @@ int CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &p
         if (item->attempts >= COAP_MAX_RETRANSMIT)
         {
             // Found an empty slot.
-            // Setting attempts to 0 to mark it as active.
-            *item = {ip, port, packet, 0, millis() + getRandomTimeout()}; // Schedule first retransmission expiry timestamp.
-            return 0;                                                     // Success
+            item->ip = ip;
+            item->port = port;
+            item->packet = packet;
+            item->attempts = 0; // Setting attempts to 0 to mark it as active.
+            item->nextAttemptTime = millis() + getRandomTimeout();
+            return 0; // Success
         }
     }
     return -1; // Queue full. Cannot schedule more retrasmissions.
@@ -244,23 +247,27 @@ void CoapRetrasmissionQueue::reset()
     }
 }
 
-int CoapRetrasmissionQueue::process()
+int CoapRetrasmissionQueue::process(Coap &coapInstance)
 {
     unsigned long now = millis();
+    int retransmitted = 0;
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
         CoapRetrasmissionItem *item = &_items[i];
         if (item->attempts < COAP_MAX_RETRANSMIT && now >= item->nextAttemptTime)
         {
             // Packet needs retransmission.
-            this->sendPacket(item->packet, item->ip, item->port);
+            if (coapInstance.sendPacket(item->packet, item->ip, item->port) < 0)
+            {
+                return -1; // Error occurred while sending packet.
+            }
             item->attempts++;                                 // When this reaches COAP_MAX_RETRANSMIT, the item is considered expired and the slot considered free.
             item->nextAttemptTime = now + getRandomTimeout(); // Schedule next retransmission time. // FIXME: Not exponential backoff yet.
+            retransmitted++;
         }
     }
 
-    // Nothing to retransmit at this time.
-    return 0;
+    return retransmitted;
 }
 
 int CoapRetrasmissionQueue::markItemAsReceived(uint16_t messageId)
@@ -407,12 +414,12 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE
         packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
     }
 
-    if (packet.code == COAP_CON)
+    if (packet.type == COAP_CON)
     {
         // Add to confirmable message queue for possible retransmission handling.
         // REVIEW: Not checking the return value.
         // If the queue is full, the packet will still be sent but no retransmission will be performed.
-        this->_confirmableMessageQueue.add(packet);
+        this->_confirmableMessageQueue.add(ip, port, packet);
     }
     // else, the packet is not confirmable (fire and forget).
 
@@ -602,7 +609,7 @@ bool Coap::loop()
     }
 
     // SECTION Process pending retransmissions
-    this->_confirmableMessageQueue.process();
+    this->_confirmableMessageQueue.process(*this);
 
     return true;
 }
@@ -614,7 +621,7 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
     packet.code = COAP_EMPTY;
     packet.token = NULL;
     packet.tokenLength = 0; // The Token Length field MUST be set to 0.
-    the Message ID field.packet.payload = NULL;
+    packet.payload = NULL;
     packet.payloadLength = 0; // No payload.
     packet.optionCount = 0;
     packet.messageId = getRandomMessageId();

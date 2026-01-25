@@ -229,6 +229,8 @@ typedef std::function<void(CoapPacket &, IPAddress, uint16_t)> CoapCallback;
 typedef void (*CoapCallback)(CoapPacket &, IPAddress, uint16_t);
 #endif
 
+class Coap; // Forward declaration.
+
 /**
  * @brief Register for CoAP callbacks and their associated URI paths.
  */
@@ -327,7 +329,7 @@ struct CoapRetrasmissionItem
     // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
     unsigned short attempts = COAP_MAX_RETRANSMIT;
     // Next scheduled attempt time.
-    unsigned long nextAttemptDelta = 0;
+    unsigned long nextAttemptTime = 0;
 };
 
 /**
@@ -367,14 +369,14 @@ public:
     /**
      * @brief Retransmit confirmable packets for requests that exceeded the timeout.
      *
-     * @param time The current timestamp in milliseconds.
+     * @param coapInstance The running Coap instance.
      *
      * The packets that exceeded the @ref COAP_MAX_RETRANSMIT number of attempts, will be discarded.
      *
      * @return The number of packets retransmitted. 0 if none were retransmitted.
      * @return -1 if an error occurred.
      */
-    int process(unsigned long time);
+    int process(Coap &coapInstance);
 
     /**
      * @brief Mark an item as received.
@@ -389,6 +391,8 @@ public:
 
 class Coap
 {
+    friend class CoapRetrasmissionQueue; // Allow access to sendPacket.
+
 private:
     UDP *_udp;
     CoapRegister _register;
