@@ -329,14 +329,51 @@ public:
 class CoapPacket
 {
 public:
-    uint8_t type = 0;
+    /**
+     * @brief The CoAP message type.
+     *
+     * See @ref COAP_TYPE.
+     */
+    COAP_TYPE type = COAP_NONCON;
+    /**
+     * @brief The CoAP message code.
+     *
+     * The behavior of this field depends on the message type.
+     *
+     * See @ref COAP_METHOD and @ref COAP_RESPONSE_CODE.
+     */
     uint8_t code = 0;
+    /**
+     * @brief The CoAP message token.
+     *
+     * The token is used to match a response with a request.
+     */
     const uint8_t *token = NULL;
+    /**
+     * @brief The length of the token.
+     */
     uint8_t tokenLength = 0;
+    /**
+     * @brief The CoAP message payload.
+     */
     const void *payload = NULL;
+    /**
+     * @brief The length of the payload.
+     */
     size_t payloadLength = 0;
+    /**
+     * @brief The CoAP message ID.
+     *
+     * This is a 16-bit identifier used to match messages of type CON and ACK.
+     */
     uint16_t messageId = 0;
+    /**
+     * @brief The number of options in the packet.
+     */
     uint8_t optionCount = 0;
+    /**
+     * @brief The array of options in the packet.
+     */
     CoapOption options[COAP_MAX_OPTION_NUM];
 
     /**

@@ -511,7 +511,7 @@ bool Coap::loop()
             continue;
         }
 
-        packet.type = (this->_rxBuffer[0] & 0x30) >> 4;
+        packet.type = (COAP_TYPE)((this->_rxBuffer[0] & 0x30) >> 4);
         packet.tokenLength = this->_rxBuffer[0] & 0x0F;
         packet.code = this->_rxBuffer[1];
         packet.messageId = 0xFF00 & (this->_rxBuffer[2] << 8);
