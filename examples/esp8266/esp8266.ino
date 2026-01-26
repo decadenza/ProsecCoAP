@@ -6,14 +6,14 @@ const char *ssid = "your-ssid";
 const char *password = "your-password";
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port);
+void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
 
-// CoAP server endpoint url callback
-void callback_light(CoapPacket &packet, IPAddress ip, int port);
+// CoAP server path url callback
+void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
 // other initialize is "Coap coap(Udp, 512);"
-// 2nd default parameter is COAP_BUF_MAX_SIZE(defaulit:128)
+// 2nd default parameter is COAP_DEFAULT_BUFFER_SIZE(defaulit:128)
 // For UDP fragmentation, it is good to set the maximum under
 // 1280byte when using the internet connection.
 WiFiUDP udp;
@@ -22,8 +22,8 @@ Coap coap(udp);
 // LED STATE
 bool LEDSTATE;
 
-// CoAP server endpoint URL
-void callback_light(CoapPacket &packet, IPAddress ip, int port)
+// CoAP server path URL
+void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Light] ON/OFF");
 
@@ -42,17 +42,17 @@ void callback_light(CoapPacket &packet, IPAddress ip, int port)
   if (LEDSTATE)
   {
     digitalWrite(9, HIGH);
-    coap.sendResponse(ip, port, packet.messageId, "1");
+    coap.sendResponse(ip, port, packet, COAP_CONTENT, "1", 1, COAP_TEXT_PLAIN);
   }
   else
   {
     digitalWrite(9, LOW);
-    coap.sendResponse(ip, port, packet.messageId, "0");
+    coap.sendResponse(ip, port, packet, COAP_CONTENT, "0", 1, COAP_TEXT_PLAIN);
   }
 }
 
 // CoAP client response callback
-void callback_response(CoapPacket &packet, IPAddress ip, int port)
+void callbackResponse(CoapPacket &packet, IPAddress, uint16_t)
 {
   Serial.println("[Coap Response got]");
 
@@ -81,18 +81,18 @@ void setup()
   digitalWrite(9, HIGH);
   LEDSTATE = true;
 
-  // add server url endpoints.
-  // can add multiple endpoint urls.
+  // add server url paths.
+  // can add multiple path urls.
   // exp) coap.server(callback_switch, "switch");
   //      coap.server(callback_env, "env/temp");
   //      coap.server(callback_env, "env/humidity");
   Serial.println("Setup Callback Light");
-  coap.server(callback_light, "light");
+  coap.server(callbackLight, "light");
 
-  // client response callback.
-  // this endpoint is single callback.
+  // Handler acknowledgment responses.
+  // This is a single handler for all ACK responses.
   Serial.println("Setup Response Callback");
-  coap.response(callback_response);
+  coap.acknowledgeWith(callbackResponse);
 
   // start coap server/client
   coap.start();

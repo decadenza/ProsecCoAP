@@ -5,22 +5,25 @@
 Documentation is available at [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
 
 ## Details
-This library is a *partial* implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)) supporting:
-- request/respose semantics,
-- observe pattern.
+This library is an implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)).
+It aims at implementing all the compulsory functionalities of the protocol, maintaining the execution lightweight and clearly documenting its API. 
 
-This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) and aims at providing:
-- Clear documentation and ease of use.
-- A closer implementation of the ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)).
+This library is a **work in progress**. Although CoAP request/response pattern and observe pattern are implemented, specific functionalities may be delivered in future releases. Please open an issue to request missing functionalities or report bugs.
 
 ## How to install
-### From Arduino IDE Library Manager
+### Pre-requirements and dependencies
+For the examples to compile and work correctly, please ensure to have all the necessary boards installed.
+
+In addition, these libraries are needed:
+- `Ethernet` by Arduino
+- `WiFi` by Arduino
+
+### Install from Arduino IDE Library Manager
 1. Open the *Sketch* menu in the IDE.
 2. Navigate to *Include Library > Manage Libraries*.
 3. Search for "ProsecCoAP" and install.
 
-### Manual
-
+### Manual install
 1. Download this source code branch as a zip file.
 2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
 
@@ -28,6 +31,18 @@ This library is a fork of [CoAP-simple-library](https://github.com/hirotakaster/
 Navigate to *File > Examples > ProsecCoAP* to get started with some basic examples.
 
 ### How to test
+#### Verify compile errors and warnings
+To quickly verify a successfull build process for multiple boards: 
+1. Install [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation/).
+2. Ensure the core for the supported boards are installed:
+```
+arduino-cli core install arduino:avr
+arduino-cli core install esp32:esp32
+arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+```
+2. Run `make`.
+
+#### Functional tests
 The [examples](./examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
 - Use two devices and use serial monitor.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
@@ -46,7 +61,15 @@ The documentation will be accesible from `./html/index.html`.
 ## Particle Photon, Core compatible
 Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
 
-## Release process
+## Contributing
+Contributions are welcome. You may contribute by:
+- Opening issues to report bugs or ask for missing features.
+- Make pull requests.
+
+Code must be documented using [Doxygen](https://www.doxygen.nl/manual/docblocks.html).
+Please write code following the [Arduino Style Guide](https://docs.arduino.cc/learn/contributions/arduino-library-style-guide/) as much as possible.
+
+## Release process memo
 A new version is released following these steps:
 1. Update [library.properties](library.properties) as required, using a new `vX.Y.Z` tag.
 2. Create the corresponding `vX.Y.Z` tag and a new release (for GitHub and Arduino library manager). The logs for the Arduino library manager bot can be checked [here](https://downloads.arduino.cc/libraries/logs/github.com/decadenza/ProsecCoAP/).
