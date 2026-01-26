@@ -7,7 +7,7 @@ uint16_t CoapGetRandomMessageId()
     return (uint16_t)random(1, 0xFFFF);
 }
 
-void CoapPacket::addOption(uint8_t number, uint8_t length, uint8_t *value)
+void CoapPacket::addOption(COAP_OPTION_NUMBER number, uint8_t length, uint8_t *value)
 {
     if (optionCount >= COAP_MAX_OPTION_NUM)
     {
@@ -484,7 +484,7 @@ int Coap::_parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buf
 
     if ((p + 1 + len) > (*buffer + bufferLength))
         return -1;
-    option->number = delta + *runningDelta;
+    option->number = (COAP_OPTION_NUMBER)(delta + *runningDelta);
     option->value = p + 1;
     option->length = len;
     *buffer = p + 1 + len;

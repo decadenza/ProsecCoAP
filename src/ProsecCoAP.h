@@ -312,7 +312,7 @@ public:
     /**
      * The CoAP option number.
      */
-    uint8_t number;
+    COAP_OPTION_NUMBER number;
     /**
      * The length of the option.
      */
@@ -348,7 +348,7 @@ public:
      * @param length The length of the option value.
      * @param value The pointer to the option value.
      */
-    void addOption(uint8_t number, uint8_t length, uint8_t *value);
+    void addOption(COAP_OPTION_NUMBER number, uint8_t length, uint8_t *value);
 
     /**
      * @brief Fetch the observe value from the packet.
