@@ -23,8 +23,8 @@ arduino:
 
 # Build for ESP32 platform
 esp32:
-	@echo "--- Compiling for board: esp32:esp32:esp32thing ---"; \
-	$(CLI) compile --fqbn esp32:esp32:esp32thing --library . examples/esp32/esp32.ino || exit 1;
+	@echo "--- Compiling for board: esp32:esp32:esp32 ---"; \
+	$(CLI) compile --fqbn esp32:esp32:esp32 --library . examples/esp32/esp32.ino || exit 1;
 
 # Build for ESP8266 platform (requires: arduino-cli core install esp8266:esp8266)
 esp8266:
