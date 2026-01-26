@@ -721,7 +721,8 @@ public:
     /**
      * @brief Send a response.
      *
-     * Starting from the request packet, it *converts* it into a response packet with the given response code
+     * Starting from the request packet, it build a corresponding response packet
+     * matching the message ID and token, and sends it back with the given response code
      * and payload data.
      *
      * @param ip The IP address of the recipient.

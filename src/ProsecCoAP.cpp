@@ -634,23 +634,24 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
 
 int Coap::sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
 {
-    // Convert the request packet into a response packet.
-    requestPacket.type = COAP_ACK;
-    requestPacket.code = code;
-    requestPacket.payload = payload;
-    requestPacket.payloadLength = payloadLength;
-    // Token remains the same of the request.
-    // Message ID remains the same of the request.
-    // Options will be cleared and re-added as needed.
-    requestPacket.optionCount = 0; // Any pre-existing options will be ignored by the sendPacket function.
+    // Extract data from the request packet to build the response packet.
+    CoapPacket responsePacket;
+    responsePacket.type = COAP_ACK;
+    responsePacket.code = code;
+    responsePacket.payload = payload;
+    responsePacket.payloadLength = payloadLength;
+    responsePacket.token = requestPacket.token; // Token remains the same of the request.
+    responsePacket.tokenLength = requestPacket.tokenLength;
+    responsePacket.messageId = requestPacket.messageId; // Message ID remains the same of the request
+    responsePacket.optionCount = 0;
 
     // Adding Content-Format option.
     uint8_t optionValue[2] = {0};
     optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
     optionValue[1] = ((uint16_t)type & 0x00FF);
-    requestPacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+    responsePacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
 
-    return this->sendPacket(requestPacket, ip, port);
+    return this->sendPacket(responsePacket, ip, port);
 }
 
 int Coap::addObserver(CoapObserver **observerOut, const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
