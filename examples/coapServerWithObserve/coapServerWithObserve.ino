@@ -82,7 +82,9 @@ void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
     COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
 
-    if (observeValue == COAP_OBSERVE_VALUE_REGISTER)
+    switch (observeValue)
+    {
+    case COAP_OBSERVE_VALUE_REGISTER:
     {
         // Add a new observer in the table.
         CoapObserver *observer = NULL;
@@ -91,7 +93,6 @@ void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
         {
             coap.sendResponse(ip, port, packet, COAP_SERVICE_UNAVAILABLE, "busy", strlen("busy"), COAP_TEXT_PLAIN);
             SERIAL_PRINTLN("Observer could not be added!");
-            return;
         }
         else
         {
@@ -99,17 +100,21 @@ void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
             // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
             SERIAL_PRINTLN("Subscribed!");
         }
+        return;
     }
-    else if (observeValue == COAP_OBSERVE_VALUE_DEREGISTER)
+    case COAP_OBSERVE_VALUE_DEREGISTER:
     {
         coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
         coap.sendResponse(ip, port, packet, COAP_CONTENT, "unsubscribed", strlen("unsubscribed"), COAP_TEXT_PLAIN);
         SERIAL_PRINTLN("Unsubscribed!");
+        return;
     }
-    else
+    default:
     {
         SERIAL_PRINT("Missing/invalid observe value: ");
         SERIAL_PRINTLN(observeValue);
+        return;
+    }
     }
 }
 
