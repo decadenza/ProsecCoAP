@@ -5,8 +5,10 @@
  *
  * To test this example with the coap-client tool from libcoap:
  * ```
- * coap-client-notls -m get -s 60 coap://192.168.0.1/subscribe
+ * coap-client-notls -m get -s 5 coap://192.168.0.1/subscribe
  * ```
+ * Note that at exit the unsubscribe call will be sent
+ * automatically by coap-client-notls.
  */
 #include <SPI.h>
 #include <Ethernet.h>
@@ -122,11 +124,10 @@ void loop()
 // Demo notification with gibberish data.
 void sendNotification()
 {
-    char payload[6]; // Max 5 digits for uint16_t + 1 for null terminator '\0'
-    sprintf(payload, "%u", 42);
-    int payloadLength = strlen(payload);
+    char payload[] = "The answer is 42\n";
+    size_t payloadLength = strlen(payload);
 
-    if (coap.notifyObservers("subscribe", payload, payloadLength, COAP_APPLICATION_OCTET_STREAM) > 0)
+    if (coap.notifyObservers("subscribe", payload, payloadLength, COAP_TEXT_PLAIN) > 0)
     {
         SERIAL_PRINTLN("Notified!");
     }
