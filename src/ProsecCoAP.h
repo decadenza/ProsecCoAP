@@ -29,27 +29,51 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "Udp.h"
 
 /**
+ * // SECTION Constants
  * @defgroup Constants
  * @brief CoAP constants.
+ *
+ * Some of these constants can be overridden by defining them before including this header.
+ * Refer to each constant's documentation for details.
+ *
  * @{
  */
-
 #ifndef COAP_MAX_CALLBACK
+/**
+ * @brief Maximum number of callbacks that can be registered.
+ *
+ * This value can be overridden.
+ */
 #define COAP_MAX_CALLBACK 10
 #endif
-
 #define COAP_HEADER_SIZE 4u
 #define COAP_OPTION_HEADER_SIZE 1
 #define COAP_PAYLOAD_MARKER 0xFF
 #ifndef COAP_MAX_OPTION_NUM
+/**
+ * @brief Maximum number of options in a CoAP packet.
+ *
+ * This limit is applied both to incoming and outgoing packets.
+ *
+ * This value can be overridden.
+ */
 #define COAP_MAX_OPTION_NUM 10
 #endif
-#ifndef COAP_BUF_MAX_SIZE
+/**
+ * @brief The maximum size of the CoAP buffer used for sending and receiving packets.
+ *
+ * To override this value, pass the desired buffer size to the Coap constructor.
+ * For example:
+ * @code{.cpp}
+ * Coap coap(udp, 256); // Allocate 256 bytes for CoAP buffer.
+ * @endcode
+ */
 #define COAP_BUF_MAX_SIZE 128
-#endif
 #ifndef COAP_MAX_OBSERVERS
 /**
  * @brief Maximum number of _observers that can be registered at runtime.
+ *
+ * This value can be overridden.
  */
 #define COAP_MAX_OBSERVERS 4
 #endif
@@ -57,25 +81,54 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define COAP_OBSERVER_LEASE_MS 60000UL
 #endif
 #ifndef COAP_MAX_OBSERVE_ENDPOINT_LEN
+/**
+ * @brief Maximum length of the endpoint string for an observer.
+ *
+ * This value can be overridden.
+ */
 #define COAP_MAX_OBSERVE_ENDPOINT_LEN 32
 #endif
 #define COAP_DEFAULT_PORT 5683
-
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
-
 // SECTION CoAP retransmission parameters
-// Minimum ACK timeout in milliseconds. See RFC 7252, Section 4.8.
-constexpr unsigned long COAP_ACK_MIN_TIMEOUT_MS = 2000UL;
-// ACK timeout random factor as per RFC 7252, Section 4.8.
-constexpr float COAP_ACK_RANDOM_FACTOR = 1.5f;
-// The maximum ACK timeout is derived from the minimum timeout and the random factor, see https://datatracker.ietf.org/doc/html/rfc7252#section-4.8
-constexpr unsigned long COAP_ACK_MAX_TIMEOUT_MS = static_cast<unsigned long>(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR);
-// The maximum number of retransmission attempts for confirmable messages.
-constexpr size_t COAP_MAX_RETRANSMIT = 4;
-// The maximum number of confirmable messages that can be tracked for retransmission.
-constexpr size_t COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE = 4;
-// !SECTION
+#ifndef COAP_ACK_MIN_TIMEOUT_MS
+/**
+ * @brief Minimum ACK timeout in milliseconds. See RFC 7252, Section 4.8.
+ * Default to 2 seconds (2000 ms).
+ *
+ * This value can be overridden.
+ */
+#define COAP_ACK_MIN_TIMEOUT_MS 2000UL
+#endif
+#ifndef COAP_ACK_RANDOM_FACTOR
+/**
+ * @brief ACK timeout random factor as per RFC 7252, Section 4.8.
+ * Default to 1.5.
+ * This value can be overridden.
+ */
+#define COAP_ACK_RANDOM_FACTOR 1.5f
+#endif
+/**
+ * @brief The precomputed maximum ACK timeout derived from the minimum timeout and the random factor.
+ */
+#define COAP_ACK_MAX_TIMEOUT_MS (unsigned long)(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR)
+#ifndef COAP_MAX_RETRANSMIT
+/**
+ * @brief The maximum number of retransmission attempts for confirmable messages.
+ * Default to 4 as per RFC 7252, Section 4.8.
+ * This value can be overridden.
+ */
+#define COAP_MAX_RETRANSMIT 4
+#endif
+#ifndef COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE
+/**
+ * @brief The maximum number of confirmable messages that are tracked for retransmission.
+ * This value can be overridden.
+ */
+#define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 4
+#endif
+// !SECTION End of CoAP retransmission parameters
 
 /**
  * @brief Limit to the number of outgoing confirmable messages being tracked.
@@ -170,6 +223,7 @@ typedef enum
 } COAP_CONTENT_TYPE;
 
 /** @} */ // End of Constants group
+// !SECTION End of constants.
 
 /**
  * @defgroup Functions
@@ -489,7 +543,7 @@ public:
      * @brief Construct a CoAP instance using the given UDP transport.
      *
      * @param udp The UDP transport to use for sending and receiving CoAP packets.
-     * @param coapBufferSize The size of the internal CoAP buffers. Default is @ref COAP_BUF_MAX_SIZE.
+     * @param coapBufferSize The size of the internal CoAP buffer. Default is @see COAP_BUF_MAX_SIZE.
      */
     Coap(
         UDP &udp,
