@@ -41,7 +41,7 @@
 EthernetUDP Udp;
 Coap coap(Udp);
 
-// Using a sequential identifier. IP and MAC will be based on this.
+// Using a sequential identifier. IP will be based on this.
 #define DEVICE_ID 1
 
 byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC address, this must be unique.

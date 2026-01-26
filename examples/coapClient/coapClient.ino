@@ -6,7 +6,7 @@
 #include <ProsecCoAP.h>
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
-IPAddress dev_ip(10, 0, 0, 99); // Set your own.
+IPAddress dev_ip(192, 168, 0, 99); // Set your own.
 
 // CoAP client response callback
 void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
@@ -18,10 +18,11 @@ Coap coap(Udp);
 // CoAP client response callback
 void callbackResponse(CoapPacket &packet, IPAddress, uint16_t)
 {
-  Serial.println("[Coap Response got]");
-
+  Serial.println("[Coap Response]");
   Serial.write((const char *)packet.payload, packet.payloadLength);
-  Serial.println(); // newline
+  Serial.print(" (message ID:");
+  Serial.print(packet.messageId);
+  Serial.println(")");
 }
 
 void setup()
@@ -47,8 +48,8 @@ void loop()
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
   Serial.println("Send Request");
-  coap.sendGetRequest(IPAddress(10, 0, 0, 1), COAP_DEFAULT_PORT, "time");
-
+  coap.sendGetRequest(IPAddress(192, 168, 0, 100), COAP_DEFAULT_PORT, "time");
+  
   delay(1000);
   coap.loop();
 }
