@@ -255,7 +255,10 @@ int detail::CoapRetrasmissionQueue::process(Coap &coapInstance)
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
         detail::CoapRetrasmissionItem *item = &_items[i];
-        if (item->attempts < COAP_MAX_RETRANSMIT && now >= item->nextAttemptDeadline)
+        // NOTE: Using subtraction between unsigned longs to handle millis() overflow.
+        // When now wraps around, the subtraction will yield a large positive number.
+        // Although in that case the exact time of retransmission won't be respected, retransmissions will still occur.
+        if (item->attempts < COAP_MAX_RETRANSMIT && now - item->nextAttemptDeadline >= 0)
         {
             // Packet needs retransmission.
             if (coapInstance.sendPacket(item->packet, item->ip, item->port) < 0)
