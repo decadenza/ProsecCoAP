@@ -40,13 +40,13 @@ arduino-cli core install arduino:avr
 arduino-cli core install esp32:esp32
 arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
 ```
-2. Run `make`.
+3. Run `make`.
 
 #### Functional tests
 The [examples](https://github.com/decadenza/ProsecCoAP/examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
-- Use two devices and use serial monitor.
+- Use two devices and check serial monitor of each.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
-- Use [libcoap](https://github.com/obgm/libcoap) by compiling the examples yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
+  For example, [libcoap](https://github.com/obgm/libcoap) by compiling it yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
 
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).

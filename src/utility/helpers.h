@@ -49,6 +49,6 @@ namespace helpers
      *         If *either* token is NULL (and length > 0), returns false.
      */
     bool tokenEquals(const uint8_t *a, uint8_t aLength, const uint8_t *b, uint8_t bLength);
-} // namespace detail
+} // namespace helpers
 
 #endif // HELPERS_H_INCLUDED
