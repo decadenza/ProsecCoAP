@@ -48,7 +48,7 @@ byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC addres
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 
 // Declarations.
-void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port);
+void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 void setup()
 {
@@ -67,7 +67,7 @@ void setup()
     }
     SERIAL_PRINTLN("OK");
 
-    coap.server(endpointSubscribe, "subscribe");
+    coap.server(pathSubscribe, "subscribe");
 
     // Start coap server.
     coap.start();
@@ -78,7 +78,7 @@ void setup()
     SERIAL_PRINTLN("Initialisation completed");
 }
 
-void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
+void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
     COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
 

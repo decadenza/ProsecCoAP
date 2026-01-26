@@ -70,12 +70,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef COAP_OBSERVER_LEASE_MS
 #define COAP_OBSERVER_LEASE_MS 60000UL
 #endif
-#ifndef COAP_MAX_OBSERVE_ENDPOINT_LEN
+#ifndef COAP_MAX_OBSERVE_PATH_LEN
 /**
- * @brief Maximum length of the endpoint string for an observer.
+ * @brief Maximum length of the URI path string for an observer.
  * This value can be overridden.
  */
-#define COAP_MAX_OBSERVE_ENDPOINT_LEN 32
+#define COAP_MAX_OBSERVE_PATH_LEN 32
 #endif
 #ifndef COAP_ACK_MIN_TIMEOUT_MS
 /**
@@ -397,9 +397,9 @@ private:
     uint32_t _observationSequentialNumber = 0;
     unsigned long _lastSeenMs = 0; // TODO: Implement cleaning up old _observers.
     /**
-     * @brief The endpoint being observed.
+     * @brief The URI path being observed.
      */
-    char _endpoint[COAP_MAX_OBSERVE_ENDPOINT_LEN] = {0};
+    char _uriPath[COAP_MAX_OBSERVE_PATH_LEN] = {0};
 
 public:
     /**
@@ -616,13 +616,13 @@ public:
     ~Coap();
 
     /**
-     * @brief Notify all _observers of a specific endpoint.
+     * @brief Notify all _observers of a specific URI path.
      *
-     * This method sends a notification to all registered _observers for the given endpoint.
+     * This method sends a notification to all registered _observers for the given URI path.
      * As per specifications, the notification includes the Observe option with a sequential number.
      * The notification will be a non-confirmable message (COAP_NONCON).
      *
-     * @param observedEndpoint The endpoint being observed.
+     * @param observedPath The URI path being observed.
      * @param payload The payload to send to _observers.
      * @param payloadLength The length of the payload.
      * @param type The content type of the payload.
@@ -630,7 +630,7 @@ public:
      * @return Number of observers notified successfully.
      * @return -1 if an error occurred.
      */
-    int notifyObservers(const char *observedEndpoint, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    int notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Add a new observer for a specific URL.
@@ -638,7 +638,7 @@ public:
      * If the observer is already registered, the existing observer is returned.
      *
      * @param observerOut Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
-     * @param endpoint The endpoint to observe.
+     * @param path The path to observe.
      * @param ip The IP address of the observer.
      * @param port The port of the observer.
      * @param token The token used by the observer.
@@ -648,7 +648,7 @@ public:
      *         -1 if the url is invalid.
      *         -2 if the observer table is full.
      */
-    int addObserver(CoapObserver **observerOut, const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+    int addObserver(CoapObserver **observerOut, const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Get the current number of active observers.
@@ -656,13 +656,13 @@ public:
     unsigned int getObserverCount();
 
     /**
-     * @brief Remove an observer for a specific endpoint.
+     * @brief Remove an observer for a specific path.
      *
      * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
      * after a GET request for deregistration, the server should send a response to the client.
      * @see sendResponse.
      */
-    bool removeObserver(const char *endpoint, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+    bool removeObserver(const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
     /**
      * @brief Start the server on the default port.
@@ -741,7 +741,7 @@ public:
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
+     * @param path The path to request.
      * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
      *
      * @return The message ID of the request that was sent.
@@ -753,12 +753,12 @@ public:
      * expectation for reliability. Use the variant with the confirmable flag to
      * explicitly send a non-confirmable request when desired.
      */
-    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint);
+    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *path);
 
     /**
      * @brief Send a GET request with explicit confirmable flag.
      */
-    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
+    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable);
 
     /**
      * @brief Send a DELETE request.
@@ -768,65 +768,65 @@ public:
     /**
      * @brief Send a confirmable DELETE request.
      */
-    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *endpoint);
+    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *path);
 
     /**
      * @brief Send a DELETE request with explicit confirmable flag.
      */
-    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *endpoint, bool confirmable);
+    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable);
 
     /**
      * @brief Send a confirmable PUT request.
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
+     * @param path The path to request.
      * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength);
+    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength);
 
     /**
      * @brief Send a PUT request with explicit confirmable flag.
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
+     * @param path The path to request.
      * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength, bool confirmable);
+    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a confirmable POST request.
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
+     * @param path The path to request.
      * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength);
+    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength);
 
     /**
      * @brief Send a POST request with explicit confirmable flag.
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
+     * @param path The path to request.
      * @param payload The pointer to the payload to send.
      * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
      * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
      *
      * @return The message ID of the request that was sent.
      */
-    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *endpoint, const void *payload, size_t payloadLength, bool confirmable);
+    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable);
 
     /**
      * @brief Send a raw CoAP message without specifying content type.
@@ -838,7 +838,7 @@ public:
      *
      * @param ip The IP address of the recipient.
      * @param port The port of the recipient.
-     * @param endpoint The endpoint to request.
+     * @param path The URI path to request.
      * @param type The CoAP message type (confirmable, non-confirmable, etc
      * @param method The CoAP method (GET, POST, etc).
      * @param token The pointer to the token to use.
@@ -848,14 +848,14 @@ public:
      * @return The message ID of the request that was sent.
      *
      */
-    uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
+    uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
 
     /**
      * @brief Send a raw CoAP message specifying the content format.
      *
      * @see send without contentType for more details.
      */
-    uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
+    uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
 
     /**
      * @brief Send a raw CoAP message specifying all the parameters.
@@ -865,7 +865,7 @@ public:
      *
      * @see send without contentType for more details.
      */
-    uint16_t send(IPAddress ip, uint16_t port, const char *endpoint, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
+    uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 
     /**
      * @brief Process incoming packets and dispatch handlers.

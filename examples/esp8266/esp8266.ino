@@ -8,7 +8,7 @@ const char *password = "your-password";
 // CoAP client response callback
 void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
 
-// CoAP server endpoint url callback
+// CoAP server path url callback
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
@@ -22,7 +22,7 @@ Coap coap(udp);
 // LED STATE
 bool LEDSTATE;
 
-// CoAP server endpoint URL
+// CoAP server path URL
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.println("[Light] ON/OFF");
@@ -81,8 +81,8 @@ void setup()
   digitalWrite(9, HIGH);
   LEDSTATE = true;
 
-  // add server url endpoints.
-  // can add multiple endpoint urls.
+  // add server url paths.
+  // can add multiple path urls.
   // exp) coap.server(callback_switch, "switch");
   //      coap.server(callback_env, "env/temp");
   //      coap.server(callback_env, "env/humidity");

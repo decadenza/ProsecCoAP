@@ -11,7 +11,7 @@
  * coap-client-notls -m put coap://192.168.0.99/light -e "0"
  * ```
  * Note that on some boards, logic may be inverted.
- * 
+ *
  * In addition, this example also acts as client, sending a GET request every second.
  * To receive such requests, start a CoAP server on the remote machine. To test, you may use:
  * ```
@@ -33,7 +33,7 @@ IPAddress dev_ip(192, 168, 0, 99); // Set your own.
 // CoAP client response callback
 void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
 
-// CoAP server endpoint url callback
+// CoAP server path url callback
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
@@ -43,7 +43,7 @@ Coap coap(Udp);
 // LED STATE
 bool LEDSTATE;
 
-// CoAP server endpoint URL.
+// CoAP server path URL.
 // The expected payload input is one character.
 //
 // A GET request will only return the current value.
@@ -51,15 +51,16 @@ bool LEDSTATE;
 // The response will be a string, either "1" or "0".
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
-  if(packet.code == COAP_PUT && packet.payloadLength) {
+  if (packet.code == COAP_PUT && packet.payloadLength)
+  {
     Serial.println("Incoming PUT");
     // Process incoming value, considering first byte only.
-    LEDSTATE = ((const char*)packet.payload)[0] == '1' ? HIGH : LOW; 
+    LEDSTATE = ((const char *)packet.payload)[0] == '1' ? HIGH : LOW;
     digitalWrite(LEDP, LEDSTATE);
-    }
-  
+  }
+
   // Send response with current value.
-  coap.sendResponse(ip, port, packet, COAP_CONTENT, LEDSTATE?"1":"0", 1, COAP_TEXT_PLAIN);
+  coap.sendResponse(ip, port, packet, COAP_CONTENT, LEDSTATE ? "1" : "0", 1, COAP_TEXT_PLAIN);
   Serial.print("[Light] ");
   Serial.println(LEDSTATE);
 }
@@ -91,8 +92,8 @@ void setup()
   digitalWrite(LEDP, HIGH);
   LEDSTATE = true;
 
-  // add server url endpoints.
-  // can add multiple endpoint urls.
+  // add server url paths.
+  // can add multiple path urls.
   // exp) coap.server(callback_switch, "switch");
   //      coap.server(callback_env, "env/temp");
   //      coap.server(callback_env, "env/humidity");
