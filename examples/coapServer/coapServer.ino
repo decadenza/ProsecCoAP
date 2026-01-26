@@ -15,7 +15,7 @@
  * In addition, this example also acts as client, sending a GET request every second.
  * To receive such requests, start a CoAP server on the remote machine. To test, you may use:
  * ```
- * coap-server-notls -A 0.0.0.0 -v 9
+ * coap-server-notls -v 9
  * ```
  */
 #include <SPI.h>
