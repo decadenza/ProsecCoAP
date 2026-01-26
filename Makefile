@@ -2,7 +2,7 @@
 
 # Config
 CLI = arduino-cli
-ARDUINO_BOARDS = arduino:avr:uno arduino:avr:mega
+ARDUINO_BOARDS = arduino:avr:uno arduino:avr:mega arduino:mbed_giga:giga
 ARDUINO_EXAMPLES = coapClient coapServer coapServerWithObserve
 
 

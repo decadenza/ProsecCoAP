@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           - name: Arduino UNO
-            arduino-board-fqbn: arduino:avr:uno
+            arduino-board-fqbn: arduino:avr:uno,arduino:avr:mega,arduino:mbed_giga:giga
             platform-url: ""
             required-libraries: Ethernet
             sketch-names-find-start: examples
