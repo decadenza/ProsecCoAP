@@ -1,3 +1,14 @@
+/**
+ * Example CoAP Client.
+ *
+ * This example sends a GET request to a CoAP server and handles the response.
+ *
+ * To test this example, you can use a CoAP server such as libcoap or microcoap.
+ * You may also test with:
+ * ```
+ * coap-server-notls -v 9
+ * ```
+ */
 #include <SPI.h>
 #include <Dhcp.h>
 #include <Dns.h>
@@ -48,8 +59,8 @@ void loop()
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
   Serial.println("Send Request");
-  coap.sendGetRequest(IPAddress(192, 168, 0, 100), COAP_DEFAULT_PORT, "time");
-  
+  coap.sendGetRequest(IPAddress(192, 168, 0, 100), COAP_DEFAULT_PORT, "time"); // Set your CoAP server IP address.
+
   delay(1000);
   coap.loop();
 }
