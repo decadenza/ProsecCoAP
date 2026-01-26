@@ -47,7 +47,7 @@ void loop()
   // send GET or PUT coap request to CoAP server.
   // To test, use libcoap, microcoap server...etc
   Serial.println("Send Request");
-  coap.sendGetRequest(IPAddress(10, 0, 0, 1), 5683, "time");
+  coap.sendGetRequest(IPAddress(10, 0, 0, 1), COAP_DEFAULT_PORT, "time");
 
   delay(1000);
   coap.loop();
