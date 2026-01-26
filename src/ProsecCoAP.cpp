@@ -250,7 +250,7 @@ void detail::CoapRetrasmissionQueue::reset()
 
 int detail::CoapRetrasmissionQueue::process(Coap &coapInstance)
 {
-    uint32_t now = millis(); // Using uint32_t (not unsigned long) to handle millis() overflow.
+    uint32_t now = millis();
     int retransmitted = 0;
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
@@ -666,7 +666,7 @@ int Coap::addObserver(CoapObserver **observerOut, const char *path, IPAddress ip
     if (observerOut)
         *observerOut = NULL;
 
-    unsigned long now = millis();
+    uint32_t now = millis();
 
     // Check for active duplicates.
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
@@ -750,7 +750,7 @@ bool CoapObserver::_deactivate()
     return true;
 }
 
-unsigned long CoapObserver::getLastSeenMs()
+uint32_t CoapObserver::getLastSeenMs()
 {
     return this->_lastSeenMs;
 }
@@ -759,7 +759,7 @@ int Coap::notifyObservers(const char *observedPath, const void *payload, size_t 
 {
     if (observedPath == NULL)
         return -1;
-    unsigned long now = millis();
+    uint32_t now = millis();
     int sent = 0;
 
     for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
@@ -769,7 +769,7 @@ int Coap::notifyObservers(const char *observedPath, const void *payload, size_t 
         if (!helpers::pathEquals(_observers[i]._uriPath, observedPath))
             continue;
 
-        if (COAP_OBSERVER_LEASE_MS > 0 && (unsigned long)(now - _observers[i]._lastSeenMs) > COAP_OBSERVER_LEASE_MS)
+        if (COAP_OBSERVER_LEASE_MS > 0 && (uint32_t)(now - _observers[i]._lastSeenMs) > COAP_OBSERVER_LEASE_MS)
         {
             _observers[i]._active = false;
             continue;

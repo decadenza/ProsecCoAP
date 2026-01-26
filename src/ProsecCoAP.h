@@ -97,7 +97,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * @brief The precomputed maximum ACK timeout derived from the minimum timeout and the random factor.
  */
-#define COAP_ACK_MAX_TIMEOUT_MS (unsigned long)(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR)
+#define COAP_ACK_MAX_TIMEOUT_MS (uint32_t)(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR)
 #ifndef COAP_MAX_RETRANSMIT
 /**
  * @brief The maximum number of retransmission attempts for confirmable messages.
@@ -396,7 +396,7 @@ private:
     uint8_t _token[8] = {0};
     uint8_t _tokenLength = 0;
     uint32_t _observationSequentialNumber = 0;
-    unsigned long _lastSeenMs = 0; // TODO: Implement cleaning up old _observers.
+    uint32_t _lastSeenMs = 0; // TODO: Implement cleaning up old _observers.
     /**
      * @brief The URI path being observed.
      */
@@ -416,9 +416,9 @@ public:
     /**
      * @brief Get the last seen time in milliseconds.
      *
-     * Note that this value may wrap around after a long uptime.
+     * Note that this value will wrap around after an uptime of approximately 49 days.
      */
-    unsigned long getLastSeenMs();
+    uint32_t getLastSeenMs();
 };
 
 /**
