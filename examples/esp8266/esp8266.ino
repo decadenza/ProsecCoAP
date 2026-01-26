@@ -13,7 +13,7 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
 // other initialize is "Coap coap(Udp, 512);"
-// 2nd default parameter is COAP_BUF_MAX_SIZE(defaulit:128)
+// 2nd default parameter is COAP_DEFAULT_BUFFER_SIZE(defaulit:128)
 // For UDP fragmentation, it is good to set the maximum under
 // 1280byte when using the internet connection.
 WiFiUDP udp;

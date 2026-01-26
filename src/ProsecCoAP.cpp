@@ -33,8 +33,8 @@ COAP_OBSERVE_VALUE CoapPacket::getObserveValue()
         {
             v = (v << 8) | options[i].value[j];
         }
-        // Validate: only 0 (register) and 1 (cancel) are valid per RFC 7641.
         if (v > 1)
+            // Only 0 (register) and 1 (deregister) are valid per RFC 7641, anything else is invalid.
             return COAP_OBSERVE_VALUE_INVALID; // Invalid observe value.
         return (COAP_OBSERVE_VALUE)v;
     }
@@ -88,7 +88,7 @@ CoapCallback detail::CoapRegister::find(String path)
 
 Coap::Coap(
     UDP &udp,
-    size_t coapBufferSize /* default value is COAP_BUF_MAX_SIZE */
+    size_t coapBufferSize /* default value is COAP_DEFAULT_BUFFER_SIZE */
 )
 {
     this->_udp = &udp;
