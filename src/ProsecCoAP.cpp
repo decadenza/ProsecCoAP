@@ -716,7 +716,7 @@ int Coap::addObserver(CoapObserver **observerOut, const char *endpoint, IPAddres
     {
         if (!_observers[i]._active)
             continue;
-        if (_observers[i]._ip == ip && _observers[i]._port == (uint16_t)port && pathEquals(_observers[i]._endpoint, endpoint) && tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
+        if (_observers[i]._ip == ip && _observers[i]._port == port && pathEquals(_observers[i]._endpoint, endpoint) && tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
         {
             // Duplicate active observer, just update last seen time.
             _observers[i]._lastSeenMs = now;
@@ -732,7 +732,7 @@ int Coap::addObserver(CoapObserver **observerOut, const char *endpoint, IPAddres
         {
             _observers[i]._active = true;
             _observers[i]._ip = ip;
-            _observers[i]._port = (uint16_t)port;
+            _observers[i]._port = port;
             _observers[i]._tokenLength = tokenLength;
             if (tokenLength > 0 && token != NULL)
                 memcpy(_observers[i]._token, token, tokenLength);
@@ -769,7 +769,7 @@ bool Coap::removeObserver(const char *endpoint, IPAddress ip, uint16_t port, con
     {
         if (!_observers[i]._active)
             continue;
-        if (_observers[i]._ip == ip && _observers[i]._port == (uint16_t)port && pathEquals(_observers[i]._endpoint, endpoint) && tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
+        if (_observers[i]._ip == ip && _observers[i]._port == port && pathEquals(_observers[i]._endpoint, endpoint) && tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
         {
             return _observers[i].remove();
         }

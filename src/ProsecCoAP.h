@@ -515,7 +515,7 @@ private:
     UDP *_udp;
     detail::CoapRegister _register;
     CoapCallback _acknowledgementHandler = NULL;
-    int _port;
+    uint16_t _port;
     size_t _coapBufferSize;
     uint8_t *_txBuffer = NULL;
     uint8_t *_rxBuffer = NULL;
