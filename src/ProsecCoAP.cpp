@@ -214,9 +214,9 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     return 0;
 }
 
-unsigned long detail::CoapRetrasmissionQueue::getRandomTimeout()
+uint32_t detail::CoapRetrasmissionQueue::getRandomTimeout()
 {
-    return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
+    return (uint32_t)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
 }
 
 int detail::CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapPacket &packet)
@@ -228,9 +228,9 @@ int detail::CoapRetrasmissionQueue::add(IPAddress ip, uint16_t port, const CoapP
         if (item->attempts >= COAP_MAX_RETRANSMIT)
         {
             // Found an empty slot.
-            item->attempts = 0;                                           // Set to 0 to mark it as active.
-            item->timeoutInterval = getRandomTimeout();                   // Select the base timeout interval.
-            item->nextAttemptDeadline = millis() + item->timeoutInterval; // Schedule first attempt deadline.
+            item->attempts = 0;                                                     // Set to 0 to mark it as active.
+            item->timeoutInterval = getRandomTimeout();                             // Select the base timeout interval.
+            item->nextAttemptDeadline = (uint32_t)millis() + item->timeoutInterval; // Schedule first attempt deadline.
             item->ip = ip;
             item->port = port;
             item->packet = packet;
@@ -250,23 +250,22 @@ void detail::CoapRetrasmissionQueue::reset()
 
 int detail::CoapRetrasmissionQueue::process(Coap &coapInstance)
 {
-    unsigned long now = millis();
+    uint32_t now = millis(); // Using uint32_t (not unsigned long) to handle millis() overflow.
     int retransmitted = 0;
     for (size_t i = 0; i < COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE; i++)
     {
         detail::CoapRetrasmissionItem *item = &_items[i];
-        // NOTE: Using subtraction between unsigned longs to handle millis() overflow.
-        // When now wraps around, the subtraction will yield a large positive number.
-        // Although in that case the exact time of retransmission won't be respected, retransmissions will still occur.
-        if (item->attempts < COAP_MAX_RETRANSMIT && now - item->nextAttemptDeadline >= 0)
+        // NOTE: Using subtraction and casting the result to signed to handle millis() overflow.
+        // When `now` wraps around, the subtraction will still be correct.
+        if (item->attempts < COAP_MAX_RETRANSMIT && (int32_t)(now - item->nextAttemptDeadline) >= 0)
         {
             // Packet needs retransmission.
             if (coapInstance.sendPacket(item->packet, item->ip, item->port) < 0)
             {
                 return -1; // Error occurred while sending packet.
             }
-            item->attempts++;                                                          // When this reaches COAP_MAX_RETRANSMIT, the item is considered expired and the slot considered free.
-            item->nextAttemptDeadline = now + item->timeoutInterval << item->attempts; // Set next retransmission deadline, see https://datatracker.ietf.org/doc/html/rfc7252#section-4.2.
+            item->attempts++;                                                            // When this reaches COAP_MAX_RETRANSMIT, the item is considered expired and the slot considered free.
+            item->nextAttemptDeadline = now + (item->timeoutInterval << item->attempts); // Set next retransmission deadline, see https://datatracker.ietf.org/doc/html/rfc7252#section-4.2.
             retransmitted++;
         }
     }

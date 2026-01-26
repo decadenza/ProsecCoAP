@@ -473,9 +473,9 @@ namespace detail
         // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
         unsigned short attempts = COAP_MAX_RETRANSMIT;
         // Next scheduled attempt deadline.
-        unsigned long nextAttemptDeadline = 0;
+        uint32_t nextAttemptDeadline = 0;
         // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
-        unsigned long timeoutInterval = 0;
+        uint32_t timeoutInterval = 0;
         // Destination IP address.
         IPAddress ip;
         // Destination port.
@@ -501,7 +501,7 @@ namespace detail
          *
          * @return The random timeout in milliseconds.
          */
-        unsigned long getRandomTimeout();
+        uint32_t getRandomTimeout();
 
         /**
           @brief Add a new packet to the outgoing queue.
