@@ -58,9 +58,6 @@ doxygen
 ```
 The documentation will be accesible from `./html/index.html`.
 
-## Particle Photon, Core compatible
-Check <a href="https://github.com/hirotakaster/CoAP">this</a> version of the library for Particle Photon, Core compatibility.
-
 ## Contributing
 Contributions are welcome. You may contribute by:
 - Opening issues to report bugs or ask for missing features.

@@ -402,18 +402,17 @@ private:
      */
     char _uriPath[COAP_MAX_OBSERVE_PATH_LEN] = {0};
 
-public:
     /**
-     * Remove the observer from the list of active _observers.
+     * Mark the observer instance as inactive.
      *
      * An observer can only be added from the Coap class (@ref Coap::addObserver).
-     * An observer can be removed either by the Coap class (@ref Coap::removeObserver) or
-     * by itself (@ref CoapObserver::remove).
+     * An observer can be removed either by calling @ref Coap::removeObserver.
      *
      * @return true if the observer was removed successfully, false if the observer was already inactive.
      */
-    bool remove();
+    bool _deactivate();
 
+public:
     /**
      * @brief Get the last seen time in milliseconds.
      *
@@ -574,6 +573,16 @@ private:
     CoapObserver _observers[COAP_MAX_OBSERVERS];
 
     /**
+     * Parse the options according to specifications.
+     *
+     * @return 0 in case of success, -1 on error.
+     *
+     * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+     */
+    int _parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buffer, size_t bufferLength);
+
+public:
+    /**
      * @brief Send a CoAP packet to the specified IP.
      *
      * It uses the default CoAP port, see @ref COAP_DEFAULT_PORT.
@@ -591,16 +600,6 @@ private:
      */
     int sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port);
 
-    /**
-     * Parse the options according to specifications.
-     *
-     * @return 0 in case of success, -1 on error.
-     *
-     * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
-     */
-    int parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buffer, size_t bufferLength);
-
-public:
     /**
      * @brief Construct a CoAP instance using the given UDP transport.
      *
@@ -634,16 +633,16 @@ public:
     int notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
     /**
-     * @brief Add a new observer for a specific URL.
+     * @brief Add a new observer for the specified observed path.
      *
-     * If the observer is already registered, the existing observer is returned.
+     * If the observer is already registered, the existing observer is returned in the `observerOut` parameter.
      *
      * @param observerOut Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
      * @param path The path to observe.
      * @param ip The IP address of the observer.
      * @param port The port of the observer.
-     * @param token The token used by the observer.
-     * @param tokenLength The length of the token.
+     * @param token The token used by the observer, normally obtained from the request packet.
+     * @param tokenLength The length of the token, normally obtained from the request packet
      *
      * @return 0 if the observer was added successfully.
      *         -1 if the url is invalid.
@@ -652,16 +651,37 @@ public:
     int addObserver(CoapObserver **observerOut, const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
     /**
-     * @brief Get the current number of active observers.
+     * @brief Get the number of currently active observers.
      */
     unsigned int getObserverCount();
 
     /**
-     * @brief Remove an observer for a specific path.
+     * @brief Remove an observer.
+     *
+     * The observer is identified by the combination of path, IP, port, and token.
      *
      * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
      * after a GET request for deregistration, the server should send a response to the client.
+     * The caller is responsible for sending the response using @ref sendResponse.
      * @see sendResponse.
+     *
+     * @return true if the observer was found and removed.
+     * @return false if the observer was not found.
+     */
+    bool removeObserver(const CoapObserver &observer);
+
+    /**
+     * @brief Remove an observer using the combination of path, IP, port, and token.
+     *
+     * The observer is identified by the combination of path, IP, port, and token.
+     *
+     * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
+     * after a GET request for deregistration, the server should send a response to the client.
+     * The caller is responsible for sending the response using @ref sendResponse.
+     * @see sendResponse.
+     *
+     * @return true if the observer was found and removed.
+     * @return false if the observer was not found.
      */
     bool removeObserver(const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 

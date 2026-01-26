@@ -432,7 +432,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE typ
     return messageId;
 }
 
-int Coap::parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buffer, size_t bufferLength)
+int Coap::_parseOption(CoapOption *option, uint16_t *runningDelta, uint8_t **buffer, size_t bufferLength)
 {
     uint8_t *p = *buffer;
     uint8_t headerLength = 1;
@@ -537,7 +537,7 @@ bool Coap::loop()
             while (optionIndex < COAP_MAX_OPTION_NUM && p < end && *p != 0xFF)
             {
                 // packet.options[optionIndex];
-                if (0 != parseOption(&packet.options[optionIndex], &delta, &p, end - p))
+                if (0 != _parseOption(&packet.options[optionIndex], &delta, &p, end - p))
                     return false;
                 optionIndex++;
             }
@@ -728,14 +728,19 @@ bool Coap::removeObserver(const char *path, IPAddress ip, uint16_t port, const u
             continue;
         if (_observers[i]._ip == ip && _observers[i]._port == port && helpers::pathEquals(_observers[i]._uriPath, path) && helpers::tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
         {
-            return _observers[i].remove();
+            return _observers[i]._deactivate();
         }
     }
 
     return false;
 }
 
-bool CoapObserver::remove()
+bool Coap::removeObserver(const CoapObserver &observer)
+{
+    return Coap::removeObserver(observer._uriPath, observer._ip, observer._port, observer._token, observer._tokenLength);
+}
+
+bool CoapObserver::_deactivate()
 {
     if (!this->_active)
         return false; // Already inactive. Nothing to remove.
