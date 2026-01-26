@@ -1,10 +1,16 @@
 /**
  * A CoAP server.
- * 
- * The server can be tested with:
+ *
+ * The current light status can be read using:
  * ```
- * coap-client-notls -v 9 -m get coap://192.168.0.99/light
+ * coap-client-notls -m get coap://192.168.0.99/light
  * ```
+ * and the light can be set ON or OFF, respectively, by using:
+ * ```
+ * coap-client-notls -m put coap://192.168.0.99/light -e "1"
+ * coap-client-notls -m put coap://192.168.0.99/light -e "0"
+ * ```
+ * Note that on some boards, logic may be inverted.
  * 
  * In addition, this example also acts as client, sending a GET request every second.
  * To receive such requests, start a CoAP server on the remote machine. To test, you may use:
@@ -19,7 +25,7 @@
 #include <EthernetUdp.h>
 #include <ProsecCoAP.h>
 
-#define LEDP 9
+#define LEDP LED_BUILTIN
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress dev_ip(192, 168, 0, 99); // Set your own.
@@ -37,43 +43,36 @@ Coap coap(Udp);
 // LED STATE
 bool LEDSTATE;
 
-// CoAP server endpoint URL
+// CoAP server endpoint URL.
+// The expected payload input is one character.
+//
+// A GET request will only return the current value.
+// A PUT request will set a new value.
+// The response will be a string, either "1" or "0".
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
-  Serial.println("[Light] ON/OFF");
-
-  // send response
-  char p[2];                                // 1 character + null terminator
-  p[0] = ((const char *)packet.payload)[0]; // Only the first character from the payload is considered here.
-  p[1] = '\0';
-
-  String message(p);
-
-  if (message.equals("0"))
-    LEDSTATE = false;
-  else if (message.equals("1"))
-    LEDSTATE = true;
-
-  if (LEDSTATE)
-  {
-    digitalWrite(LEDP, HIGH);
-    coap.sendResponse(ip, port, packet, COAP_CONTENT, "1", 1, COAP_TEXT_PLAIN);
-  }
-  else
-  {
-    digitalWrite(LEDP, LOW);
-    coap.sendResponse(ip, port, packet, COAP_CONTENT, "0", 1, COAP_TEXT_PLAIN);
-  }
+  if(packet.code == COAP_PUT && packet.payloadLength) {
+    Serial.println("Incoming PUT");
+    // Process incoming value, considering first byte only.
+    LEDSTATE = ((const char*)packet.payload)[0] == '1' ? HIGH : LOW; 
+    digitalWrite(LEDP, LEDSTATE);
+    }
+  
+  // Send response with current value.
+  coap.sendResponse(ip, port, packet, COAP_CONTENT, LEDSTATE?"1":"0", 1, COAP_TEXT_PLAIN);
+  Serial.print("[Light] ");
+  Serial.println(LEDSTATE);
 }
 
 // CoAP client response callback. This will receive the ACK responses.
 void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
-  if(packet.payloadLength) {
+  if (packet.payloadLength)
+  {
     Serial.println("[Coap Response ACK] Message ID ");
     Serial.print(packet.messageId);
     Serial.print(" from ");
-    Serial.print(ip.toString()+":"+port);
+    Serial.print(ip + ":" + port);
     Serial.println();
   }
 }

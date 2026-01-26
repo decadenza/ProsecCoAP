@@ -149,16 +149,25 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
 
 /**
- * @brief Limit to the number of outgoing confirmable messages being tracked.
+ * @brief The CoAP message types.
  */
 typedef enum
 {
+    /** Confirmable message */
     COAP_CON = 0,
+    /** Non-confirmable message */
     COAP_NONCON = 1,
+    /** Acknowledgement message */
     COAP_ACK = 2,
+    /** Reset message */
     COAP_RESET = 3
 } COAP_TYPE;
 
+/**
+ * @brief The CoAP method codes.
+ *
+ * These will be part of the CoAP packet code field.
+ */
 typedef enum
 {
     COAP_GET = 1,
@@ -167,32 +176,65 @@ typedef enum
     COAP_DELETE = 4
 } COAP_METHOD;
 
+/**
+ * @brief The CoAP response codes.
+ *
+ * The response codes are defined in Section 5.9 of RFC 7252.
+ * https://datatracker.ietf.org/doc/html/rfc7252#section-5.9
+ */
 typedef enum
 {
+    /** Empty message */
     COAP_EMPTY = COAP_RESPONSE_CODE_ENCODE(0, 0),
+
+    // SECTION 2.xx Success response codes.
+    /** Like HTTP 201 "Created", only used in response to POST and PUT requests. */
     COAP_CREATED = COAP_RESPONSE_CODE_ENCODE(2, 1),
+    /** Like HTTP 204 "No Content", only used in response to DELETE or POST requests that cause the resource to cease being available. */
     COAP_DELETED = COAP_RESPONSE_CODE_ENCODE(2, 2),
+    /** Related to HTTP 304 "Not Modified", indicates the response identified by the entity-tag is valid. */
     COAP_VALID = COAP_RESPONSE_CODE_ENCODE(2, 3),
+    /** Like HTTP 204 "No Content", only used in response to POST and PUT requests. */
     COAP_CHANGED = COAP_RESPONSE_CODE_ENCODE(2, 4),
+    /** Like HTTP 200 "OK", only used in response to GET requests. */
     COAP_CONTENT = COAP_RESPONSE_CODE_ENCODE(2, 5),
 
+    // SECTION 4.xx Client Error response codes.
+    /** Like HTTP 400 "Bad Request". */
     COAP_BAD_REQUEST = COAP_RESPONSE_CODE_ENCODE(4, 0),
+    /** The client is not authorized to perform the requested action. */
     COAP_UNAUTHORIZED = COAP_RESPONSE_CODE_ENCODE(4, 1),
+    /** The request could not be understood due to one or more unrecognized or malformed options. */
     COAP_BAD_OPTION = COAP_RESPONSE_CODE_ENCODE(4, 2),
+    /** Like HTTP 403 "Forbidden". */
     COAP_FORBIDDEN = COAP_RESPONSE_CODE_ENCODE(4, 3),
+    /** Like HTTP 404 "Not Found". */
     COAP_NOT_FOUND = COAP_RESPONSE_CODE_ENCODE(4, 4),
+    /** Like HTTP 405 "Method Not Allowed" but with no parallel to the "Allow" header field. */
     COAP_METHOD_NOT_ALLOWED = COAP_RESPONSE_CODE_ENCODE(4, 5),
+    /** Like HTTP 406 "Not Acceptable", but with no response entity. */
     COAP_NOT_ACCEPTABLE = COAP_RESPONSE_CODE_ENCODE(4, 6),
+    /** Like HTTP 412 "Precondition Failed". */
     COAP_PRECONDITION_FAILED = COAP_RESPONSE_CODE_ENCODE(4, 12),
+    /** Like HTTP 413 "Request Entity Too Large". */
     COAP_REQUEST_ENTITY_TOO_LARGE = COAP_RESPONSE_CODE_ENCODE(4, 13),
+    /** Like HTTP 415 "Unsupported Media Type". */
     COAP_UNSUPPORTED_CONTENT_FORMAT = COAP_RESPONSE_CODE_ENCODE(4, 15),
 
+    // SECTION 5.xx Server Error response codes.
+    /** Like HTTP 500 "Internal Server Error". */
     COAP_INTERNAL_SERVER_ERROR = COAP_RESPONSE_CODE_ENCODE(5, 0),
+    /** Like HTTP 501 "Not Implemented". */
     COAP_NOT_IMPLEMENTED = COAP_RESPONSE_CODE_ENCODE(5, 1),
+    /** Like HTTP 502 "Bad Gateway". */
     COAP_BAD_GATEWAY = COAP_RESPONSE_CODE_ENCODE(5, 2),
+    /** Like HTTP 503 "Service Unavailable" but uses Max-Age Option instead of "Retry-After" header. */
     COAP_SERVICE_UNAVAILABLE = COAP_RESPONSE_CODE_ENCODE(5, 3),
+    /** Like HTTP 504 "Gateway Timeout". */
     COAP_GATEWAY_TIMEOUT = COAP_RESPONSE_CODE_ENCODE(5, 4),
+    /** The server is unable or unwilling to act as a forward-proxy for the URI specified in the Proxy-Uri Option. */
     COAP_PROXYING_NOT_SUPPORTED = COAP_RESPONSE_CODE_ENCODE(5, 5)
+    /** @} */ // End of Server Error group
 } COAP_RESPONSE_CODE;
 
 /**

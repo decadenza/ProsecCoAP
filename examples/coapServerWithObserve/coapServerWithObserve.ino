@@ -80,7 +80,6 @@ void setup()
 
 void endpointSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
-    SERIAL_PRINTLN("CALLED!");
     COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
 
     if (observeValue == COAP_OBSERVE_VALUE_REGISTER)
