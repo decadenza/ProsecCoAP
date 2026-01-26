@@ -43,7 +43,7 @@ arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp826
 3. Run `make`.
 
 #### Functional tests
-The [examples](https://github.com/decadenza/ProsecCoAP/examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
+The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
 - Use two devices and check serial monitor of each.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
   For example, [libcoap](https://github.com/obgm/libcoap) by compiling it yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
@@ -71,7 +71,7 @@ Please write code following the [Arduino Style Guide](https://docs.arduino.cc/le
 
 ## Release process memo
 A new version is released following these steps:
-1. Update [library.properties](https://github.com/decadenza/ProsecCoAP/library.properties) as required, using a new `vX.Y.Z` tag.
+1. Update [library.properties](https://github.com/decadenza/ProsecCoAP/blob/main/library.properties) as required, using a new `vX.Y.Z` tag.
 2. Create the corresponding `vX.Y.Z` tag and a new release (for GitHub and Arduino library manager). The logs for the Arduino library manager bot can be checked [here](https://downloads.arduino.cc/libraries/logs/github.com/decadenza/ProsecCoAP/).
 3. Publish the new library to PlatformIO, running the following from the main project folder:
 ```
