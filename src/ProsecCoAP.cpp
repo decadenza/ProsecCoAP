@@ -653,49 +653,6 @@ int Coap::sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, C
     return this->sendPacket(requestPacket, ip, port);
 }
 
-static uint8_t encodeUintOption(uint32_t value, uint8_t out[3])
-{
-    if (value == 0)
-    {
-        // Special case: zero is encoded as a zero-length option.
-        // https://datatracker.ietf.org/doc/html/rfc7252#section-3.2
-        return 0;
-    }
-    if (value <= 0xFF)
-    {
-        out[0] = (uint8_t)value;
-        return 1;
-    }
-    if (value <= 0xFFFF)
-    {
-        out[0] = (uint8_t)(value >> 8);
-        out[1] = (uint8_t)(value & 0xFF);
-        return 2;
-    }
-    out[0] = (uint8_t)((value >> 16) & 0xFF);
-    out[1] = (uint8_t)((value >> 8) & 0xFF);
-    out[2] = (uint8_t)(value & 0xFF);
-    return 3;
-}
-
-static bool pathEquals(const char *a, const char *b)
-{
-    if (a == NULL || b == NULL)
-        return false;
-    return strcmp(a, b) == 0;
-}
-
-static bool tokenEquals(const uint8_t *a, uint8_t aLength, const uint8_t *b, uint8_t bLength)
-{
-    if (aLength != bLength)
-        return false;
-    if (aLength == 0) // Both lengths are zero.
-        return true;
-    if (a == NULL || b == NULL)
-        return false;
-    return memcmp(a, b, aLength) == 0;
-}
-
 int Coap::addObserver(CoapObserver **observerOut, const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
 {
     if (path == NULL)
@@ -715,7 +672,7 @@ int Coap::addObserver(CoapObserver **observerOut, const char *path, IPAddress ip
     {
         if (!_observers[i]._active)
             continue;
-        if (_observers[i]._ip == ip && _observers[i]._port == port && pathEquals(_observers[i]._uriPath, path) && tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
+        if (_observers[i]._ip == ip && _observers[i]._port == port && helpers::pathEquals(_observers[i]._uriPath, path) && helpers::tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
         {
             // Duplicate active observer, just update last seen time.
             _observers[i]._lastSeenMs = now;
@@ -768,7 +725,7 @@ bool Coap::removeObserver(const char *path, IPAddress ip, uint16_t port, const u
     {
         if (!_observers[i]._active)
             continue;
-        if (_observers[i]._ip == ip && _observers[i]._port == port && pathEquals(_observers[i]._uriPath, path) && tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
+        if (_observers[i]._ip == ip && _observers[i]._port == port && helpers::pathEquals(_observers[i]._uriPath, path) && helpers::tokenEquals(_observers[i]._token, _observers[i]._tokenLength, token, tokenLength))
         {
             return _observers[i].remove();
         }
@@ -803,7 +760,7 @@ int Coap::notifyObservers(const char *observedPath, const void *payload, size_t 
     {
         if (!_observers[i]._active)
             continue;
-        if (!pathEquals(_observers[i]._uriPath, observedPath))
+        if (!helpers::pathEquals(_observers[i]._uriPath, observedPath))
             continue;
 
         if (COAP_OBSERVER_LEASE_MS > 0 && (unsigned long)(now - _observers[i]._lastSeenMs) > COAP_OBSERVER_LEASE_MS)
@@ -824,7 +781,7 @@ int Coap::notifyObservers(const char *observedPath, const void *payload, size_t 
 
         uint32_t observeSequence = ++_observers[i]._observationSequentialNumber;
         uint8_t observeBuf[3] = {0};
-        uint8_t observeLength = encodeUintOption(observeSequence, observeBuf);
+        uint8_t observeLength = helpers::encodeUintOption(observeSequence, observeBuf);
         packet.addOption(COAP_OBSERVE, observeLength, observeBuf);
 
         uint8_t optionBuffer[2] = {0};

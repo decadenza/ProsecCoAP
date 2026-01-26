@@ -294,6 +294,7 @@ typedef enum
 
 /**
  * @brief Generate a random message ID.
+ *
  * @return A random 16-bit message ID.
  */
 uint16_t CoapGetRandomMessageId();
