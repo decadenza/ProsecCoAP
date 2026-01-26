@@ -31,7 +31,7 @@ byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress dev_ip(192, 168, 0, 99); // Set your own.
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
+void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
 
 // CoAP server path url callback
 void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port);
@@ -83,7 +83,7 @@ void setup()
   Serial.begin(9600);
 
   Ethernet.begin(mac, dev_ip);
-  Serial.print("My IP address: ");
+  Serial.print("IP address: ");
   Serial.print(Ethernet.localIP());
   Serial.println();
 
