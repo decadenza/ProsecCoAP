@@ -588,7 +588,7 @@ public:
      * @return Number of observers notified successfully.
      * @return -1 if an error occurred.
      */
-    int notifyObservers(const char *observedEndpoint, const void *payload, int payloadLength, COAP_CONTENT_TYPE type);
+    int notifyObservers(const char *observedEndpoint, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
     /**
      * @brief Add a new observer for a specific URL.

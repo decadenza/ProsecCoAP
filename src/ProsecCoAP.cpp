@@ -793,7 +793,7 @@ unsigned long CoapObserver::getLastSeenMs()
     return this->_lastSeenMs;
 }
 
-int Coap::notifyObservers(const char *observedEndpoint, const void *payload, int payloadLength, COAP_CONTENT_TYPE type)
+int Coap::notifyObservers(const char *observedEndpoint, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
 {
     if (observedEndpoint == NULL)
         return -1;
