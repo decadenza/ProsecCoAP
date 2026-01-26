@@ -34,6 +34,12 @@ Navigate to *File > Examples > ProsecCoAP* to get started with some basic exampl
 #### Verify compile errors and warnings
 To quickly verify a successfull build process for multiple boards: 
 1. Install [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation/).
+2. Ensure the core for the supported boards are installed:
+```
+arduino-cli core install arduino:avr
+arduino-cli core install esp32:esp32
+arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
+```
 2. Run `make`.
 
 #### Functional tests
