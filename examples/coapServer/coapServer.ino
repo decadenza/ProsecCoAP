@@ -1,3 +1,17 @@
+/**
+ * A CoAP server.
+ * 
+ * The server can be tested with:
+ * ```
+ * coap-client-notls -v 9 -m get coap://192.168.0.99/light
+ * ```
+ * 
+ * In addition, this example also acts as client, sending a GET request every second.
+ * To receive such requests, start a CoAP server on the remote machine. To test, you may use:
+ * ```
+ * coap-server-notls -A 0.0.0.0 -v 9
+ * ```
+ */
 #include <SPI.h>
 #include <Dhcp.h>
 #include <Dns.h>
@@ -8,7 +22,7 @@
 #define LEDP 9
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
-IPAddress dev_ip(10, 0, 0, 99); // Set your own.
+IPAddress dev_ip(192, 168, 0, 99); // Set your own.
 
 // CoAP client response callback
 void callbackResponse(CoapPacket &packet, IPAddress, uint16_t);
@@ -52,13 +66,16 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
   }
 }
 
-// CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress, uint16_t)
+// CoAP client response callback. This will receive the ACK responses.
+void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
-  Serial.println("[Coap Response got]");
-
-  Serial.write((const char *)packet.payload, packet.payloadLength);
-  Serial.println(); // newline
+  if(packet.payloadLength) {
+    Serial.println("[Coap Response ACK] Message ID ");
+    Serial.print(packet.messageId);
+    Serial.print(" from ");
+    Serial.print(ip.toString()+":"+port);
+    Serial.println();
+  }
 }
 
 void setup()
@@ -99,7 +116,7 @@ void loop()
   Serial.println("Send Request");
   // Constantly send a GET request.
   // Set your own IP to receive it.
-  coap.sendGetRequest(IPAddress(10, 0, 0, 1), COAP_DEFAULT_PORT, "time");
+  coap.sendGetRequest(IPAddress(192, 168, 0, 100), COAP_DEFAULT_PORT, "time"); // Set your own remote IP.
 
   delay(1000);
   coap.loop();
