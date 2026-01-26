@@ -27,9 +27,11 @@ start	KEYWORD2
 loop	KEYWORD2
 server	KEYWORD2
 acknowledgeWith	KEYWORD2
+sendGetRequest	KEYWORD2
+sendPostRequest	KEYWORD2
+sendPutRequest	KEYWORD2
+sendDeleteRequest	KEYWORD2
 sendResponse	KEYWORD2
-get	KEYWORD2
-put	KEYWORD2
 send	KEYWORD2
 notifyObservers	KEYWORD2
 addObserver	KEYWORD2
