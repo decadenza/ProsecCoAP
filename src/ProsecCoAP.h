@@ -638,7 +638,10 @@ namespace detail
 
     /**
      * @brief An item in the retransmission queue.
+     *
+     * The template parameter N defines the maximum binary packet size that can be stored in the item.
      */
+    template <size_t N>
     struct CoapRetrasmissionItem
     {
         // Count of retransmission attempts done.
@@ -652,20 +655,25 @@ namespace detail
         IPAddress ip;
         // Destination port.
         uint16_t port = 0;
-        // The packet that needs to be retransmitted.
-        CoapPacket packet;
+        // The raw packet that needs to be retransmitted.
+        uint8_t packet[N];
     };
 
     /**
      * @brief Class to track outgoing confirmable messages.
      *
+     * Template parameter N defines the maximum binary packet size that can be stored in each item.
+     *
      * This is used by @ref Coap::loop to implement retransmission as per specifications.
      */
+    template <size_t N>
     class CoapRetrasmissionQueue
     {
     private:
         // Store packets for outgoing confirmable retransmissions.
-        CoapRetrasmissionItem _items[COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE]{}; // NOTE: Initialised items will have attempts = COAP_MAX_RETRANSMIT;
+        // NOTE: Initialised items will have attempts = COAP_MAX_RETRANSMIT to indicate they are free.
+        CoapRetrasmissionItem<N> _items[COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE]{};
+
     public:
         /**
          * @brief Generate the random initial timeout between
@@ -723,7 +731,7 @@ namespace detail
  */
 class Coap
 {
-    friend class detail::CoapRetrasmissionQueue; // Allow access to sendPacket.
+    // friend class detail::CoapRetrasmissionQueue; // Allow access to sendPacket.
 
 private:
     UDP *_udp;
