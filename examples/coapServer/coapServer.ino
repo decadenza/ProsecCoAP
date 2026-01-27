@@ -59,8 +59,15 @@ void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
     digitalWrite(LEDP, LEDSTATE);
   }
 
-  // Send response with current value.
-  coap.sendResponse(ip, port, packet, COAP_CONTENT, LEDSTATE ? "1" : "0", 1, COAP_TEXT_PLAIN);
+  // Payload is ready. Send a piggybacked response.
+  //coap.sendResponse(ip, port, packet, COAP_CONTENT, LEDSTATE ? "1" : "0", 1, COAP_TEXT_PLAIN);
+
+  // Payload may not be ready. Send an Empty Ackwnoledgement to tell the client that the request has been received...
+  coap.sendEmptyAcknowledgement(ip, port, packet);
+  delay(50); // Simulate some delay caused by processing...
+  //... and when the payload is ready, send a "separate response".
+  coap.sendSeparateResponse(ip, port, packet, COAP_CONTENT, LEDSTATE ? "1" : "0", 1, COAP_TEXT_PLAIN);
+  
   Serial.print("[Light] ");
   Serial.println(LEDSTATE);
 }

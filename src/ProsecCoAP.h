@@ -140,6 +140,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * @{
  */
+/**
+ * @brief The CoAP version.
+ *
+ * CoAP version as per RFC 7252.
+ */
+#define COAP_VERSION 0x01
 #define COAP_HEADER_SIZE 4u
 #define COAP_OPTION_HEADER_SIZE 1
 #define COAP_PAYLOAD_MARKER 0xFF
@@ -830,7 +836,9 @@ public:
      *
      * According to the protocol, an "Empty Message" is a message with a Code of 0.00;
      * neither a request nor a response. An Empty message only contains the 4-byte header.
-     * An empty message is always confirmable (COAP_CON). Non confirmable empty messages cannot be sent.
+     * A Confirmable message always carries either a request or response, unless it is used only
+     * to elicit a Reset message, in which case it is Empty.
+     * The recipient will reply with a Reset message upon receiving this Empty Confirmable message.
      *
      * Note that this is different from an Empty Acknowledgement, @ref sendEmptyAcknowledgement.
      *
@@ -838,7 +846,7 @@ public:
      * @param port The port to send the message to.
      * @return The message ID used for the empty message.
      */
-    uint16_t sendEmptyMessage(IPAddress ip, uint16_t port);
+    uint16_t sendEmptyConfirmableMessage(IPAddress ip, uint16_t port);
 
     // TODO: int sendResetMessage(IPAddress ip, uint16_t port, uint16_t messageId);
 
@@ -856,6 +864,7 @@ public:
      * @return 0 on success, -1 on failure.
      */
     int sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requestPacket);
+
     /**
      * @brief Send a piggybacked response.
      *

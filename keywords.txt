@@ -32,7 +32,7 @@ sendPostRequest	KEYWORD2
 sendPutRequest	KEYWORD2
 sendDeleteRequest	KEYWORD2
 sendResponse	KEYWORD2
-sendEmptyMessage	KEYWORD2
+sendEmptyConfirmableMessage	KEYWORD2
 sendEmptyAcknowledgement	KEYWORD2
 sendSeparateResponse	KEYWORD2
 send	KEYWORD2

@@ -152,14 +152,14 @@ int Coap::sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port)
     uint16_t packetSize = 0;
 
     // Coap packet base header.
-    *p = 0x01 << 6;
+    *p = COAP_VERSION << 6;
     *p |= (packet.type & 0x03) << 4;
     *p++ |= (packet.tokenLength & 0x0F);
     *p++ = packet.code;
     *p++ = (packet.messageId >> 8);
     *p++ = (packet.messageId & 0xFF);
     p = this->_txBuffer + COAP_HEADER_SIZE;
-    packetSize += 4;
+    packetSize += COAP_HEADER_SIZE;
 
     // Add the token, if present and valid.
     if (packet.token != NULL && packet.tokenLength <= 0x0F)
@@ -635,16 +635,13 @@ bool Coap::loop()
     return true;
 }
 
-uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
+uint16_t Coap::sendEmptyConfirmableMessage(IPAddress ip, uint16_t port)
 {
+    // Build the packet.
     CoapPacket packet;
-    packet.type = COAP_ACK;
+    packet.type = COAP_CON;
+    packet.tokenLength = 0;
     packet.code = COAP_EMPTY;
-    packet.token = NULL;
-    packet.tokenLength = 0; // The Token Length field MUST be set to 0.
-    packet.payload = NULL;
-    packet.payloadLength = 0; // No payload.
-    packet.optionCount = 0;
     packet.messageId = CoapGetNextMessageId();
 
     return this->sendPacket(packet, ip, port);
@@ -652,7 +649,14 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
 
 int Coap::sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requestPacket)
 {
-    return this->sendResponse(ip, port, requestPacket, COAP_EMPTY, NULL, 0, COAP_NONE);
+    // Build the packet.
+    CoapPacket packet;
+    packet.type = COAP_ACK;
+    packet.tokenLength = 0;
+    packet.code = COAP_EMPTY;
+    packet.messageId = requestPacket.messageId;
+
+    return this->sendPacket(packet, ip, port);
 }
 
 int Coap::sendSeparateResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
