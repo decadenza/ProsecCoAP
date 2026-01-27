@@ -26,7 +26,7 @@ CoapGetNextMessageId	KEYWORD2
 start	KEYWORD2
 loop	KEYWORD2
 server	KEYWORD2
-acknowledgeWith	KEYWORD2
+responseHandler	KEYWORD2
 sendGetRequest	KEYWORD2
 sendPostRequest	KEYWORD2
 sendPutRequest	KEYWORD2

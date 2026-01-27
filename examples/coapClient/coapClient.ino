@@ -48,7 +48,7 @@ void setup()
   // Handler acknowledgment responses.
   // This is a single handler for all ACK responses.
   Serial.println("Setup Response Callback");
-  coap.acknowledgeWith(callbackResponse);
+  coap.responseHandler(callbackResponse);
 
   // start coap server/client
   coap.start();

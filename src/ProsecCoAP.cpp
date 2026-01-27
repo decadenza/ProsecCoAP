@@ -579,20 +579,20 @@ bool Coap::loop()
             }
         }
 
-        if (packet.type == COAP_ACK)
+        if (packet.type == COAP_ACK || packet.type == COAP_RESET)
         {
-            // First, mark the message as received in the retransmission queue (if present).
+            // First, mark the message as correctly received by the remote server
+            // in the retransmission queue (if present).
             this->_confirmableMessageQueue.markItemAsReceived(packet.messageId);
 
             // Pass the packet to the acknowledgment handler, if set.
-            if (_acknowledgementHandler)
+            if (_responseHandler)
             {
-                _acknowledgementHandler(packet, _udp->remoteIP(), _udp->remotePort());
+                _responseHandler(packet, _udp->remoteIP(), _udp->remotePort());
             }
         }
         else
         {
-
             String path = "";
             path.reserve(64); // Pre-allocate memory to avoid fragmentation.
 
