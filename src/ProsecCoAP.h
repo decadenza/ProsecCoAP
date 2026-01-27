@@ -433,7 +433,7 @@ private:
     uint8_t _token[8] = {0};
     uint8_t _tokenLength = 0;
     uint32_t _observationSequentialNumber = 0;
-    uint32_t _lastSeenMs = 0; // TODO: Implement cleaning up old _observers.
+    uint32_t _lastSeenMs = 0;
     /**
      * @brief The URI path being observed.
      */
@@ -456,6 +456,11 @@ public:
      * Note that this value will wrap around after an uptime of approximately 49 days.
      */
     uint32_t getLastSeenMs();
+
+    /**
+     * @brief Update the last seen time to the current time.
+     */
+    void updateLastSeenMs();
 };
 
 /**
@@ -673,6 +678,7 @@ public:
      * @brief Add a new observer for the specified observed path.
      *
      * If the observer is already registered, the existing observer is returned in the `observerOut` parameter.
+     * The observer last seen time is set to the current time.
      *
      * @param observerOut Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
      * @param path The path to observe.
@@ -695,12 +701,9 @@ public:
     /**
      * @brief Remove an observer.
      *
-     * The observer is identified by the combination of path, IP, port, and token.
-     *
      * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
      * after a GET request for deregistration, the server should send a response to the client.
      * The caller is responsible for sending the response using @ref sendResponse.
-     * @see sendResponse.
      *
      * @return true if the observer was found and removed.
      * @return false if the observer was not found.
@@ -710,7 +713,7 @@ public:
     /**
      * @brief Remove an observer using the combination of path, IP, port, and token.
      *
-     * The observer is identified by the combination of path, IP, port, and token.
+     * The observer is found by the first matching path, IP, port, and token.
      *
      * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
      * after a GET request for deregistration, the server should send a response to the client.
@@ -721,6 +724,20 @@ public:
      * @return false if the observer was not found.
      */
     bool removeObserver(const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+
+    /**
+     * @brief Remove all the observers of the given path.
+     *
+     * @return The number of observers removed.
+     */
+    int removeObservers(const char *path);
+
+    /**
+     * @brief Remove all the observers from any path.
+     *
+     * @return The number of observers removed.
+     */
+    int removeAllObservers();
 
     /**
      * @brief Start the server on the default port.

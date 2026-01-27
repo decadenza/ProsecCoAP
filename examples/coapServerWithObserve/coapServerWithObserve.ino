@@ -104,7 +104,7 @@ void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
     }
     case COAP_OBSERVE_VALUE_DEREGISTER:
     {
-        coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength);
+        coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength); // Remove the observer of "subscribe" path.
         coap.sendResponse(ip, port, packet, COAP_CONTENT, "unsubscribed", strlen("unsubscribed"), COAP_TEXT_PLAIN);
         SERIAL_PRINTLN("Unsubscribed!");
         return;

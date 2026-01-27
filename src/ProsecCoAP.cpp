@@ -740,6 +740,41 @@ bool Coap::removeObserver(const CoapObserver &observer)
     return Coap::removeObserver(observer._uriPath, observer._ip, observer._port, observer._token, observer._tokenLength);
 }
 
+int Coap::removeObservers(const char *path)
+{
+    if (path == NULL)
+        return 0;
+
+    int removedCount = 0;
+    for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
+    {
+        if (!_observers[i]._active)
+            continue;
+        if (helpers::pathEquals(_observers[i]._uriPath, path))
+        {
+            if (_observers[i]._deactivate())
+            {
+                removedCount++;
+            }
+        }
+    }
+
+    return removedCount;
+}
+
+int Coap::removeAllObservers()
+{
+    int removedCount = 0;
+    for (int i = 0; i < COAP_MAX_OBSERVERS; i++)
+    {
+        if (_observers[i]._deactivate())
+        {
+            removedCount++;
+        }
+    }
+    return removedCount;
+}
+
 bool CoapObserver::_deactivate()
 {
     if (!this->_active)
@@ -753,6 +788,11 @@ bool CoapObserver::_deactivate()
 uint32_t CoapObserver::getLastSeenMs()
 {
     return this->_lastSeenMs;
+}
+
+void CoapObserver::updateLastSeenMs()
+{
+    this->_lastSeenMs = millis();
 }
 
 int Coap::notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
