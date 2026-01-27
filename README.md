@@ -1,4 +1,4 @@
-# ProsecCoAP 🥂 - CoAP client/server library for Arduino.
+# ProsecCoAP 🥂 - CoAP client/server library for Arduino
 
 <a href="http://coap.space/" target=_blank>Constrained Application Protocol (CoAP)</a> server/client library for Arduino IDE/PlatformIO, ESP32, ESP8266.
 
