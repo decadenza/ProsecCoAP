@@ -392,11 +392,6 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE typ
     sprintf(ipAddress, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
     packet.addOption(COAP_URI_HOST, strlen(ipAddress), (uint8_t *)ipAddress);
 
-    /*
-        Add Query Support
-        Author: @YelloooBlue
-    */
-
     // Parse path.
     size_t idx = 0;
     bool hasQuery = false;
@@ -680,11 +675,14 @@ int Coap::sendSeparateResponse(IPAddress ip, uint16_t port, CoapPacket &requestP
     responsePacket.messageId = CoapGetNextMessageId(); // Message ID is new for separate responses.
     responsePacket.optionCount = 0;
 
-    // Adding Content-Format option.
-    uint8_t optionValue[2] = {0};
-    optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
-    optionValue[1] = ((uint16_t)type & 0x00FF);
-    responsePacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+    if (type != COAP_NONE)
+    {
+        // Adding Content-Format option.
+        uint8_t optionValue[2] = {0};
+        optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
+        optionValue[1] = ((uint16_t)type & 0x00FF);
+        responsePacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+    }
 
     return this->sendPacket(responsePacket, ip, port);
 }
@@ -702,11 +700,14 @@ int Coap::sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, C
     responsePacket.messageId = requestPacket.messageId; // Message ID remains the same of the request for piggybacked responses.
     responsePacket.optionCount = 0;
 
-    // Adding Content-Format option.
-    uint8_t optionValue[2] = {0};
-    optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
-    optionValue[1] = ((uint16_t)type & 0x00FF);
-    responsePacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+    if (type != COAP_NONE)
+    {
+        // Adding Content-Format option.
+        uint8_t optionValue[2] = {0};
+        optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
+        optionValue[1] = ((uint16_t)type & 0x00FF);
+        responsePacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+    }
 
     return this->sendPacket(responsePacket, ip, port);
 }
@@ -887,10 +888,13 @@ int Coap::notifyObservers(const char *observedPath, const void *payload, size_t 
         uint8_t observeLength = helpers::encodeUintOption(observeSequence, observeBuf);
         packet.addOption(COAP_OBSERVE, observeLength, observeBuf);
 
-        uint8_t optionBuffer[2] = {0};
-        optionBuffer[0] = ((uint16_t)type & 0xFF00) >> 8;
-        optionBuffer[1] = ((uint16_t)type & 0x00FF);
-        packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
+        if (type != COAP_NONE)
+        {
+            uint8_t optionBuffer[2] = {0};
+            optionBuffer[0] = ((uint16_t)type & 0xFF00) >> 8;
+            optionBuffer[1] = ((uint16_t)type & 0x00FF);
+            packet.addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
+        }
 
         // NOTE: A notification is like a CoAP response, so it carries no POST method.
         if (this->sendPacket(packet, _observers[i]._ip, _observers[i]._port) == 0) // 0 means success
