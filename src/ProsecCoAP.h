@@ -51,6 +51,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define COAP_MAX_CALLBACK 10
 #endif
+#ifndef COAP_TOKEN_LENGTH
+/**
+ * @brief The length of the CoAP token used by default.
+ *
+ * Functions may explicitly specify a different token length.
+ * Whenever the library needs to generate a token, it will use this length.
+ *
+ * The maximum length for a CoAP token is 8 bytes.
+ * @see COAP_MAX_TOKEN_LENGTH
+ *
+ * This value can be overridden.
+ */
+#define COAP_TOKEN_LENGTH 2
+#endif
 #ifndef COAP_MAX_OPTION_NUM
 /**
  * @brief Maximum number of options in a CoAP packet.
@@ -147,7 +161,12 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define COAP_DEFAULT_PORT 5683
 #define COAP_RESPONSE_CODE_ENCODE(class, detail) ((class << 5) | (detail))
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
-
+/**
+ * @brief The maximum length of a CoAP token.
+ *
+ * See also https://datatracker.ietf.org/doc/html/rfc7252#section-5.3.1.
+ */
+#define COAP_MAX_TOKEN_LENGTH 8U
 /**
  * @brief The CoAP message types.
  */
@@ -293,11 +312,28 @@ typedef enum
  */
 
 /**
- * @brief Generate a random message ID.
+ * @brief Get the next Message ID.
  *
- * @return A random 16-bit message ID.
+ * Message ID are sequentially assigned, starting from a random value.
+ * The role of the Message ID is only to detect duplicates.
+ *
+ * @return A 16-bit message ID.
  */
-uint16_t CoapGetRandomMessageId();
+uint16_t CoapGetNextMessageId();
+
+/**
+ * @brief Generate a random token.
+ *
+ * For functions where the token is not expicitly defined, this function
+ * will be called using a token with the default length of @ref COAP_TOKEN_LENGTH.
+ *
+ * @param buffer The buffer where to store the generated token.
+ * @param length The length (in bytes) of the token to generate.
+ *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes. Any greater value will be clamped.
+ *
+ * @see CoapPacket::token
+ */
+void CoapGenerateRandomToken(uint8_t *buffer, size_t length);
 
 /** @} */ // End of Functions group
 
@@ -344,9 +380,11 @@ public:
      */
     uint8_t code = 0;
     /**
-     * @brief The CoAP message token.
+     * @brief The CoAP token.
      *
-     * The token is used to match a response with a request.
+     * A token is intended for use as a client-local identifier for
+     * differentiating between concurrent requests.
+     * The token can be 0-8 bytes long.
      */
     const uint8_t *token = NULL;
     /**

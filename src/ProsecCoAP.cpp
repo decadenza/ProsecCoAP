@@ -2,9 +2,31 @@
 #include "ProsecCoAP.h"
 #include "utility/helpers.h"
 
-uint16_t CoapGetRandomMessageId()
+uint16_t CoapGetNextMessageId()
 {
-    return (uint16_t)random(1, 0xFFFF);
+    // Message ID is a simple sequential identifier.
+    // However, to avoid collisions after a reset, start with a random value.
+    static uint16_t id = (uint16_t)random(0, 0xFFFF);
+    return id++;
+}
+
+void CoapGenerateRandomToken(uint8_t *buffer, size_t length)
+{
+
+    // Clamp length to maximum allowed token length to respect protocol specifications.
+    length = length > COAP_MAX_TOKEN_LENGTH ? COAP_MAX_TOKEN_LENGTH : length;
+
+    while (length > 0)
+    {
+        // Taking the full range of random values, including negative ones, and casting to uint32_t.
+        // NOTE: It is more efficient to generate 4 bytes at a time.
+        // The endianness is irrelevant for a random value.
+        uint32_t r = random(0xF0000000, 0x0FFFFFFF);
+        size_t chunkSize = length > 4 ? 4 : length;
+        memcpy(buffer, &r, chunkSize);
+        buffer += chunkSize;
+        length -= chunkSize; // Length will become 0 on last loop.
+    }
 }
 
 void CoapPacket::addOption(COAP_OPTION_NUMBER number, uint8_t length, uint8_t *value)
@@ -296,7 +318,9 @@ Coap::sendGetRequest(IPAddress ip, uint16_t port, const char *path)
 
 uint16_t Coap::sendGetRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable)
 {
-    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_GET, NULL, 0, NULL, 0);
+    uint8_t token[COAP_TOKEN_LENGTH];
+    CoapGenerateRandomToken(token, COAP_TOKEN_LENGTH);
+    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_GET, token, COAP_TOKEN_LENGTH, NULL, 0);
 }
 
 uint16_t Coap::sendDeleteRequest(IPAddress ip, uint16_t port, const char *path)
@@ -306,7 +330,9 @@ uint16_t Coap::sendDeleteRequest(IPAddress ip, uint16_t port, const char *path)
 
 uint16_t Coap::sendDeleteRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable)
 {
-    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_DELETE, NULL, 0, NULL, 0);
+    uint8_t token[COAP_TOKEN_LENGTH];
+    CoapGenerateRandomToken(token, COAP_TOKEN_LENGTH);
+    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_DELETE, token, COAP_TOKEN_LENGTH, NULL, 0);
 }
 
 uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength)
@@ -316,7 +342,9 @@ uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *path, con
 
 uint16_t Coap::sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable)
 {
-    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, NULL, 0, (uint8_t *)payload, payloadLength);
+    uint8_t token[COAP_TOKEN_LENGTH];
+    CoapGenerateRandomToken(token, COAP_TOKEN_LENGTH);
+    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_PUT, token, COAP_TOKEN_LENGTH, (uint8_t *)payload, payloadLength);
 }
 
 uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength)
@@ -326,7 +354,9 @@ uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *path, co
 
 uint16_t Coap::sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable)
 {
-    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, NULL, 0, (uint8_t *)payload, payloadLength);
+    uint8_t token[COAP_TOKEN_LENGTH];
+    CoapGenerateRandomToken(token, COAP_TOKEN_LENGTH);
+    return this->send(ip, port, path, confirmable ? COAP_CON : COAP_NONCON, COAP_POST, token, COAP_TOKEN_LENGTH, (uint8_t *)payload, payloadLength);
 }
 
 // Send CoAP message with payload but without specifying content type.
@@ -338,7 +368,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE typ
 // Send CoAP message with payload and content type.
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType)
 {
-    return this->send(ip, port, path, type, method, token, tokenLength, payload, payloadLength, contentType, CoapGetRandomMessageId());
+    return this->send(ip, port, path, type, method, token, tokenLength, payload, payloadLength, contentType, CoapGetNextMessageId());
 }
 
 // Send a CoAP message with full specification.
@@ -627,7 +657,7 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
     packet.payload = NULL;
     packet.payloadLength = 0; // No payload.
     packet.optionCount = 0;
-    packet.messageId = CoapGetRandomMessageId();
+    packet.messageId = CoapGetNextMessageId();
 
     return this->sendPacket(packet, ip, port);
 }
@@ -823,7 +853,7 @@ int Coap::notifyObservers(const char *observedPath, const void *payload, size_t 
         packet.payload = (uint8_t *)payload;
         packet.payloadLength = payloadLength;
         packet.optionCount = 0;
-        packet.messageId = CoapGetRandomMessageId();
+        packet.messageId = CoapGetNextMessageId();
 
         uint32_t observeSequence = ++_observers[i]._observationSequentialNumber;
         uint8_t observeBuf[3] = {0};
