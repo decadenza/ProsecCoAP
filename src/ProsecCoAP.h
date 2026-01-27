@@ -442,7 +442,9 @@ public:
     /**
      * @brief Fetch the observe value from the packet.
      *
-     * @return The observe value if the observe option is present, @see COAP_OBSERVE_VALUE.
+     * @return The observe value. If the observe option is not present,
+     *         @ref COAP_OBSERVE_VALUE_NOT_FOUND is returned.
+     *         If the observe option is malformed, @ref COAP_OBSERVE_VALUE_INVALID is returned.
      */
     COAP_OBSERVE_VALUE getObserveValue();
 };

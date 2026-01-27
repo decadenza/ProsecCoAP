@@ -585,7 +585,7 @@ bool Coap::loop()
             // in the retransmission queue (if present).
             this->_confirmableMessageQueue.markItemAsReceived(packet.messageId);
 
-            // Pass the packet to the acknowledgment handler, if set.
+            // Pass the packet to the handler, if set.
             if (_responseHandler)
             {
                 _responseHandler(packet, _udp->remoteIP(), _udp->remotePort());
@@ -629,7 +629,7 @@ bool Coap::loop()
         packetLength = _udp->parsePacket();
     }
 
-    // SECTION Process pending retransmissions
+    // Process pending retransmissions.
     this->_confirmableMessageQueue.process(*this);
 
     return true;
