@@ -365,7 +365,7 @@ uint16_t Coap::send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE typ
     return this->send(ip, port, path, type, method, token, tokenLength, payload, payloadLength, COAP_NONE);
 }
 
-// Send CoAP message with payload and content type.
+// Send CoAP message, generating a message ID automatically.
 uint16_t Coap::send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType)
 {
     return this->send(ip, port, path, type, method, token, tokenLength, payload, payloadLength, contentType, CoapGetNextMessageId());
@@ -662,6 +662,33 @@ uint16_t Coap::sendEmptyMessage(IPAddress ip, uint16_t port)
     return this->sendPacket(packet, ip, port);
 }
 
+int Coap::sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requestPacket)
+{
+    return this->sendResponse(ip, port, requestPacket, COAP_EMPTY, NULL, 0, COAP_NONE);
+}
+
+int Coap::sendSeparateResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
+{
+    // Extract data from the request packet to build the response packet.
+    CoapPacket responsePacket;
+    responsePacket.type = COAP_ACK;
+    responsePacket.code = code;
+    responsePacket.payload = payload;
+    responsePacket.payloadLength = payloadLength;
+    responsePacket.token = requestPacket.token; // Token remains the same of the request.
+    responsePacket.tokenLength = requestPacket.tokenLength;
+    responsePacket.messageId = CoapGetNextMessageId(); // Message ID is new for separate responses.
+    responsePacket.optionCount = 0;
+
+    // Adding Content-Format option.
+    uint8_t optionValue[2] = {0};
+    optionValue[0] = ((uint16_t)type & 0xFF00) >> 8;
+    optionValue[1] = ((uint16_t)type & 0x00FF);
+    responsePacket.addOption(COAP_CONTENT_FORMAT, 2, optionValue);
+
+    return this->sendPacket(responsePacket, ip, port);
+}
+
 int Coap::sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
 {
     // Extract data from the request packet to build the response packet.
@@ -672,7 +699,7 @@ int Coap::sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, C
     responsePacket.payloadLength = payloadLength;
     responsePacket.token = requestPacket.token; // Token remains the same of the request.
     responsePacket.tokenLength = requestPacket.tokenLength;
-    responsePacket.messageId = requestPacket.messageId; // Message ID remains the same of the request
+    responsePacket.messageId = requestPacket.messageId; // Message ID remains the same of the request for piggybacked responses.
     responsePacket.optionCount = 0;
 
     // Adding Content-Format option.
