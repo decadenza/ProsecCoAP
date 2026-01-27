@@ -51,20 +51,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define COAP_MAX_CALLBACK 10
 #endif
-#ifndef COAP_TOKEN_LENGTH
-/**
- * @brief The length of the CoAP token used by default.
- *
- * Functions may explicitly specify a different token length.
- * Whenever the library needs to generate a token, it will use this length.
- *
- * The maximum length for a CoAP token is 8 bytes.
- * @see COAP_MAX_TOKEN_LENGTH
- *
- * This value can be overridden.
- */
-#define COAP_TOKEN_LENGTH 2
-#endif
 #ifndef COAP_MAX_OPTION_NUM
 /**
  * @brief Maximum number of options in a CoAP packet.
@@ -352,21 +338,26 @@ class CoapOption
 {
 public:
     /**
-     * The CoAP option number.
+     * @brief The CoAP option number.
      */
     COAP_OPTION_NUMBER number;
     /**
-     * The length of the option.
+     * @brief The length of the option.
      */
     uint8_t length;
     /**
-     * The pointer to the option value.
+     * @brief The pointer to the option value.
      */
     uint8_t *value;
 };
 
 /**
  * @brief A CoAP packet.
+ *
+ * A packet contains all the fields necessary to build a CoAP message.
+ * For performance, fields like token, options and payload are represented as pointers.
+ * It is the responsibility of the user to ensure that the memory referenced by these pointers
+ * remains valid for the duration of the packet's use.
  */
 class CoapPacket
 {
@@ -384,13 +375,15 @@ public:
      *
      * See @ref COAP_METHOD and @ref COAP_RESPONSE_CODE.
      */
-    uint8_t code = 0;
+    uint8_t code = COAP_EMPTY;
     /**
      * @brief The CoAP token.
      *
      * A token is intended for use as a client-local identifier for
      * differentiating between concurrent requests.
-     * The token can be 0-8 bytes long.
+     * The token can be max @ref COAP_MAX_TOKEN_LENGTH bytes long.
+     *
+     * The token cannot change after its first definition.
      */
     const uint8_t *token = NULL;
     /**
@@ -429,9 +422,44 @@ public:
     CoapOption options[COAP_MAX_OPTION_NUM];
 
     /**
+     * @brief Construct a new Coap Packet object.
+     *
+     * It builds a CoAP packet, assigning default values to its fields.
+     * The default type is @ref COAP_NONCON and the default code is 0 (empty).
+     * It assigns a message ID using @ref CoapGetNextMessageId.
+     */
+    CoapPacket() { messageId = CoapGetNextMessageId(); };
+
+    /**
+     * @brief Set the message type of the packet.
+     *
+     * @param t The CoAP message type to set (e.g., COAP_CON, COAP_NONCON).
+     */
+    void setType(COAP_TYPE t) { type = t; };
+
+    /**
+     * @brief Build a response packet based on a request packet.
+     *
+     * This constructor initializes a CoAP response packet
+     * using the provided request packet as a template.
+     * As per specifications https://datatracker.ietf.org/doc/html/rfc7252#section-2.2
+     * it sets the type to @ref COAP_ACK if the request packet type is @ref COAP_CON,
+     * otherwise it sets the type to @ref COAP_NONCON.
+     *
+     * The response code is set to the specified one.
+     *
+     * The token and message ID are copied from the request packet.
+     * All other fields are left to default values.
+     *
+     * @param requestPacket The CoAP request packet to base the response on.
+     * @param responseCode The CoAP response code to use (e.g., COAP_RESPONSE_CODE_CONTENT).
+     */
+    CoapPacket(const CoapPacket &requestPacket, COAP_RESPONSE_CODE responseCode);
+
+    /**
      * @brief Add an option to the packet.
      *
-     * The option is stored and will be later parsed when sending the packet.
+     * The reference to the option value is stored.
      *
      * @param number The option number.
      * @param length The length of the option value.
@@ -440,13 +468,70 @@ public:
     void addOption(COAP_OPTION_NUMBER number, uint8_t length, uint8_t *value);
 
     /**
-     * @brief Fetch the observe value from the packet.
+     * @brief Fetch the observe value from the packet options, if present.
      *
      * @return The observe value. If the observe option is not present,
      *         @ref COAP_OBSERVE_VALUE_NOT_FOUND is returned.
      *         If the observe option is malformed, @ref COAP_OBSERVE_VALUE_INVALID is returned.
      */
     COAP_OBSERVE_VALUE getObserveValue();
+
+    /**
+     * @brief Set the packet recipient data using the destination IP and URI path.
+     *
+     * It uses the default CoAP port (@ref COAP_DEFAULT_PORT).
+     *
+     * **Do not call this function twice on the same packet.**
+     *
+     * @see setRecipient
+     */
+    void setRecipient(IPAddress ip, const char *path)
+    {
+        setRecipient(ip, COAP_DEFAULT_PORT, path);
+    };
+
+    /**
+     * @brief Set the packet recipient data using the destination IP, port and URI path.
+     *
+     * **Do not call this function twice on the same packet.**
+     *
+     * It adds the URI_HOST, URI_PORT, and URI_PATH options
+     * to the CoAP packet as per specifications.
+     *
+     * @param ip The destination IP address.
+     * @param port The destination port. Can be COAP_DEFAULT_PORT.
+     * @param path The URI path to send the packet to.
+     *
+     */
+    void setRecipient(IPAddress ip, uint16_t port, const char *path);
+
+    /**
+     * @brief Configure the packet as a request.
+     *
+     * @param method The CoAP method to use (e.g., COAP_GET, COAP_POST).
+     */
+    void asRequest(COAP_METHOD method) { code = (uint8_t)method; };
+
+    /**
+     * @brief Set a payload to the packet.
+     *
+     * @param payload The pointer to the payload data.
+     * @param length The length of the payload data.
+     * @param contentType The content type of the payload (e.g., COAP_APPLICATION_JSON, COAP_TEXT_PLAIN).
+     */
+    void withPayload(const void *payload, size_t length, COAP_CONTENT_TYPE contentType);
+
+    /**
+     * @brief Assign a token to the packet.
+     *
+     * @param token The pointer to the token data.
+     * @param length The length of the token data.
+     */
+    void withToken(const uint8_t *token, size_t length)
+    {
+        token = token;
+        tokenLength = length;
+    };
 };
 
 #if defined(ESP8266) || defined(ESP32)
@@ -679,24 +764,6 @@ private:
 
 public:
     /**
-     * @brief Send a CoAP packet to the specified IP.
-     *
-     * It uses the default CoAP port, see @ref COAP_DEFAULT_PORT.
-     *
-     * @return 0 if the packet was sent correctly.
-     * @return -1 if the packet could not be sent.
-     */
-    int sendPacket(CoapPacket &packet, IPAddress ip);
-
-    /**
-     * @brief Send a CoAP packet to the specified IP and port.
-     *
-     * @return 0 if the packet was sent correctly.
-     * @return -1 if the packet could not be sent.
-     */
-    int sendPacket(CoapPacket &packet, IPAddress ip, uint16_t port);
-
-    /**
      * @brief Construct a CoAP instance using the given UDP transport.
      *
      * @param udp The UDP transport to use for sending and receiving CoAP packets.
@@ -712,86 +779,104 @@ public:
     ~Coap();
 
     /**
-     * @brief Notify all _observers of a specific URI path.
+     * @brief Send a CoAP packet to the specified IP, using the default port.
      *
-     * This method sends a notification to all registered _observers for the given URI path.
-     * As per specifications, the notification includes the Observe option with a sequential number.
-     * The notification will be a non-confirmable message (COAP_NONCON).
+     * The default CoAP port is specified by @ref COAP_DEFAULT_PORT.
      *
-     * @param observedPath The URI path being observed.
-     * @param payload The payload to send to _observers.
-     * @param payloadLength The length of the payload.
-     * @param type The content type of the payload.
-     *
-     * @return Number of observers notified successfully.
-     * @return -1 if an error occurred.
+     * @return 0 if the packet was sent correctly.
+     * @return -1 if the packet could not be sent.
      */
-    int notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    int sendPacket(const CoapPacket &packet, IPAddress ip);
 
     /**
-     * @brief Add a new observer for the specified observed path.
+     * @brief Send a CoAP packet to the specified IP and port.
      *
-     * If the observer is already registered, the existing observer is returned in the `observerOut` parameter.
-     * The observer last seen time is set to the current time.
-     *
-     * @param observerOut Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
-     * @param path The path to observe.
-     * @param ip The IP address of the observer.
-     * @param port The port of the observer.
-     * @param token The token used by the observer, normally obtained from the request packet.
-     * @param tokenLength The length of the token, normally obtained from the request packet
-     *
-     * @return 0 if the observer was added successfully.
-     *         -1 if the url is invalid.
-     *         -2 if the observer table is full.
+     * @return 0 if the packet was sent correctly.
+     * @return -1 if the packet could not be sent.
      */
-    int addObserver(CoapObserver **observerOut, const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+    int sendPacket(const CoapPacket &packet, IPAddress ip, uint16_t port);
 
-    /**
-     * @brief Get the number of currently active observers.
-     */
-    unsigned int getObserverCount();
+    // /**
+    //  * @brief Notify all _observers of a specific URI path.
+    //  *
+    //  * This method sends a notification to all registered _observers for the given URI path.
+    //  * As per specifications, the notification includes the Observe option with a sequential number.
+    //  * The notification will be a non-confirmable message (COAP_NONCON).
+    //  *
+    //  * @param observedPath The URI path being observed.
+    //  * @param payload The payload to send to _observers.
+    //  * @param payloadLength The length of the payload.
+    //  * @param type The content type of the payload.
+    //  *
+    //  * @return Number of observers notified successfully.
+    //  * @return -1 if an error occurred.
+    //  */
+    // int notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
-    /**
-     * @brief Remove an observer.
-     *
-     * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
-     * after a GET request for deregistration, the server should send a response to the client.
-     * The caller is responsible for sending the response using @ref sendResponse.
-     *
-     * @return true if the observer was found and removed.
-     * @return false if the observer was not found.
-     */
-    bool removeObserver(const CoapObserver &observer);
+    // /**
+    //  * @brief Add a new observer for the specified observed path.
+    //  *
+    //  * If the observer is already registered, the existing observer is returned in the `observerOut` parameter.
+    //  * The observer last seen time is set to the current time.
+    //  *
+    //  * @param observerOut Pointer to an Observer pointer that will be set to the newly added observer, or to the existing observer if already registered.
+    //  * @param path The path to observe.
+    //  * @param ip The IP address of the observer.
+    //  * @param port The port of the observer.
+    //  * @param token The token used by the observer, normally obtained from the request packet.
+    //  * @param tokenLength The length of the token, normally obtained from the request packet
+    //  *
+    //  * @return 0 if the observer was added successfully.
+    //  *         -1 if the url is invalid.
+    //  *         -2 if the observer table is full.
+    //  */
+    // int addObserver(CoapObserver **observerOut, const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
 
-    /**
-     * @brief Remove an observer using the combination of path, IP, port, and token.
-     *
-     * The observer is found by the first matching path, IP, port, and token.
-     *
-     * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
-     * after a GET request for deregistration, the server should send a response to the client.
-     * The caller is responsible for sending the response using @ref sendResponse.
-     * @see sendResponse.
-     *
-     * @return true if the observer was found and removed.
-     * @return false if the observer was not found.
-     */
-    bool removeObserver(const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+    // /**
+    //  * @brief Get the number of currently active observers.
+    //  */
+    // unsigned int getObserverCount();
 
-    /**
-     * @brief Remove all the observers of the given path.
-     *
-     * @return The number of observers removed.
-     */
-    int removeObservers(const char *path);
+    // /**
+    //  * @brief Remove an observer.
+    //  *
+    //  * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
+    //  * after a GET request for deregistration, the server should send a response to the client.
+    //  * The caller is responsible for sending the response using @ref sendResponse.
+    //  *
+    //  * @return true if the observer was found and removed.
+    //  * @return false if the observer was not found.
+    //  */
+    // bool removeObserver(const CoapObserver &observer);
 
-    /**
-     * @brief Remove all the observers from any path.
-     *
-     * @return The number of observers removed.
-     */
-    int removeAllObservers();
+    // /**
+    //  * @brief Remove an observer using the combination of path, IP, port, and token.
+    //  *
+    //  * The observer is found by the first matching path, IP, port, and token.
+    //  *
+    //  * According to https://datatracker.ietf.org/doc/html/rfc7641#section-4.1,
+    //  * after a GET request for deregistration, the server should send a response to the client.
+    //  * The caller is responsible for sending the response using @ref sendResponse.
+    //  * @see sendResponse.
+    //  *
+    //  * @return true if the observer was found and removed.
+    //  * @return false if the observer was not found.
+    //  */
+    // bool removeObserver(const char *path, IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+
+    // /**
+    //  * @brief Remove all the observers of the given path.
+    //  *
+    //  * @return The number of observers removed.
+    //  */
+    // int removeObservers(const char *path);
+
+    // /**
+    //  * @brief Remove all the observers from any path.
+    //  *
+    //  * @return The number of observers removed.
+    //  */
+    // int removeAllObservers();
 
     /**
      * @brief Start the server on the default port.
@@ -846,11 +931,12 @@ public:
      *
      * @param ip The IP address to send the message to.
      * @param port The port to send the message to.
-     * @return The message ID used for the empty message.
+     *
+     * @return 0 in case of success, -1 on failure.
      */
-    uint16_t sendEmptyConfirmableMessage(IPAddress ip, uint16_t port);
+    int sendEmptyConfirmableMessage(IPAddress ip, uint16_t port);
 
-    // TODO: int sendResetMessage(IPAddress ip, uint16_t port, uint16_t messageId);
+    // // TODO: int sendResetMessage(IPAddress ip, uint16_t port, uint16_t messageId);
 
     /**
      * @brief Send an Empty Acknowledgement.
@@ -867,175 +953,165 @@ public:
      */
     int sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requestPacket);
 
-    /**
-     * @brief Send a piggybacked response.
-     *
-     * Starting from the request packet, it build a corresponding response packet
-     * matching the message ID and token, and sends it back with the given response code
-     * and payload data.
-     *
-     * See https://datatracker.ietf.org/doc/html/rfc7252#section-5.2.1
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param requestPacket The packet to which the response corresponds.
-     * @param code The response code to send.
-     *        From it, the IP, port, message ID and token are inferred.
-     * @param payload The pointer to the payload to send. It must correspond to the specified content type.
-     * @param payloadLength The length of the payload. For empty payloads, set to 0. For string payloads, the length should not include the null terminator.
-     * @param type The content type of the payload.
-     *
-     * @return 0 on success, -1 on failure.
-     */
-    int sendResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    // /**
+    //  * @brief Send a piggybacked response.
+    //  *
+    //  * Starting from the request packet, it build a corresponding response packet
+    //  * matching the message ID and token, and sends it back with the given response code
+    //  * and payload data.
+    //  *
+    //  * See https://datatracker.ietf.org/doc/html/rfc7252#section-5.2.1
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param requestPacket The packet to which the response corresponds.
+    //  * @param code The response code to send.
+    //  *        From it, the IP, port, message ID and token are inferred.
+    //  * @param payload The pointer to the payload to send. It must correspond to the specified content type.
+    //  * @param payloadLength The length of the payload. For empty payloads, set to 0. For string payloads, the length should not include the null terminator.
+    //  * @param type The content type of the payload.
+    //  *
+    //  * @return 0 on success, -1 on failure.
+    //  */
+    // int sendResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
-    /**
-     * @brief Send a separate response.
-     *
-     * The only difference with @ref sendResponse is that this function
-     * will use a new message ID for the response packet, as per CoAP specifications.
-     *
-     * See https://datatracker.ietf.org/doc/html/rfc7252#section-5.2.2
-     *
-     * @see sendResponse.
-     */
-    int sendSeparateResponse(IPAddress ip, uint16_t port, CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    // /**
+    //  * @brief Send a separate response.
+    //  *
+    //  * The only difference with @ref sendResponse is that this function
+    //  * will use a new message ID for the response packet, as per CoAP specifications.
+    //  *
+    //  * See https://datatracker.ietf.org/doc/html/rfc7252#section-5.2.2
+    //  *
+    //  * @see sendResponse.
+    //  */
+    // int sendSeparateResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
 
-    /**
-     * @brief Send a GET request.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param path The path to request.
-     * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    /**
-     * @brief Send a confirmable GET request.
-     *
-     * This overload defaults to a confirmable request, matching the protocol's
-     * expectation for reliability. Use the variant with the confirmable flag to
-     * explicitly send a non-confirmable request when desired.
-     */
-    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *path);
+    // /**
+    //  * @brief Send a GET request.
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param path The path to request.
+    //  *
+    //  * @return The message ID of the request that was sent.
+    //  */
+    // uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *path);
 
-    /**
-     * @brief Send a GET request with explicit confirmable flag.
-     */
-    uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable);
+    // /**
+    //  * @brief Send a GET request with explicit confirmable flag.
+    //  *
+    //  * @see sendGetRequest for details.
+    //  */
+    // uint16_t sendGetRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable);
 
-    /**
-     * @brief Send a DELETE request.
-     *
-     * @see sendGetRequest.
-     */
-    /**
-     * @brief Send a confirmable DELETE request.
-     */
-    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *path);
+    // /**
+    //  * @brief Send a DELETE request.
+    //  */
 
-    /**
-     * @brief Send a DELETE request with explicit confirmable flag.
-     */
-    uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable);
+    // uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *path);
 
-    /**
-     * @brief Send a confirmable PUT request.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param path The path to request.
-     * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength);
+    // /**
+    //  * @brief Send a confirmable DELETE request.
+    //  */
+    // uint16_t sendDeleteRequest(IPAddress ip, uint16_t port, const char *path, bool confirmable);
 
-    /**
-     * @brief Send a PUT request with explicit confirmable flag.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param path The path to request.
-     * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable);
+    // /**
+    //  * @brief Send a confirmable PUT request.
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param path The path to request.
+    //  * @param payload The pointer to the payload to send.
+    //  * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
+    //  *
+    //  * @return The message ID of the request that was sent.
+    //  */
+    // uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength);
 
-    /**
-     * @brief Send a confirmable POST request.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param path The path to request.
-     * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength);
+    // /**
+    //  * @brief Send a PUT request with explicit confirmable flag.
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param path The path to request.
+    //  * @param payload The pointer to the payload to send.
+    //  * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
+    //  *
+    //  * @return The message ID of the request that was sent.
+    //  */
+    // uint16_t sendPutRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable);
 
-    /**
-     * @brief Send a POST request with explicit confirmable flag.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param path The path to request.
-     * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
-     * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
-     *
-     * @return The message ID of the request that was sent.
-     */
-    uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable);
+    // /**
+    //  * @brief Send a confirmable POST request.
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param path The path to request.
+    //  * @param payload The pointer to the payload to send.
+    //  * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
+    //  *
+    //  * @return The message ID of the request that was sent.
+    //  */
+    // uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength);
 
-    /**
-     * @brief Send a raw CoAP message without specifying content type.
-     *
-     * Specifying content type is not compulsory and can be inferred from the applications.
-     * * @see https://datatracker.ietf.org/doc/html/rfc7252#section-5.5.1
-     *
-     * To send a message with content type, use the overload with the contentType parameter.
-     *
-     * @param ip The IP address of the recipient.
-     * @param port The port of the recipient.
-     * @param path The URI path to request.
-     * @param type The CoAP message type (confirmable, non-confirmable, etc
-     * @param method The CoAP method (GET, POST, etc).
-     * @param token The pointer to the token to use.
-     * @param tokenLength The length of the token.
-     * @param payload The pointer to the payload to send.
-     * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
-     * @return The message ID of the request that was sent.
-     *
-     */
-    uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
+    // /**
+    //  * @brief Send a POST request with explicit confirmable flag.
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param path The path to request.
+    //  * @param payload The pointer to the payload to send.
+    //  * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
+    //  * @param confirmable Whether to send a confirmable (true) or non-confirmable (false) request. Default to true.
+    //  *
+    //  * @return The message ID of the request that was sent.
+    //  */
+    // uint16_t sendPostRequest(IPAddress ip, uint16_t port, const char *path, const void *payload, size_t payloadLength, bool confirmable);
 
-    /**
-     * @brief Send a raw CoAP message specifying the content format.
-     *
-     * The generated Message ID of the sent message is returned.
-     *
-     * @see send without contentType for more details.
-     */
-    uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
+    // /**
+    //  * @brief Send a raw CoAP message without specifying content type.
+    //  *
+    //  * Specifying content type is not compulsory and can be inferred from the applications.
+    //  * * @see https://datatracker.ietf.org/doc/html/rfc7252#section-5.5.1
+    //  *
+    //  * To send a message with content type, use the overload with the contentType parameter.
+    //  *
+    //  * @param ip The IP address of the recipient.
+    //  * @param port The port of the recipient.
+    //  * @param path The URI path to request.
+    //  * @param type The CoAP message type (confirmable, non-confirmable, etc
+    //  * @param method The CoAP method (GET, POST, etc).
+    //  * @param token The pointer to the token to use.
+    //  * @param tokenLength The length of the token.
+    //  * @param payload The pointer to the payload to send.
+    //  * @param payloadLength The length of the payload. For string payloads, the length should not include the null terminator.
+    //  * @return The message ID of the request that was sent.
+    //  *
+    //  */
+    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength);
 
-    /**
-     * @brief Send a raw CoAP message specifying all the parameters.
-     *
-     * This is the lowest level send function, allowing to specify all parameters,
-     * including the message ID.
-     *
-     * The message will be queued for transmission and sent in the next loop cycle.
-     * If the message is confirmable, retransmissions will be handled according to CoAP specifications.
-     *
-     * @see send without contentType for more details.
-     */
-    uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
+    // /**
+    //  * @brief Send a raw CoAP message specifying the content format.
+    //  *
+    //  * The generated Message ID of the sent message is returned.
+    //  *
+    //  * @see send without contentType for more details.
+    //  */
+    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
+
+    // /**
+    //  * @brief Send a raw CoAP message specifying all the parameters.
+    //  *
+    //  * This is the lowest level send function, allowing to specify all parameters,
+    //  * including the message ID.
+    //  *
+    //  * The message will be queued for transmission and sent in the next loop cycle.
+    //  * If the message is confirmable, retransmissions will be handled according to CoAP specifications.
+    //  *
+    //  * @see send without contentType for more details.
+    //  */
+    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
 
     /**
      * @brief Process incoming packets and dispatch handlers.

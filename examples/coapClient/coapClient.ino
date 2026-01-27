@@ -17,7 +17,8 @@
 #include <ProsecCoAP.h>
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
-IPAddress dev_ip(192, 168, 0, 99); // Set your own.
+IPAddress deviceIp(192, 168, 0, 99); // Set your own.
+IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
 
 // CoAP client response callback
 void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
@@ -31,7 +32,12 @@ void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
 {
   Serial.print("[Coap Response] ");
   Serial.write((const char *)packet.payload, packet.payloadLength);
-  Serial.print(" (message ID:");
+  Serial.print(" (token: ");
+  for (size_t i = 0; i < packet.tokenLength; i++)
+  {
+    Serial.print(packet.token[i], HEX);
+  }
+  Serial.print(", message ID:");
   Serial.print(packet.messageId);
   Serial.println(")");
 }
@@ -40,7 +46,7 @@ void setup()
 {
   Serial.begin(9600);
 
-  Ethernet.begin(mac, dev_ip);
+  Ethernet.begin(mac, deviceIp);
   Serial.print("IP address: ");
   Serial.print(Ethernet.localIP());
   Serial.println();
@@ -56,11 +62,33 @@ void setup()
 
 void loop()
 {
-  // send GET or PUT coap request to CoAP server.
-  // To test, use libcoap, microcoap server...etc
-  uint16_t messageId = coap.sendGetRequest(IPAddress(192, 168, 0, 100), COAP_DEFAULT_PORT, "time"); // Set your CoAP server IP address.
-  Serial.print("Send Request with message ID: ");
-  Serial.println(messageId);
+  IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
+  
+  CoapPacket packet;
+  packet.setType(COAP_CON);                                 // Confirmable.
+  packet.asRequest(COAP_GET);                               // GET request.
+  packet.setRecipient(destinationIp, "time"); 
+
+  // Optionally, set a token.
+  uint8_t token[2];
+  CoapGenerateRandomToken(token, sizeof(token));
+  packet.withToken(token, sizeof(token));
+
+  // Send and show info.
+  if (coap.sendPacket(packet, destinationIp) == 0) // 0 means success
+    Serial.print("[GET request] OK");
+  else
+    Serial.print("[GET request] FAILED");
+
+  Serial.print(" (message ID: ");
+  Serial.print(packet.messageId);
+  Serial.print(", token: ");
+  for (size_t i = 0; i < packet.tokenLength; i++)
+  {
+    Serial.print(packet.token[i], HEX);
+  }
+  Serial.println(")");
+
   delay(1000);
   coap.loop();
 }
