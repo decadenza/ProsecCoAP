@@ -246,6 +246,15 @@ int Coap::sendPacket(const CoapPacket &packet, IPAddress ip, uint16_t port)
     _udp->write(this->_txBuffer, packetSize);
     _udp->endPacket();
 
+    if (packet.type == COAP_CON)
+    {
+        // Add to confirmable message queue for possible retransmission handling.
+        // REVIEW: Not checking the return value.
+        // If the queue is full, the packet will still be sent but no retransmission will be performed.
+        this->_confirmableMessageQueue.add(ip, port, packet);
+    }
+    // else, the packet is not confirmable (fire and forget).
+
     // Successful transmission.
     return 0;
 }
@@ -326,13 +335,15 @@ int detail::CoapRetrasmissionQueue::markItemAsReceived(uint16_t messageId)
 
 void CoapPacket::setRecipient(IPAddress ip, uint16_t port, const char *path)
 {
-    // Populate COAP_URI_HOST option.
-    char ipAddress[16] = "";
-    sprintf(ipAddress, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
-    this->addOption(COAP_URI_HOST, strlen(ipAddress), (uint8_t *)ipAddress);
+    // SECTION Add recipient info to the packet data.
+
+    // Populate COAP_URI_HOST option (using internal buffer).
+    char _ipAddressBuffer[15]; // Max length of IPv4 address in string form is 15 characters.
+    sprintf(_ipAddressBuffer, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+    this->addOption(COAP_URI_HOST, strlen(_ipAddressBuffer), (uint8_t *)_ipAddressBuffer); // strlen does not count the null terminator.
 
     // Populate COAP_URI_PORT option.
-    this->addOption(COAP_URI_PORT, 2, &port);
+    this->addOption(COAP_URI_PORT, sizeof(port), (uint8_t *)&port);
 
     // Populate COAP_URI_PATH and COAP_URI_QUERY options (a packet can have many of them).
     size_t idx = 0;
@@ -369,20 +380,21 @@ void CoapPacket::setRecipient(IPAddress ip, uint16_t port, const char *path)
             this->addOption(COAP_URI_PATH, strlen(path) - idx, (uint8_t *)(path + idx)); // the last URI_PATH (between / and the end)
         }
     }
+    // !SECTION End of recipient info.
+
+    return this->sendPacket(packet, ip, port);
 }
 
-void CoapPacket::withPayload(const void *payload, size_t length, COAP_CONTENT_TYPE contentType)
+void CoapPacket::withPayload(const void *payload, size_t length, COAP_CONTENT_FORMAT contentFormat)
 {
     this->payload = (uint8_t *)payload;
     this->payloadLength = length;
-    this->contentType = contentType;
+    this->contentFormat = contentFormat;
 
-    uint8_t optionBuffer[2]{0};
-    if (contentType != COAP_NONE)
+    if (contentFormat != COAP_NONE)
     {
-        optionBuffer[0] = ((uint16_t)contentType & 0xFF00) >> 8;
-        optionBuffer[1] = ((uint16_t)contentType & 0x00FF);
-        this->addOption(COAP_CONTENT_FORMAT, 2, optionBuffer);
+        // Using the reference to contentFormat.
+        this->addOption(COAP_CONTENT_FORMAT, 2, (uint8_t *)&contentFormat);
     }
 }
 
@@ -458,7 +470,7 @@ bool Coap::loop()
 
         CoapPacket packet;
 
-        // parse coap packet header
+        // SECTION Parse CoAP packet header.
         if (packetLength < COAP_HEADER_SIZE || (((this->_rxBuffer[0] & 0xC0) >> 6) != 1))
         {
             packetLength = _udp->parsePacket();
@@ -471,6 +483,7 @@ bool Coap::loop()
         packet.messageId = 0xFF00 & (this->_rxBuffer[2] << 8);
         packet.messageId |= 0x00FF & this->_rxBuffer[3];
 
+        // SECTION Parse token, if present.
         if (packet.tokenLength == 0)
             packet.token = NULL;
         else if (packet.tokenLength <= 8)
@@ -481,7 +494,7 @@ bool Coap::loop()
             continue;
         }
 
-        // parse packet options/payload
+        // SECTION Parse packet options/payload.
         if (COAP_HEADER_SIZE + packet.tokenLength < packetLength)
         {
             int optionIndex = 0;
@@ -508,8 +521,10 @@ bool Coap::loop()
             }
         }
 
+        // SECTION Handle the received packet if it is a response.
         if (packet.type == COAP_ACK || packet.type == COAP_RESET)
         {
+            // Stop retransmission queue when receiving ACK or RESET.
             // First, mark the message as correctly received by the remote server
             // in the retransmission queue (if present).
             this->_confirmableMessageQueue.markItemAsReceived(packet.messageId);
@@ -522,6 +537,7 @@ bool Coap::loop()
         }
         else
         {
+            // SECTION Route incoming request to the registered handler.
             String path = "";
             path.reserve(64); // Pre-allocate memory to avoid fragmentation.
 
@@ -588,7 +604,7 @@ int Coap::sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requ
     return this->sendPacket(packet, ip, port);
 }
 
-// int Coap::sendSeparateResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
+// int Coap::sendSeparateResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_FORMAT type)
 // {
 //     // Extract data from the request packet to build the response packet.
 //     CoapPacket responsePacket;
@@ -613,7 +629,7 @@ int Coap::sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requ
 //     return this->sendPacket(responsePacket, ip, port);
 // }
 
-// int Coap::sendResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
+// int Coap::sendResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_FORMAT type)
 // {
 //     // Extract data from the request packet to build the response packet.
 //     CoapPacket responsePacket;
@@ -642,7 +658,7 @@ int Coap::sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requ
 // {
 //     if (path == NULL)
 //         return -1; // Invalid path.
-//     if (strlen(path) >= COAP_MAX_OBSERVE_PATH_LEN)
+//     if (strlen(path) >= COAP_MAX_URI_PATH_LEN)
 //         return -1; // Invalid path.
 //     if (tokenLength > 8)
 //         return -1; // Invalid token.
@@ -679,8 +695,8 @@ int Coap::sendEmptyAcknowledgement(IPAddress ip, uint16_t port, CoapPacket &requ
 //                 memcpy(_observers[i]._token, token, tokenLength);
 //             _observers[i]._observationSequentialNumber = 0;
 //             _observers[i]._lastSeenMs = now;
-//             strncpy(_observers[i]._uriPath, path, COAP_MAX_OBSERVE_PATH_LEN - 1);
-//             _observers[i]._uriPath[COAP_MAX_OBSERVE_PATH_LEN - 1] = 0;
+//             strncpy(_observers[i]._uriPath, path, COAP_MAX_URI_PATH_LEN - 1);
+//             _observers[i]._uriPath[COAP_MAX_URI_PATH_LEN - 1] = 0;
 //             if (observerOut)
 //                 *observerOut = &_observers[i];
 //             return 0;
@@ -780,7 +796,7 @@ void CoapObserver::updateLastSeenMs()
 }
 
 // FIXME: Unefficient.
-// int Coap::notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type)
+// int Coap::notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_FORMAT type)
 // {
 //     if (observedPath == NULL)
 //         return -1;

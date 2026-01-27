@@ -70,12 +70,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef COAP_OBSERVER_LEASE_MS
 #define COAP_OBSERVER_LEASE_MS 60000UL
 #endif
-#ifndef COAP_MAX_OBSERVE_PATH_LEN
+#ifndef COAP_MAX_URI_PATH_LEN
 /**
- * @brief Maximum length of the URI path string for an observer.
- * This value can be overridden.
+ * @brief Maximum length of the URI path.
+ *
+ * This value can be overridden. Set to a higher value if you expect to handle
+ * longer URI paths. Set it to a lower value to save memory.
  */
-#define COAP_MAX_OBSERVE_PATH_LEN 32
+#define COAP_MAX_URI_PATH_LEN 32
 #endif
 #ifndef COAP_ACK_MIN_TIMEOUT_MS
 /**
@@ -291,7 +293,7 @@ typedef enum
     COAP_APPLICATION_EXI = 47,
     COAP_APPLICATION_JSON = 50,
     COAP_APPLICATION_CBOR = 60
-} COAP_CONTENT_TYPE;
+} COAP_CONTENT_FORMAT;
 
 /** @} */ // End of "Other constants" group
 
@@ -332,23 +334,24 @@ void CoapGenerateRandomToken(uint8_t *buffer, size_t length);
 /**
  * @brief A CoAP option.
  *
+ * An option has a number, a length and a value. The value is represented as a pointer.
+ *
  * See also https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
  */
-class CoapOption
+struct CoapOption
 {
-public:
     /**
      * @brief The CoAP option number.
      */
     COAP_OPTION_NUMBER number;
     /**
-     * @brief The length of the option.
+     * @brief The explicit length of the option.
      */
-    uint8_t length;
+    uint8_t length = 0;
     /**
      * @brief The pointer to the option value.
      */
-    uint8_t *value;
+    const uint8_t *value = NULL;
 };
 
 /**
@@ -356,8 +359,8 @@ public:
  *
  * A packet contains all the fields necessary to build a CoAP message.
  * For performance, fields like token, options and payload are represented as pointers.
- * It is the responsibility of the user to ensure that the memory referenced by these pointers
- * remains valid for the duration of the packet's use.
+ * It is the responsibility of the caller to **ensure that the memory referenced by these pointers
+ * remains valid for the duration of the packet's use**.
  */
 class CoapPacket
 {
@@ -399,6 +402,12 @@ public:
      */
     size_t payloadLength = 0;
     /**
+     * @brief The content format of the payload.
+     *
+     * See @ref COAP_CONTENT_FORMAT.
+     */
+    COAP_CONTENT_FORMAT contentFormat = COAP_NONE;
+    /**
      * @brief The CoAP Message ID.
      *
      * The Message ID is used to detect duplicates and match
@@ -431,13 +440,6 @@ public:
     CoapPacket() { messageId = CoapGetNextMessageId(); };
 
     /**
-     * @brief Set the message type of the packet.
-     *
-     * @param t The CoAP message type to set (e.g., COAP_CON, COAP_NONCON).
-     */
-    void setType(COAP_TYPE t) { type = t; };
-
-    /**
      * @brief Build a response packet based on a request packet.
      *
      * This constructor initializes a CoAP response packet
@@ -457,15 +459,28 @@ public:
     CoapPacket(const CoapPacket &requestPacket, COAP_RESPONSE_CODE responseCode);
 
     /**
+     * @brief Set the message type of the packet.
+     *
+     * @param t The CoAP message type to set (e.g., COAP_CON, COAP_NONCON).
+     */
+    void setType(COAP_TYPE t) { type = t; };
+
+    /**
      * @brief Add an option to the packet.
      *
-     * The reference to the option value is stored.
+     * The option will reference the provided value.
+     * The value must remain valid for the duration of the packet's use.
+     *
+     * Note that Uri-Host, Uri-Port, Uri-Path and Uri-Query options
+     * will be added when sending the packet.
      *
      * @param number The option number.
      * @param length The length of the option value.
-     * @param value The pointer to the option value.
+     * @param value The pointer to the option value. The caller must ensure
+     *              that the memory referenced by this pointer remains valid
+     *              for the duration of the packet's use.
      */
-    void addOption(COAP_OPTION_NUMBER number, uint8_t length, uint8_t *value);
+    void addOption(COAP_OPTION_NUMBER number, uint8_t length, const uint8_t *value);
 
     /**
      * @brief Fetch the observe value from the packet options, if present.
@@ -477,35 +492,6 @@ public:
     COAP_OBSERVE_VALUE getObserveValue();
 
     /**
-     * @brief Set the packet recipient data using the destination IP and URI path.
-     *
-     * It uses the default CoAP port (@ref COAP_DEFAULT_PORT).
-     *
-     * **Do not call this function twice on the same packet.**
-     *
-     * @see setRecipient
-     */
-    void setRecipient(IPAddress ip, const char *path)
-    {
-        setRecipient(ip, COAP_DEFAULT_PORT, path);
-    };
-
-    /**
-     * @brief Set the packet recipient data using the destination IP, port and URI path.
-     *
-     * **Do not call this function twice on the same packet.**
-     *
-     * It adds the URI_HOST, URI_PORT, and URI_PATH options
-     * to the CoAP packet as per specifications.
-     *
-     * @param ip The destination IP address.
-     * @param port The destination port. Can be COAP_DEFAULT_PORT.
-     * @param path The URI path to send the packet to.
-     *
-     */
-    void setRecipient(IPAddress ip, uint16_t port, const char *path);
-
-    /**
      * @brief Configure the packet as a request.
      *
      * @param method The CoAP method to use (e.g., COAP_GET, COAP_POST).
@@ -513,13 +499,18 @@ public:
     void asRequest(COAP_METHOD method) { code = (uint8_t)method; };
 
     /**
-     * @brief Set a payload to the packet.
+     * @brief Associate a payload to the packet.
+     *
+     * This function sets the payload and adds it to the packet
+     * as an option.
      *
      * @param payload The pointer to the payload data.
      * @param length The length of the payload data.
-     * @param contentType The content type of the payload (e.g., COAP_APPLICATION_JSON, COAP_TEXT_PLAIN).
+     * @param contentFormat The content format of the payload (e.g., COAP_APPLICATION_JSON, COAP_TEXT_PLAIN).
+     *        Note that the contentFormat parameter is passed by reference and must remain valid
+     *        for the duration of the packet's use.
      */
-    void withPayload(const void *payload, size_t length, COAP_CONTENT_TYPE contentType);
+    void withPayload(const void *payload, size_t length, COAP_CONTENT_FORMAT contentFormat);
 
     /**
      * @brief Assign a token to the packet.
@@ -576,7 +567,7 @@ private:
     /**
      * @brief The URI path being observed.
      */
-    char _uriPath[COAP_MAX_OBSERVE_PATH_LEN] = {0};
+    char _uriPath[COAP_MAX_URI_PATH_LEN] = {0};
 
     /**
      * Mark the observer instance as inactive.
@@ -779,17 +770,20 @@ public:
     ~Coap();
 
     /**
-     * @brief Send a CoAP packet to the specified IP, using the default port.
+     * @brief Send a raw CoAP packet to the specified IP using the default port.
      *
      * The default CoAP port is specified by @ref COAP_DEFAULT_PORT.
      *
-     * @return 0 if the packet was sent correctly.
-     * @return -1 if the packet could not be sent.
+     * @see sendPacket(const CoapPacket &packet, IPAddress ip, uint16_t port)
      */
     int sendPacket(const CoapPacket &packet, IPAddress ip);
 
     /**
-     * @brief Send a CoAP packet to the specified IP and port.
+     * @brief Send a raw CoAP packet to the specified IP and port.
+     *
+     * The packet is sent as-is, without any modification.
+     * Confirmable packets will be added to the retransmission queue,
+     * unless the retransmission queue is full.
      *
      * @return 0 if the packet was sent correctly.
      * @return -1 if the packet could not be sent.
@@ -811,7 +805,7 @@ public:
     //  * @return Number of observers notified successfully.
     //  * @return -1 if an error occurred.
     //  */
-    // int notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    // int notifyObservers(const char *observedPath, const void *payload, size_t payloadLength, COAP_CONTENT_FORMAT type);
 
     // /**
     //  * @brief Add a new observer for the specified observed path.
@@ -973,7 +967,7 @@ public:
     //  *
     //  * @return 0 on success, -1 on failure.
     //  */
-    // int sendResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    // int sendResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_FORMAT type);
 
     // /**
     //  * @brief Send a separate response.
@@ -985,7 +979,7 @@ public:
     //  *
     //  * @see sendResponse.
     //  */
-    // int sendSeparateResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_TYPE type);
+    // int sendSeparateResponse(IPAddress ip, uint16_t port, const CoapPacket &requestPacket, COAP_RESPONSE_CODE code, const void *payload, size_t payloadLength, COAP_CONTENT_FORMAT type);
 
     // /**
     //  * @brief Send a GET request.
@@ -1075,7 +1069,7 @@ public:
     //  * Specifying content type is not compulsory and can be inferred from the applications.
     //  * * @see https://datatracker.ietf.org/doc/html/rfc7252#section-5.5.1
     //  *
-    //  * To send a message with content type, use the overload with the contentType parameter.
+    //  * To send a message with content type, use the overload with the contentFormat parameter.
     //  *
     //  * @param ip The IP address of the recipient.
     //  * @param port The port of the recipient.
@@ -1096,9 +1090,9 @@ public:
     //  *
     //  * The generated Message ID of the sent message is returned.
     //  *
-    //  * @see send without contentType for more details.
+    //  * @see send without contentFormat for more details.
     //  */
-    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType);
+    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_FORMAT contentFormat);
 
     // /**
     //  * @brief Send a raw CoAP message specifying all the parameters.
@@ -1109,9 +1103,9 @@ public:
     //  * The message will be queued for transmission and sent in the next loop cycle.
     //  * If the message is confirmable, retransmissions will be handled according to CoAP specifications.
     //  *
-    //  * @see send without contentType for more details.
+    //  * @see send without contentFormat for more details.
     //  */
-    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_TYPE contentType, uint16_t messageId);
+    // uint16_t send(IPAddress ip, uint16_t port, const char *path, COAP_TYPE type, COAP_METHOD method, const uint8_t *token, uint8_t tokenLength, const uint8_t *payload, size_t payloadLength, COAP_CONTENT_FORMAT contentFormat, uint16_t messageId);
 
     /**
      * @brief Process incoming packets and dispatch handlers.
