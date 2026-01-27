@@ -625,13 +625,6 @@ bool Coap::loop()
             }
         }
 
-        if (packet.type == COAP_CON)
-        {
-            // Received a message that requires acknowledgment.
-            // Reply with an empty ACK.
-            sendEmptyMessage(_udp->remoteIP(), _udp->remotePort());
-        }
-
         // next packet
         packetLength = _udp->parsePacket();
     }
