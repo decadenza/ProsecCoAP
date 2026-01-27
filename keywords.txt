@@ -33,6 +33,8 @@ sendPutRequest	KEYWORD2
 sendDeleteRequest	KEYWORD2
 sendResponse	KEYWORD2
 sendEmptyMessage	KEYWORD2
+sendEmptyAcknowledgement	KEYWORD2
+sendSeparateResponse	KEYWORD2
 send	KEYWORD2
 notifyObservers	KEYWORD2
 addObserver	KEYWORD2
