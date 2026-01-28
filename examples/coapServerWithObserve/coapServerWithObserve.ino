@@ -39,7 +39,7 @@
 
 // UDP and CoAP class
 EthernetUDP Udp;
-Coap coap(Udp);
+// Coap coap(Udp);
 
 // Using a sequential identifier. IP will be based on this.
 #define DEVICE_ID 1

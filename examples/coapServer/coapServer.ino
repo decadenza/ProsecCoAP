@@ -49,7 +49,7 @@ bool LEDSTATE;
 // A GET request will only return the current value.
 // A PUT request will set a new value.
 // The response will be a string, either "1" or "0".
-void callbackLight(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 {
   // if (packet.code == COAP_PUT && packet.payloadLength)
   // {

@@ -211,7 +211,7 @@ namespace Coap
         Get = COAP_CODE_ENCODE(0, 1),
         Post = COAP_CODE_ENCODE(0, 2),
         Put = COAP_CODE_ENCODE(0, 3),
-        Delete = COAP_CODE_ENCODE(0, 4)
+        Delete = COAP_CODE_ENCODE(0, 4),
         // !SECTION End of 0.xx Request MessageCodes
 
         // SECTION 2.xx Success response codes
@@ -262,7 +262,7 @@ namespace Coap
         /** Like HTTP 504 "Gateway Timeout". */
         GatewayTimeout = COAP_CODE_ENCODE(5, 4),
         /** The server is unable or unwilling to act as a forward-proxy for the URI specified in the Proxy-Uri Option. */
-        ProxyingNotSupported = COAP_CODE_ENCODE(5, 5)
+        ProxyingNotSupported = COAP_CODE_ENCODE(5, 5),
         // !SECTION End of 5.xx Server Error response codes
     };
 
@@ -488,7 +488,7 @@ namespace Coap
          * @return
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
-    }
+    };
 
 } // End of namespace Coap
 
