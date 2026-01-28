@@ -428,15 +428,27 @@ namespace Coap
 
     public:
         /**
-         * @brief Builds the CoAP message with default values.
+         * @brief Builds a default CoAP message.
          *
          * The version is set to @ref COAP_VERSION.
          * The type is set to @ref COAP_NONCON.
-         * The token length is set to 0.
          * The code is set to @ref COAP_EMPTY.
-         * The message ID is set to a new value from @ref getNextMessageId
+         * The token length is set to 0.
+         * The message ID is assigned automatically.
          */
-        Message();
+        Message() : Message(MessageType::NonCon, MessageCode::Empty) {}
+
+        /**
+         * @brief Builds a CoAP message with the given type and code.
+         *
+         * The version is set to @ref COAP_VERSION.
+         * The token length is set to 0.
+         * The message ID is assigned automatically.
+         *
+         * @param type The message type.
+         * @param code The message code.
+         */
+        Message(MessageType type, MessageCode code);
 
         /**
          * @brief Set the message type.
@@ -486,7 +498,7 @@ namespace Coap
          *
          * @param length The length (in bytes) of the token.
          *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes.
-         * @return 0 on success, or a negative error code on failure.
+         * @return An error code. ErrorCode::None for success.
          *
          * Example:
          * @code{.cpp}
@@ -499,9 +511,10 @@ namespace Coap
         /**
          * @brief Get the current token from the message (read-only).
          *
-         * @param[out] buffer Pointer to the token within the message. The caller should consider if to copy it.
+         * @param[out] buffer Pointer to the token within the message.
+         *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The token length.
-         * @return 0 on success, or a negative error code on failure.
+         * @return An error code. ErrorCode::None for success.
          *
          * Example:
          * @code{.cpp}

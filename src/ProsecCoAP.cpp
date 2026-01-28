@@ -4,11 +4,11 @@
 
 namespace Coap
 {
-    Message::Message()
+    Message::Message(MessageType type, MessageCode code)
     {
         // Initialize message with default CoAP header values.
-        this->_message[0] = (COAP_VERSION << 6) | (static_cast<uint8_t>(MessageType::Con) << 4); // Version 1, Type 0 (CON), Token Length 0
-        this->_message[1] = static_cast<uint8_t>(MessageCode::Empty);                            // Code
+        this->_message[0] = (COAP_VERSION << 6) | (static_cast<uint8_t>(type) << 4); // Version 1, given code, Token Length 0
+        this->_message[1] = static_cast<uint8_t>(code);                              // Code data.
         uint16_t messageId = _getNextId();
         this->_message[2] = (messageId >> 8) & 0xFF; // Message ID high byte.
         this->_message[3] = messageId & 0xFF;        // Message ID low byte.
@@ -17,15 +17,16 @@ namespace Coap
 
     uint16_t Message::getId()
     {
-        // 3rd and 4th bytes of the message contain the Message ID.
+        // 3rd and 4th bytes of the message MUST contain the Message ID.
         return (static_cast<uint16_t>(this->_message[2]) << 8) | static_cast<uint16_t>(this->_message[3]);
     }
 
     ErrorCode Message::_insert(size_t startPosition, const uint8_t *data, size_t length)
     {
-        // Check if insertion would exceed maximum message size.
         if (this->_messageLength + length > COAP_MAX_MESSAGE_SIZE)
         {
+            // Insertion would exceed maximum message size.
+            // Return without modification to the message.
             return ErrorCode::MessageTooLarge;
         }
 
