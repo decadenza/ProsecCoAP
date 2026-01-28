@@ -64,7 +64,8 @@ void loop()
 {
   IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
 
-  Coap::Message msg;
+  Coap::Message msg; // Initialise a new CoAP message with id = msg.getId().
+  Serial.println(msg.getId());
   msg.setType(Coap::MessageType::Con); // Set as confirmable message.
   msg.setCode(Coap::MessageCode::Get); // Set as GET request.
   msg.addToken(4);                     // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.

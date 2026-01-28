@@ -120,7 +120,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Reduce this value to save memory.
  */
-#define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 4U
+#define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 2U
 #endif
 /** @} */ // End of "Configurable constants" group
 
@@ -466,9 +466,19 @@ namespace Coap
         MessageCode getCode();
 
         /**
+         * @brief Get the message ID.
+         *
+         * The message ID is always present in a CoAP message.
+         *
+         * @return The 16-bit message ID.
+         */
+        uint16_t getId();
+
+        /**
          * @brief Add a token of the given length to the message.
          *
          * A random token is generated and added to the message as per specifications.
+         * If present, the previous token is replaced.
          *
          * The token is an optional field in a CoAP message.
          * It is intended for use as a client-local identifier for
@@ -487,21 +497,21 @@ namespace Coap
         ErrorCode addToken(size_t length);
 
         /**
-         * @brief Get the current token from the message.
+         * @brief Get the current token from the message (read-only).
          *
-         * @param[out] buffer Pointer to a uint8_t pointer that will be set to point to the token within the message.
-         * @param[out] length Pointer to a size_t variable where the token length will be stored.
+         * @param[out] buffer Pointer to the token within the message. The caller should consider if to copy it.
+         * @param[out] length The token length.
          * @return 0 on success, or a negative error code on failure.
          *
          * Example:
          * @code{.cpp}
          * Coap::Message msg;
-         * uint8_t *token;
+         * const uint8_t *token;
          * size_t length;
-         * const uint8_t* token = msg.getToken(&token, &length);
+         * msg.getToken(token, length);
          * @endcode
          */
-        ErrorCode getToken(uint8_t *&buffer, size_t &length);
+        ErrorCode getToken(const uint8_t *&buffer, size_t &length);
 
         /**
          * @brief Add an option to the message.

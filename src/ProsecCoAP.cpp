@@ -15,6 +15,12 @@ namespace Coap
         this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
     }
 
+    uint16_t Message::getId()
+    {
+        // 3rd and 4th bytes of the message contain the Message ID.
+        return (static_cast<uint16_t>(this->_message[2]) << 8) | static_cast<uint16_t>(this->_message[3]);
+    }
+
     ErrorCode Message::_insert(size_t startPosition, const uint8_t *data, size_t length)
     {
         // Check if insertion would exceed maximum message size.
@@ -38,16 +44,22 @@ namespace Coap
 
     ErrorCode Message::_remove(size_t startPosition, size_t length)
     {
+        if (length == 0)
+        {
+            return ErrorCode::None; // Nothing to remove.
+        }
+
         // Check if removal is valid.
         if (startPosition + length > this->_messageLength)
         {
             return ErrorCode::InvalidArgument;
         }
 
-        // Shift bytes to remove the specified data.
-        memmove(this->_message + startPosition,          // Destination.
-                this->_message + startPosition + length, // Source.
-                length);                                 // Amount of bytes to move.
+        // Shift rightmost bytes over the removed segment.
+        // Even if we are removing the rightmost bytes, memmove with zero length is safe.
+        memmove(this->_message + startPosition,                   // Destination.
+                this->_message + startPosition + length,          // Source.
+                this->_messageLength - (startPosition + length)); // Amount of bytes to shift.
 
         // Update current message length.
         this->_messageLength -= length;
@@ -95,16 +107,26 @@ namespace Coap
             return ErrorCode::InvalidArgument;
         }
 
+        // SECTION Remove any existing token.
+        size_t existingTokenLength = this->_message[0] & 0x0F;
+        this->_remove(COAP_HEADER_SIZE, existingTokenLength); // No-op if existingTokenLength is 0.
+
         // SECTION Generate a random token.
-        uint8_t tokenBuffer[COAP_MAX_TOKEN_LENGTH] = {0};
-        // The random token is generated in chunks of 4 bytes.
-        for (size_t chunk; chunk <= length / 4U; chunk++)
+        uint8_t tokenBuffer[COAP_MAX_TOKEN_LENGTH];
+
+        // The random token is generated in chunks of sizeof(long) bytes.
+        // Although long should be 4 bytes, the code is platform-independent.
+        size_t chunkSize = sizeof(long);
+        long min = 1 << ((chunkSize * 8) - 1); // Minimum value for long.
+        long max = ~min;                       // Maximum value for long.
+        for (size_t n = 0; chunkSize * n < length; n++)
         {
             // Taking the full range of random values, including negative ones, and casting to uint32_t.
             // NOTE: It is more efficient to generate 4 bytes at a time.
-            // The endianness is irrelevant for a random value.
-            uint32_t r = random(0xF0000000, 0x0FFFFFFF);
-            memcpy(tokenBuffer + (chunk * 4U), &r, 4U);
+            // Random takes long data types, so negative values are possible.
+            // NOTE: The endianness is irrelevant for a random value.
+            long r = random(min, max);
+            memcpy(tokenBuffer + (chunkSize * n), &r, chunkSize);
         }
         // !SECTION
 
@@ -121,14 +143,13 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    ErrorCode Message::getToken(uint8_t *&buffer, size_t &length)
+    ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length)
     {
         // Extract token length from the first byte of the message.
         length = this->_message[0] & 0x0F;
         if (length == 0)
         {
             // Invalid case: no token present.
-            length = 0;
             buffer = nullptr;
             return ErrorCode::None; // No token present. Not an error.
         }
@@ -140,9 +161,8 @@ namespace Coap
             buffer = nullptr;
             return ErrorCode::MalformedMessage;
         }
-        // Copy the token into the provided buffer.
-        // When present, the token starts immediately after the 4-byte header.
-        memcpy(buffer, this->_message + COAP_HEADER_SIZE, length);
+        // Give access by reference to the token within the message.
+        buffer = this->_message + COAP_HEADER_SIZE;
         return ErrorCode::None;
     }
 }
