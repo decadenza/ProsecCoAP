@@ -416,6 +416,16 @@ namespace Coap
          */
         ErrorCode _remove(size_t startPosition, size_t length);
 
+        /**
+         * @brief Get the next Message ID.
+         *
+         * Message ID are sequentially assigned, starting from a random value.
+         * The role of the Message ID is only to detect duplicates.
+         *
+         * @return A 16-bit message ID.
+         */
+        static uint16_t _getNextId();
+
     public:
         /**
          * @brief Builds the CoAP message with default values.
@@ -428,29 +438,19 @@ namespace Coap
          */
         Message();
 
-        /**
-         * @brief Get the next Message ID.
-         *
-         * Message ID are sequentially assigned, starting from a random value.
-         * The role of the Message ID is only to detect duplicates.
-         *
-         * @return A 16-bit message ID.
-         */
-        static uint16_t getNextId();
-
-        /**
+                /**
          * @brief Set the message type.
          *
          * @param type The message type to set.
          */
-        void setMessageType(MessageType type);
+        void setType(MessageType type);
 
         /**
          * @brief Get the message type.
          *
          * The type is always present in a CoAP message.
          */
-        MessageType getMessageType();
+        MessageType getType();
 
         /**
          * @brief Add a token of the given length to the message.
@@ -495,13 +495,13 @@ namespace Coap
          *
          * @param code The message code to set.
          */
-        void setMessageCode(MessageCode code);
+        void setCode(MessageCode code);
         /**
          * @brief Get the message code.
          *
          * The code is always present in a CoAP message.
          */
-        MessageCode getMessageCode();
+        MessageCode getCode();
 
         /**
          * @brief Add an option to the message.

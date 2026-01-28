@@ -9,7 +9,7 @@ namespace Coap
         // Initialize message with default CoAP header values.
         this->_message[0] = (COAP_VERSION << 6) | (static_cast<uint8_t>(MessageType::Con) << 4); // Version 1, Type 0 (CON), Token Length 0
         this->_message[1] = static_cast<uint8_t>(MessageCode::Empty);                            // Code
-        uint16_t messageId = getNextId();
+        uint16_t messageId = _getNextId();
         this->_message[2] = (messageId >> 8) & 0xFF; // Message ID high byte.
         this->_message[3] = messageId & 0xFF;        // Message ID low byte.
         this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
@@ -54,12 +54,27 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    uint16_t Message::getNextId()
+    uint16_t Message::_getNextId()
     {
         // Message ID is a simple sequential identifier.
         // However, to avoid collisions after a reset, start with a random value.
         static uint16_t id = (uint16_t)random(0, 0xFFFF);
         return id++;
+    }
+
+    void Message::setType(MessageType type)
+    {
+        // Clear the current type bits.
+        this->_message[0] &= 0b11001111;
+        // Set the new type.
+        this->_message[0] |= (static_cast<uint8_t>(type) << 4) & 0b00110000;
+    }
+
+    MessageType Message::getType()
+    {
+        // Extract the type bits from the first byte.
+        uint8_t t = (this->_message[0] >> 4) & 0b00000011;
+        return static_cast<MessageType>(t);
     }
 
     ErrorCode Message::addToken(size_t length)
