@@ -438,7 +438,7 @@ namespace Coap
          */
         Message();
 
-                /**
+        /**
          * @brief Set the message type.
          *
          * @param type The message type to set.
@@ -451,6 +451,19 @@ namespace Coap
          * The type is always present in a CoAP message.
          */
         MessageType getType();
+
+        /**
+         * @brief Set the message code.
+         *
+         * @param code The message code to set.
+         */
+        void setCode(MessageCode code);
+        /**
+         * @brief Get the message code.
+         *
+         * The code is always present in a CoAP message.
+         */
+        MessageCode getCode();
 
         /**
          * @brief Add a token of the given length to the message.
@@ -491,19 +504,6 @@ namespace Coap
         ErrorCode getToken(uint8_t *&buffer, size_t &length);
 
         /**
-         * @brief Set the message code.
-         *
-         * @param code The message code to set.
-         */
-        void setCode(MessageCode code);
-        /**
-         * @brief Get the message code.
-         *
-         * The code is always present in a CoAP message.
-         */
-        MessageCode getCode();
-
-        /**
          * @brief Add an option to the message.
          *
          * The option is added according to the CoAP option encoding rules.
@@ -522,6 +522,16 @@ namespace Coap
          * @return An error code indicating success or failure.
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
+
+        /**
+         * @brief Remove an option from the message.
+         *
+         * If multiple options with the same number are present, all are removed.
+         *
+         * @param number The option number to remove.
+         * @return An error code indicating success or failure.
+         */
+        ErrorCode removeOption(OptionNumber number);
     };
 
 } // End of namespace Coap
