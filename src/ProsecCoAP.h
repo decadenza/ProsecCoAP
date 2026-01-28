@@ -112,8 +112,13 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endif
 #ifndef COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE
 /**
- * @brief The maximum number of confirmable messages that are tracked for retransmission.
- * This value can be overridden.
+ * @brief The maximum number of confirmable messages that are stored for retransmission.
+ *
+ * The total memory used by the queue will be *about*:
+ * COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE * COAP_MAX_MESSAGE_SIZE bytes.
+ * The actual memory usage may be slightly higher due to the @ref Message representation.
+ *
+ * Reduce this value to save memory.
  */
 #define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 4U
 #endif
@@ -342,8 +347,8 @@ namespace Coap
         MessageTooLarge = -2,
         /** The message is malformed. */
         MalformedMessage = -3,
-        /** The option is invalid. */
-        InvalidOption = -4,
+        /** One of the supplied arguments is invalid. */
+        InvalidArgument = -4,
         /** The operation is not supported. */
         NotSupported = -5,
         /** General failure. */
@@ -376,6 +381,25 @@ namespace Coap
          * @brief Message binary data.
          */
         uint8_t _message[COAP_MAX_MESSAGE_SIZE];
+        /**
+         * @brief Current length of the message in bytes.
+         */
+        size_t _messageLength;
+        /**
+         * @brief Inserts data into the message.
+         *
+         * It inserts data at the specified position, shifting existing data.
+         * It updates the resulting message length accordingly.
+         *
+         * @param startPosition The position in the message where the data should be inserted.
+         * @param data Pointer to the data to insert.
+         * @param length The length of the data to insert in bytes.
+         * @return An error code indicating success or failure. Particularly,
+         *         it returns @ref ErrorCode::MessageTooLarge if the insertion would exceed
+         *         the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).
+         *         On failure, the message remains unmodified.
+         */
+        ErrorCode _insert(size_t startPosition, const uint8_t *data, size_t length);
 
     public:
         /**
@@ -400,16 +424,6 @@ namespace Coap
         static uint16_t getNextId();
 
         /**
-         * @brief Generate a random token of the given length.
-         *
-         * @param[out] buffer The destination buffer of the generated token.
-         * @param length The length (in bytes) of the token to generate.
-         *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes. Any greater value will be clamped.
-         *
-         */
-        static void getRandomToken(uint8_t *buffer, size_t length);
-
-        /**
          * @brief Set the message type.
          *
          * @param type The message type to set.
@@ -431,10 +445,9 @@ namespace Coap
          * The token is an optional field in a CoAP message.
          * It is intended for use as a client-local identifier for
          * differentiating between concurrent requests.
-         * The token can be max @ref COAP_MAX_TOKEN_LENGTH bytes long.
          *
          * @param length The length (in bytes) of the token.
-         *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes. Any greater value will be clamped.
+         *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes.
          * @return 0 on success, or a negative error code on failure.
          *
          * Example:
@@ -448,17 +461,19 @@ namespace Coap
         /**
          * @brief Get the current token from the message.
          *
+         * @param[out] buffer Pointer to a uint8_t pointer that will be set to point to the token within the message.
          * @param[out] length Pointer to a size_t variable where the token length will be stored.
-         * @return A pointer to the token within the message. The caller should not read beyond the token length.
+         * @return 0 on success, or a negative error code on failure.
          *
          * Example:
          * @code{.cpp}
          * Coap::Message msg;
-         * size_t tokenLength;
-         * const uint8_t* token = msg.getToken(&tokenLength);
+         * uint8_t *token;
+         * size_t length;
+         * const uint8_t* token = msg.getToken(&token, &length);
          * @endcode
          */
-        const uint8_t *getToken(size_t *length);
+        ErrorCode getToken(uint8_t *&buffer, size_t &length);
 
         /**
          * @brief Set the message code.
