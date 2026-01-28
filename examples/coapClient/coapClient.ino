@@ -66,6 +66,7 @@ void loop()
 
   Coap::Message msg;
   msg.setType(Coap::MessageType::Con); // Set as confirmable message.
+  msg.setCode(Coap::MessageCode::Get); // Set as GET request.
   msg.addToken(4);                     // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.
 
   // CoapPacket packet;

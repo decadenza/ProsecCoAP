@@ -77,6 +77,16 @@ namespace Coap
         return static_cast<MessageType>(t);
     }
 
+    void Message::setCode(MessageCode code)
+    {
+        this->_message[1] = static_cast<uint8_t>(code);
+    }
+
+    MessageCode Message::getCode()
+    {
+        return static_cast<MessageCode>(this->_message[1]);
+    }
+
     ErrorCode Message::addToken(size_t length)
     {
 
