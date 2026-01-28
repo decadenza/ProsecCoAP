@@ -2,7 +2,7 @@
 #include "ProsecCoAP.h"
 #include "utility/helpers.h"
 
-uint16_t CoapGetNextMessageId()
+uint16_t CoapgetNextMessageId()
 {
     // Message ID is a simple sequential identifier.
     // However, to avoid collisions after a reset, start with a random value.
@@ -10,7 +10,7 @@ uint16_t CoapGetNextMessageId()
     return id++;
 }
 
-void CoapGenerateRandomToken(uint8_t *buffer, size_t length)
+void CoapgenerateRandomToken(uint8_t *buffer, size_t length)
 {
 
     // Clamp length to maximum allowed token length to respect protocol specifications.

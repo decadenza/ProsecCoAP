@@ -22,7 +22,7 @@ COAP_CONTENT_FORMAT	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
-CoapGetNextMessageId	KEYWORD2
+CoapgetNextMessageId	KEYWORD2
 start	KEYWORD2
 loop	KEYWORD2
 server	KEYWORD2

@@ -17,7 +17,7 @@
 #include <ProsecCoAP.h>
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
-IPAddress deviceIp(192, 168, 0, 99); // Set your own.
+IPAddress deviceIp(192, 168, 0, 99);                   // Set your own.
 IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
 
 // CoAP client response callback
@@ -63,15 +63,15 @@ void setup()
 void loop()
 {
   IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
-  
+
   CoapPacket packet;
-  packet.setType(COAP_CON);                                 // Confirmable.
-  packet.asRequest(COAP_GET);                               // GET request.
-  packet.setRecipient(destinationIp, "time"); 
+  packet.setType(COAP_CON);   // Confirmable.
+  packet.asRequest(COAP_GET); // GET request.
+  packet.setRecipient(destinationIp, "time");
 
   // Optionally, set a token.
   uint8_t token[2];
-  CoapGenerateRandomToken(token, sizeof(token));
+  CoapgenerateRandomToken(token, sizeof(token));
   packet.withToken(token, sizeof(token));
 
   // Send and show info.
