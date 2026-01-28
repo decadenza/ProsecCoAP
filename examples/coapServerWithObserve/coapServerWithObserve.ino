@@ -48,7 +48,7 @@ byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC addres
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 
 // Declarations.
-void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port);
+void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port);
 
 void setup()
 {
@@ -67,10 +67,10 @@ void setup()
     }
     SERIAL_PRINTLN("OK");
 
-    coap.server(pathSubscribe, "subscribe");
+    // coap.server(pathSubscribe, "subscribe");
 
-    // Start coap server.
-    coap.start();
+    // // Start coap server.
+    // coap.start();
 
     SERIAL_PRINT("Server listening on ");
     SERIAL_PRINTLN(Ethernet.localIP());
@@ -78,49 +78,49 @@ void setup()
     SERIAL_PRINTLN("Initialisation completed");
 }
 
-void pathSubscribe(CoapPacket &packet, IPAddress ip, uint16_t port)
+void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
 {
-    COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
+    // COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
 
-    switch (observeValue)
-    {
-    case COAP_OBSERVE_VALUE_REGISTER:
-    {
-        // Add a new observer in the table.
-        CoapObserver *observer = NULL;
-        int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
-        if (rc != 0 || observer == NULL)
-        {
-            coap.sendResponse(ip, port, packet, COAP_SERVICE_UNAVAILABLE, "busy", strlen("busy"), COAP_TEXT_PLAIN);
-            SERIAL_PRINTLN("Observer could not be added!");
-        }
-        else
-        {
-            // The loop will return the current representation of the resource
-            // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
-            SERIAL_PRINTLN("Subscribed!");
-        }
-        return;
-    }
-    case COAP_OBSERVE_VALUE_DEREGISTER:
-    {
-        coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength); // Remove the observer of "subscribe" path.
-        coap.sendResponse(ip, port, packet, COAP_CONTENT, "unsubscribed", strlen("unsubscribed"), COAP_TEXT_PLAIN);
-        SERIAL_PRINTLN("Unsubscribed!");
-        return;
-    }
-    default:
-    {
-        SERIAL_PRINT("Missing/invalid observe value: ");
-        SERIAL_PRINTLN(observeValue);
-        return;
-    }
-    }
+    // switch (observeValue)
+    // {
+    // case COAP_OBSERVE_VALUE_REGISTER:
+    // {
+    //     // Add a new observer in the table.
+    //     CoapObserver *observer = NULL;
+    //     int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
+    //     if (rc != 0 || observer == NULL)
+    //     {
+    //         coap.sendResponse(ip, port, packet, COAP_SERVICE_UNAVAILABLE, "busy", strlen("busy"), COAP_TEXT_PLAIN);
+    //         SERIAL_PRINTLN("Observer could not be added!");
+    //     }
+    //     else
+    //     {
+    //         // The loop will return the current representation of the resource
+    //         // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
+    //         SERIAL_PRINTLN("Subscribed!");
+    //     }
+    //     return;
+    // }
+    // case COAP_OBSERVE_VALUE_DEREGISTER:
+    // {
+    //     coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength); // Remove the observer of "subscribe" path.
+    //     coap.sendResponse(ip, port, packet, COAP_CONTENT, "unsubscribed", strlen("unsubscribed"), COAP_TEXT_PLAIN);
+    //     SERIAL_PRINTLN("Unsubscribed!");
+    //     return;
+    // }
+    // default:
+    // {
+    //     SERIAL_PRINT("Missing/invalid observe value: ");
+    //     SERIAL_PRINTLN(observeValue);
+    //     return;
+    // }
+    // }
 }
 
 void loop()
 {
-    coap.loop(); // Process coap requests.
+    // coap.loop(); // Process coap requests.
 
     sendNotification();
 }
@@ -131,8 +131,8 @@ void sendNotification()
     char payload[] = "The answer is 42\n";
     size_t payloadLength = strlen(payload);
 
-    if (coap.notifyObservers("subscribe", payload, payloadLength, COAP_TEXT_PLAIN) > 0)
-    {
-        SERIAL_PRINTLN("Notified!");
-    }
+    // if (coap.notifyObservers("subscribe", payload, payloadLength, COAP_TEXT_PLAIN) > 0)
+    // {
+    //     SERIAL_PRINTLN("Notified!");
+    // }
 }

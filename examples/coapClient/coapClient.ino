@@ -21,25 +21,25 @@ IPAddress deviceIp(192, 168, 0, 99);                   // Set your own.
 IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port);
+void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port);
 
 // UDP and CoAP class
 EthernetUDP Udp;
-Coap coap(Udp);
+// Coap coap(Udp);
 
 // CoAP client response callback
-void callbackResponse(CoapPacket &packet, IPAddress ip, uint16_t port)
+void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
 {
-  Serial.print("[Coap Response] ");
-  Serial.write((const char *)packet.payload, packet.payloadLength);
-  Serial.print(" (token: ");
-  for (size_t i = 0; i < packet.tokenLength; i++)
-  {
-    Serial.print(packet.token[i], HEX);
-  }
-  Serial.print(", message ID:");
-  Serial.print(packet.messageId);
-  Serial.println(")");
+  // Serial.print("[Coap Response] ");
+  // Serial.write((const char *)message.payload, message.payloadLength);
+  // Serial.print(" (token: ");
+  // for (size_t i = 0; i < message.tokenLength; i++)
+  // {
+  //   Serial.print(packet.token[i], HEX);
+  // }
+  // Serial.print(", message ID:");
+  // Serial.print(packet.messageId);
+  // Serial.println(")");
 }
 
 void setup()
@@ -54,41 +54,41 @@ void setup()
   // Handler acknowledgment responses.
   // This is a single handler for all ACK responses.
   Serial.println("Setup Response Callback");
-  coap.responseHandler(callbackResponse);
+  // coap.responseHandler(callbackResponse);
 
   // start coap server/client
-  coap.start();
+  // coap.start();
 }
 
 void loop()
 {
   IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
 
-  CoapPacket packet;
-  packet.setType(COAP_CON);   // Confirmable.
-  packet.asRequest(COAP_GET); // GET request.
-  packet.setRecipient(destinationIp, "time");
+  // CoapPacket packet;
+  // packet.setType(COAP_CON);   // Confirmable.
+  // packet.asRequest(COAP_GET); // GET request.
+  // packet.setRecipient(destinationIp, "time");
 
-  // Optionally, set a token.
-  uint8_t token[2];
-  CoapgenerateRandomToken(token, sizeof(token));
-  packet.withToken(token, sizeof(token));
+  // // Optionally, set a token.
+  // uint8_t token[2];
+  // CoapgenerateRandomToken(token, sizeof(token));
+  // packet.withToken(token, sizeof(token));
 
-  // Send and show info.
-  if (coap.sendPacket(packet, destinationIp) == 0) // 0 means success
-    Serial.print("[GET request] OK");
-  else
-    Serial.print("[GET request] FAILED");
+  // // Send and show info.
+  // if (coap.sendPacket(packet, destinationIp) == 0) // 0 means success
+  //   Serial.print("[GET request] OK");
+  // else
+  //   Serial.print("[GET request] FAILED");
 
-  Serial.print(" (message ID: ");
-  Serial.print(packet.messageId);
-  Serial.print(", token: ");
-  for (size_t i = 0; i < packet.tokenLength; i++)
-  {
-    Serial.print(packet.token[i], HEX);
-  }
-  Serial.println(")");
+  // Serial.print(" (message ID: ");
+  // Serial.print(packet.messageId);
+  // Serial.print(", token: ");
+  // for (size_t i = 0; i < packet.tokenLength; i++)
+  // {
+  //   Serial.print(packet.token[i], HEX);
+  // }
+  // Serial.println(")");
 
-  delay(1000);
-  coap.loop();
+  // delay(1000);
+  // coap.loop();
 }
