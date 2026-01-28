@@ -42,25 +42,41 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * Refer to each constant's documentation for details.
  *@{
- #ifndef COAP_MAX_MESSAGE_SIZE
+ */
+#ifndef COAP_MAX_MESSAGE_SIZE
 /**
  * @brief Maximum size of a CoAP message in bytes.
  *
+ * As per CoAP specification, the recommended message size should fit within a single
+ * IP packet to avoid fragmentation. The recommended maximum size is therefore 1152 bytes.
+ * The absolute minimum size for a UDP payload (and thus, of a message) is 40 bytes.
+ *
+ * This value applies to both incoming and outgoing messages.
+ * Keep this value small enough to reduce memory usage. Exceeding it will
+ * lead to errors when building outgoing messages or parsing incoming messages.
+ *
  * See https://datatracker.ietf.org/doc/html/rfc7252#section-4.6
+ *
+ * # Further considerations on the message size
+ * The message structure is:
+ * | HEADER  | TOKEN | OPTIONS  | PAYLOAD  |
+ * | :------ | :---- | :------- | :------- |
+ * | 4 bytes | 0-8b  | variable | variable |
+ *
  */
-#define COAP_MAX_MESSAGE_SIZE 1280
+#define COAP_MAX_MESSAGE_SIZE 128U
 #endif
 #ifndef COAP_MAX_CALLBACK
 /**
  * @brief Maximum number of callbacks that can be registered.
  */
-#define COAP_MAX_CALLBACK 10
+#define COAP_MAX_CALLBACK 10U
 #endif
 #ifndef COAP_MAX_OBSERVERS
 /**
- * @brief Maximum number of _observers that can be registered at runtime.
+ * @brief Maximum number of observers that can be registered at runtime.
  */
-#define COAP_MAX_OBSERVERS 4
+#define COAP_MAX_OBSERVERS 4U
 #endif
 #ifndef COAP_OBSERVER_LEASE_MS
 #define COAP_OBSERVER_LEASE_MS 60000UL
@@ -92,14 +108,14 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  * Default to 4 as per RFC 7252, Section 4.8.
  * This value can be overridden.
  */
-#define COAP_MAX_RETRANSMIT 4
+#define COAP_MAX_RETRANSMIT 4U
 #endif
 #ifndef COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE
 /**
  * @brief The maximum number of confirmable messages that are tracked for retransmission.
  * This value can be overridden.
  */
-#define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 4
+#define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 4U
 #endif
 /** @} */ // End of "Configurable constants" group
 
@@ -123,7 +139,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /**
  * @brief The size of the CoAP header in bytes.
  */
-#define COAP_HEADER_SIZE 4u
+#define COAP_HEADER_SIZE 4U
 /**
  * @brief The payload marker byte.
  */
@@ -136,7 +152,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #define COAP_DEFAULT_PORT 5683
 /**
- * @brief Helper to use response codes as defined in RFC 7252.
+ * @brief Helper to encode class and detail into a 8-bit response code as defined in RFC 7252.
  */
 #define COAP_CODE_ENCODE(class, detail) ((class << 5) | (detail))
 /**
@@ -333,12 +349,13 @@ void CoapGenerateRandomToken(uint8_t *buffer, size_t length);
  */
 class CoapMessage
 {
-
 private:
     /**
      * @brief Message binary data.
      */
     uint8_t _message[COAP_MAX_MESSAGE_SIZE];
+
+public:
 }
 
 #endif
