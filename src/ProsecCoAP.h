@@ -359,26 +359,6 @@ namespace Coap
      * @{
      */
 
-    /**
-     * @brief Get the next Message ID.
-     *
-     * Message ID are sequentially assigned, starting from a random value.
-     * The role of the Message ID is only to detect duplicates.
-     *
-     * @return A 16-bit message ID.
-     */
-    uint16_t getNextMessageId();
-
-    /**
-     * @brief Generate a random token of the given length.
-     *
-     * @param[out] buffer The destination buffer of the generated token.
-     * @param length The length (in bytes) of the token to generate.
-     *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes. Any greater value will be clamped.
-     *
-     */
-    void generateRandomToken(uint8_t *buffer, size_t length);
-
     /** @} */ // End of Functions group
     // !SECTION End of Functions.
 
@@ -408,18 +388,41 @@ namespace Coap
          * The message ID is set to a new value from @ref getNextMessageId
          */
         Message();
+
+        /**
+         * @brief Get the next Message ID.
+         *
+         * Message ID are sequentially assigned, starting from a random value.
+         * The role of the Message ID is only to detect duplicates.
+         *
+         * @return A 16-bit message ID.
+         */
+        static uint16_t getNextId();
+
+        /**
+         * @brief Generate a random token of the given length.
+         *
+         * @param[out] buffer The destination buffer of the generated token.
+         * @param length The length (in bytes) of the token to generate.
+         *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes. Any greater value will be clamped.
+         *
+         */
+        static void getRandomToken(uint8_t *buffer, size_t length);
+
         /**
          * @brief Set the message type.
          *
          * @param type The message type to set.
          */
         void setMessageType(MessageType type);
+
         /**
          * @brief Get the message type.
          *
          * The type is always present in a CoAP message.
          */
         MessageType getMessageType();
+
         /**
          * @brief Add a token of the given length to the message.
          *
@@ -456,6 +459,7 @@ namespace Coap
          * @endcode
          */
         const uint8_t *getToken(size_t *length);
+
         /**
          * @brief Set the message code.
          *
@@ -482,10 +486,10 @@ namespace Coap
          *
          * See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
          *
-         * @param number
-         * @param value
-         * @param length
-         * @return
+         * @param number The option number, as defined in the CoAP specification.
+         * @param value The pointer to the option value.
+         * @param length The length of the option value.
+         * @return An error code indicating success or failure.
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
     };
