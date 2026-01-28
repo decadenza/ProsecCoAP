@@ -26,13 +26,31 @@ namespace Coap
         // Shift existing bytes to make space for new data.
         memmove(this->_message + startPosition + length, // Destination.
                 this->_message + startPosition,          // Source.
-                this->_messageLength - startPosition);   // Amount of bytes to move.
+                this->_messageLength - startPosition);   // Amount of bytes to move (all the bytes after the insertion point).
 
         // Copy new data into the message.
         memcpy(this->_message + startPosition, data, length);
 
         // Update current message length.
         this->_messageLength += length;
+        return ErrorCode::None;
+    }
+
+    ErrorCode Message::_remove(size_t startPosition, size_t length)
+    {
+        // Check if removal is valid.
+        if (startPosition + length > this->_messageLength)
+        {
+            return ErrorCode::InvalidArgument;
+        }
+
+        // Shift bytes to remove the specified data.
+        memmove(this->_message + startPosition,          // Destination.
+                this->_message + startPosition + length, // Source.
+                length);                                 // Amount of bytes to move.
+
+        // Update current message length.
+        this->_messageLength -= length;
         return ErrorCode::None;
     }
 

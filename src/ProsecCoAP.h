@@ -371,6 +371,8 @@ namespace Coap
      * @brief A CoAP message.
      *
      * This is a view on the binary representation of a CoAP message.
+     * The intended use is to build a CoAP message to be sent, or to parse
+     * a received CoAP message.
      *
      * See https://datatracker.ietf.org/doc/html/rfc7252#section-3
      */
@@ -400,6 +402,19 @@ namespace Coap
          *         On failure, the message remains unmodified.
          */
         ErrorCode _insert(size_t startPosition, const uint8_t *data, size_t length);
+
+        /**
+         * @brief Removes bytes from the message, shifting existing data.
+         *
+         * It removes bytes starting from the specified position, shifting existing data.
+         * It updates the resulting message length accordingly.
+         *
+         * @param startPosition The position in the message where the data should be removed.
+         * @param length The length of the data to remove in bytes.
+         * @return An error code indicating success or failure.
+         *         On failure, the message remains unmodified.
+         */
+        ErrorCode _remove(size_t startPosition, size_t length);
 
     public:
         /**
