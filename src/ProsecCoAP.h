@@ -1,5 +1,5 @@
 /*
-CoAP library for Arduino with Observe functionality.
+ProseCoAP library for Arduino.
 
 This software is released under the MIT License.
 Copyright (c) 2014 Hirotaka Niisato
@@ -140,32 +140,32 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * CoAP version as per RFC 7252.
  */
-#define COAP_VERSION 0x01
+constexpr uint8_t COAP_VERSION = 0x01;
 /**
  * @brief The size of the CoAP header in bytes.
  */
-#define COAP_HEADER_SIZE 4U
+constexpr uint8_t COAP_HEADER_SIZE = 4U;
 /**
  * @brief The payload marker byte.
  */
-#define COAP_PAYLOAD_MARKER 0xFF
+constexpr uint8_t COAP_PAYLOAD_MARKER = 0xFF;
 /**
  * @brief The default CoAP port number.
  *
  * As per RFC 7252, the default port for CoAP is 5683.
  * The the CoAP instance may define a different port.
  */
-#define COAP_DEFAULT_PORT 5683
+constexpr uint16_t COAP_DEFAULT_PORT = 5683;
 /**
  * @brief Helper to encode class and detail into a 8-bit response code as defined in RFC 7252.
  */
-#define COAP_CODE_ENCODE(class, detail) ((class << 5) | (detail))
+constexpr uint8_t COAP_CODE_ENCODE(uint8_t class_, uint8_t detail) { return (class_ << 5) | (detail); }
 /**
  * @brief The maximum length of a CoAP token.
  *
  * See also https://datatracker.ietf.org/doc/html/rfc7252#section-5.3.1.
  */
-#define COAP_MAX_TOKEN_LENGTH 8U
+constexpr uint8_t COAP_MAX_TOKEN_LENGTH = 8U;
 /** @} */ // End of "Non configurable constants" group
 
 // !SECTION End of all constants.
