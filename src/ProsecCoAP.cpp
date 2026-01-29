@@ -109,25 +109,22 @@ namespace Coap
         }
 
         // SECTION Remove any existing token.
-        size_t existingTokenLength = this->_message[0] & 0x0F;
-        this->_remove(COAP_HEADER_SIZE, existingTokenLength); // No-op if existingTokenLength is 0.
+        size_t existingTokenLength = this->_message[0] & 0x0F; // Get existing token length.
+        this->_remove(COAP_HEADER_SIZE, existingTokenLength);  // No-op if existingTokenLength is 0.
 
         // SECTION Generate a random token.
         uint8_t tokenBuffer[COAP_MAX_TOKEN_LENGTH];
 
-        // The random token is generated in chunks of sizeof(long) bytes.
-        // Although long should be 4 bytes, the code is platform-independent.
-        size_t chunkSize = sizeof(long);
-        long min = 1 << ((chunkSize * 8) - 1); // Minimum value for long.
-        long max = ~min;                       // Maximum value for long.
-        for (size_t n = 0; chunkSize * n < length; n++)
+        // Fill token buffer with random bytes, minimizing calls to random().
+        // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
+        // Each random() call only provides 31 random bits, so we can extract up to 3 fully random bytes per call.
+        constexpr size_t chunkSize = sizeof(long) - 1; // Generally will be 4 - 1 = 3 bytes.
+        constexpr long max = (1UL << (chunkSize * 8)); // Generally 0xFFFFFF.
+        for (size_t c = 0; c < length; c += chunkSize)
         {
-            // Taking the full range of random values, including negative ones, and casting to uint32_t.
-            // NOTE: It is more efficient to generate 4 bytes at a time.
-            // Random takes long data types, so negative values are possible.
-            // NOTE: The endianness is irrelevant for a random value.
-            long r = random(min, max);
-            memcpy(tokenBuffer + (chunkSize * n), &r, chunkSize);
+            long r = random(0, max);
+            size_t bytesToCopy = (length - c < chunkSize) ? (length - c) : chunkSize;
+            memcpy(tokenBuffer + c, &r, bytesToCopy);
         }
         // !SECTION
 
@@ -146,24 +143,30 @@ namespace Coap
 
     ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length)
     {
-        // Extract token length from the first byte of the message.
+        // Extract token length from bits 4-7 of the first byte of the message.
         length = this->_message[0] & 0x0F;
         if (length == 0)
         {
-            // Invalid case: no token present.
+            // Special case: no token present. Still a valid message.
             buffer = nullptr;
-            return ErrorCode::None; // No token present. Not an error.
+            return ErrorCode::None;
         }
-        if (this->_messageLength < COAP_HEADER_SIZE + length)
+        if (length > COAP_MAX_TOKEN_LENGTH || this->_messageLength < COAP_HEADER_SIZE + length)
         {
             // The message is malformed: it indicates the presence of a token
-            // whose length would be greater than the actual message size.
+            // whose length would be greater allowed or whose value will exceed the whole message size.
             length = 0;
             buffer = nullptr;
             return ErrorCode::MalformedMessage;
         }
         // Give access by reference to the token within the message.
         buffer = this->_message + COAP_HEADER_SIZE;
+        return ErrorCode::None;
+    }
+
+    ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
+    {
+
         return ErrorCode::None;
     }
 }

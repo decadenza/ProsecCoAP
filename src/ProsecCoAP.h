@@ -351,6 +351,8 @@ namespace Coap
         InvalidArgument = -4,
         /** The operation is not supported. */
         NotSupported = -5,
+        /** Adding the option would exceed the maximum number of allowed options. */
+        TooManyOptions = -6,
         /** General failure. */
         Failure = -99
     };
@@ -509,7 +511,7 @@ namespace Coap
         ErrorCode addToken(size_t length);
 
         /**
-         * @brief Get the current token from the message (read-only).
+         * @brief Get the current token from the message.
          *
          * @param[out] buffer Pointer to the token within the message.
          *             @warning The pointer is valid **as long as the message exists**.
@@ -531,30 +533,117 @@ namespace Coap
          *
          * The option is added according to the CoAP option encoding rules.
          *
-         * For options that can appear only once, the existing option is replaced.
-         * For options that can appear multiple times, the option is appended to the existing ones.
+         * If adding the option will result in exceeding the limits specified by RFC 7252 Section 5.10,
+         * the error code @ref ErrorCode::TooManyOptions is returned.
+         * For options that can appear multiple times, the option is *appended after* the existing ones.
          *
-         * Prefer using specialized methods for common options like @ref COAP_CONTENT_FORMAT,
-         * @ref COAP_URI_PATH, or @ref COAP_URI_QUERY when available.
+         * Prefer using specialized methods to populate common options, for example @ref addPath to
+         * add @ref COAP_URI_PATH and @ref COAP_URI_QUERY options.
          *
          * See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
          *
          * @param number The option number, as defined in the CoAP specification.
          * @param value The pointer to the option value.
          * @param length The length of the option value.
-         * @return An error code indicating success or failure.
+         * @return An error code indicating success or failure. @ref ErrorCode::TooManyOptions is returned
+         *        if adding the option would exceed the maximum number of allowed options for that
+         *        number. An @ref ErrorCode::MessageTooLarge is returned if adding the option would exceed
+         *        the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
 
+        // /**
+        //  * @brief Get one option from the message.
+        //  *
+        //  * @param number The option number to retrieve.
+        //  * @param index The index, for options that can appear multiple times.
+        //  *              For example, to get the third occurrence of the Uri-Path option:
+        //  *              ```
+        //  *              msg.getOption(OptionNumber::UriPath, 2, value, length);
+        //  *              ```
+        //  * @param[out] value The pointer to the option value. The pointer is valid as long as the message exists.
+        //  * @param[out] length The length of the option value.
+        //  * @return An error code indicating success or failure. It will return @ref ErrorCode::NotFound
+        //  *         if the option with the given number and index does not exist.
+        //  */
+        // ErrorCode getOption(OptionNumber number, size_t index, const uint8_t *&value, size_t &length);
+
         /**
-         * @brief Remove an option from the message.
+         * @brief Iterate over all options with the given number.
          *
-         * If multiple options with the same number are present, all are removed.
+         * This is a zero-copy operation: the callback is given a pointer to each option's value.
+         *
+         * @tparam F A callable having signature `bool func(const uint8_t *value, size_t length)`.
+         *         The callback is invoked for each option found with the given number.
+         *         If the callback returns true, the iteration exits early.
+         * @param number The option number to search for.
+         * @param callback The function executed for each matching item found.
+         *                 The function may capture variables from the surrounding context.
+         * @return An error code indicating success or failure. It will return @ref ErrorCode::NotFound
+         *         if no option with the given number exists.
+         */
+        template <typename F>
+        ErrorCode readOptions(OptionNumber number, F callback);
+
+        /**
+         * @brief Remove all the options of the given number.
          *
          * @param number The option number to remove.
          * @return An error code indicating success or failure.
          */
-        ErrorCode removeOption(OptionNumber number);
+        ErrorCode removeOptions(OptionNumber number);
+
+        /**
+         * @brief Add the Uri-Host option to the message.
+         *
+         * It converts the given IP address to string format and adds it as the Uri-Host option,
+         * as per RFC 7252 Section 6.4.
+         * The Uri-Host option is not compulsory. As per Section 6.5, if not present, the
+         * the destination IP address where the message is being sent will be used.
+         *
+         * Any existing Uri-Host option is removed before adding the new one.
+         *
+         * @param ip The IP address to set as the Uri-Host.
+         * @return An error code indicating success or failure.
+         */
+        ErrorCode addHost(IPAddress ip);
+
+        /**
+         * @brief Add the Uri-Port option to the message.
+         *
+         * It adds the Uri-Port option as per RFC 7252 Section 6.4.
+         * The Uri-Port option is not compulsory. As per Section 6.5, if not present, the
+         * the default CoAP port @ref COAP_DEFAULT_PORT will be used.
+         *
+         * Any existing Uri-Port option is removed before adding the new one.
+         *
+         * @param port The port number to set as the Uri-Port.
+         * @return An error code indicating success or failure.
+         */
+        ErrorCode addPort(uint16_t port);
+
+        /**
+         * @brief Add the URI path (and query) to the message.
+         *
+         * It follows section "Decomposing URIs into Options"
+         * https://datatracker.ietf.org/doc/html/rfc7252#section-6.4
+         * to encode the path into the necessary Uri-Path and Uri-Query options.
+         *
+         * Any existing Uri-Path and Uri-Query options are removed before adding the new ones.
+         *
+         * @param path The URI path + query associated with the recipient, null terminated.
+         *             Initial slash is optional. Valid examples are:
+         *             ``
+         *             sensors/temp
+         *             /sensors/temp?unit=celsius
+         *             ```
+         *             Individual Uri-Path and Uri-Query segments cannot exceed
+         *             255 bytes, as per specification.
+         * @return An error code indicating success or failure.
+         */
+        ErrorCode addPath(const char *path);
+
+        ErrorCode addPayload(const uint8_t *payload, size_t length, ContentFormat format);
     };
 
 } // End of namespace Coap
