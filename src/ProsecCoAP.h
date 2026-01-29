@@ -370,6 +370,15 @@ namespace Coap
     // !SECTION End of Functions.
 
     /**
+     * @brief Callback function type for handling incoming messages.
+     *
+     * @param message The received CoAP message.
+     * @param ip The IP address of the sender.
+     * @param port The UDP port of the sender.
+     */
+    typedef void (*Callback)(Message &message, IPAddress ip, uint16_t port);
+
+    /**
      * @brief A CoAP message.
      *
      * This is a view on the binary representation of a CoAP message.
@@ -646,6 +655,35 @@ namespace Coap
         ErrorCode addPayload(const uint8_t *payload, size_t length, ContentFormat format);
     };
 
+    /**
+     * @brief The main CoAP class.
+     *
+     * It provides methods to send and receive CoAP messages, @see Message.
+     */
+    class Coap
+    {
+    private:
+        // The internal UDP instance used for communication.
+        UDP *_udp;
+        // The callback fuction for handling incoming response messages.
+        Callback _responseHandler;
+
+    public:
+        /**
+         * @brief Set the response callback.
+         *
+         * The response handler is invoked when a message of type @ref COAP_ACK or @ref COAP_RESET
+         * is received, allowing the application to handle the response.
+         * The callback is unique for all the requests sent by this Coap instance.
+         *
+         * Note that transmission ACK are also received internally by the retrasmission queue.
+         *
+         * Responses to different requests can be differentiated by matching the message ID.
+         *
+         * @param handler The callback function to handle acknowledgements.
+         */
+        void responseHandler(CoapCallback handler) { _responseHandler = handler; }
+    }
 } // End of namespace Coap
 
 #endif

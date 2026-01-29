@@ -164,9 +164,9 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
-    {
+    // ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
+    // {
 
-        return ErrorCode::None;
-    }
+    //     return ErrorCode::None;
+    // }
 }
