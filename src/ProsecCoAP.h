@@ -144,7 +144,7 @@ constexpr uint8_t COAP_VERSION = 0x01;
 /**
  * @brief The size of the CoAP header in bytes.
  */
-constexpr uint8_t COAP_HEADER_SIZE = 4U;
+constexpr uint8_t COAP_HEADER_SIZE = 4;
 /**
  * @brief The payload marker byte.
  */
@@ -165,7 +165,7 @@ constexpr uint8_t COAP_CODE_ENCODE(uint8_t class_, uint8_t detail) { return (cla
  *
  * See also https://datatracker.ietf.org/doc/html/rfc7252#section-5.3.1.
  */
-constexpr uint8_t COAP_MAX_TOKEN_LENGTH = 8U;
+constexpr uint8_t COAP_MAX_TOKEN_LENGTH = 8;
 /** @} */ // End of "Non configurable constants" group
 
 // !SECTION End of all constants.

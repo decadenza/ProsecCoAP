@@ -119,7 +119,7 @@ namespace Coap
         // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
         // Each random() call only provides 31 random bits, so we can extract up to 3 fully random bytes per call.
         constexpr size_t chunkSize = sizeof(long) - 1; // Generally will be 4 - 1 = 3 bytes.
-        constexpr long max = (1UL << (chunkSize * 8)); // Generally 0xFFFFFF.
+        constexpr long max = (1UL << (chunkSize * 8)); // Generally 16 777 216.
         for (size_t c = 0; c < length; c += chunkSize)
         {
             long r = random(0, max);
