@@ -351,8 +351,6 @@ namespace Coap
         InvalidArgument = -4,
         /** The operation is not supported. */
         NotSupported = -5,
-        /** Adding the option would exceed the maximum number of allowed options. */
-        TooManyOptions = -6,
         /** General failure. */
         Failure = -99
     };
@@ -554,7 +552,7 @@ namespace Coap
          * For options that can appear multiple times, this function appends the new option to the existing ones.
          *
          * If adding the option will result in exceeding the limits specified by RFC 7252 Section 5.10,
-         * the error code @ref ErrorCode::TooManyOptions is returned.
+         * the error code @ref ErrorCode::NotSupported is returned.
          * For options that can appear multiple times, the option is *appended after* the existing ones.
          *
          * This is a low-level method to add options.
@@ -566,7 +564,7 @@ namespace Coap
          * @param number The option number, as defined in the CoAP specification.
          * @param value The pointer to the option value.
          * @param length The length of the option value.
-         * @return An error code indicating success or failure. @ref ErrorCode::TooManyOptions is returned
+         * @return An error code indicating success or failure. @ref ErrorCode::NotSupported is returned
          *        if adding the option would exceed the maximum number of allowed options for that
          *        number. An @ref ErrorCode::MessageTooLarge is returned if adding the option would exceed
          *        the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).

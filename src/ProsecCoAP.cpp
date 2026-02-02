@@ -254,8 +254,14 @@ namespace Coap
             }
             // !SECTION End of length processing.
 
+            if (this->_messageLength < currentByte + 1 + length)
+            {
+                // The option value would exceed the message size!
+                return ErrorCode::MalformedMessage;
+            }
+
             // Call the callback with the option number, value and length.
-            const uint8_t *optionValue = this->_message + currentByte + 1;
+            const uint8_t *optionValue = this->_message + currentByte + 1; // The option value starts after delta and length bytes.
             if (callback(static_cast<OptionNumber>(currentOptionNumber), optionValue, length))
             {
                 // Callback requested to stop iteration.
@@ -266,18 +272,175 @@ namespace Coap
         }
     }
 
-    ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
+    ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)
     {
-
         // Read the token length.
         size_t tokenLength = this->getTokenLength();
         // Go to HEADER_SIZE + token length to find the start of the options.
-        size_t optionsStart = COAP_HEADER_SIZE + tokenLength;
+        size_t currentByte = COAP_HEADER_SIZE + tokenLength;
+        // Options are stored in order of increasing option number.
         // Iterate through existing options to find the insertion point.
+        // In case of multiple options with the same number, the new option is added after existing ones.
+        uint16_t lastOptionNumber = 0;
+        while (currentByte < this->_messageLength && lastOptionNumber <= static_cast<uint16_t>(newNumber))
+        {
+            // Read the option header byte.
+            uint8_t optionHeader = this->_message[currentByte];
+            uint8_t delta = (optionHeader >> 4) & 0x0F;
+            uint8_t length = optionHeader & 0x0F;
 
-        // Check if the option is already present (for single-instance options) and return ErrorCode::NotSupported if so.
+            // SECTION Process the delta special cases.
+            if (delta == 13)
+            {
+                // Extended delta (8 bits).
+                if (this->_messageLength < currentByte + 1)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                delta = this->_message[currentByte + 1] + 13;
+                currentByte++;
+            }
+            else if (delta == 14)
+            {
+                // Extended delta (16 bits).
+                if (this->_messageLength < currentByte + 2)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                delta = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
+                         static_cast<uint16_t>(this->_message[currentByte + 2])) +
+                        269;
+                currentByte += 2;
+            }
+            else if (delta == 15)
+            {
+                if (length == 15)
+                {
+                    // Payload marker reached. End of options.
+                    return ErrorCode::None;
+                }
+                else
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+            }
+            // Current option number is previous plus delta.
+            lastOptionNumber += delta;
+            // !SECTION End of delta processing.
 
-        // Add the new option at the correct position using insert (will return error if no space left).
+            // SECTION Process the length special cases.
+            if (length == 13)
+            {
+                // Extended length (8 bits).
+                if (this->_messageLength < currentByte + 1)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                length = this->_message[currentByte + 1] + 13;
+                currentByte++;
+            }
+            else if (length == 14)
+            {
+                // Extended length (16 bits).
+                if (this->_messageLength < currentByte + 2)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                length = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
+                          static_cast<uint16_t>(this->_message[currentByte + 2])) +
+                         269;
+                currentByte += 2;
+            }
+            else if (length == 15)
+            {
+                return ErrorCode::MalformedMessage;
+            }
+            // !SECTION End of length processing.
+            // Move to the beginning of the next option (or to the insertion point).
+            currentByte += 1 + length;
+        }
+        // currentByte is now the insertion point for the new option.
+
+        // For single-instance options, check if one already exists
+        // and return ErrorCode::NotSupported if so.
+        // See https://datatracker.ietf.org/doc/html/rfc7252#section-5.10
+        switch (static_cast<OptionNumber>(lastOptionNumber))
+        {
+        case OptionNumber::UriHost:
+        case OptionNumber::IfNoneMatch:
+        case OptionNumber::Observe: // Observe can only appear once!
+        case OptionNumber::UriPort:
+        case OptionNumber::ContentFormat:
+        case OptionNumber::MaxAge:
+        case OptionNumber::Accept:
+        case OptionNumber::ProxyUri:
+        case OptionNumber::ProxyScheme:
+        case OptionNumber::Size1:
+            return ErrorCode::NotSupported;
+        default:
+            // Multi-instance option, allowed to add again.
+            break;
+        }
+
+        // Build the new option header.
+        uint8_t newOptionHeader[5] = {0}; // Max 5 bytes for option header (1 + 2 for delta + 2 for length).
+        size_t newOptionHeaderLength = 1; // Initial header length.
+        uint16_t newOptionDelta = static_cast<uint16_t>(newNumber) - lastOptionNumber;
+        if (newOptionDelta > 269)
+        {
+            // Extended delta (16 bits).
+            newOptionHeader[1] = ((newOptionDelta - 269) >> 8) & 0xFF;
+            newOptionHeader[2] = (newOptionDelta - 269) & 0xFF;
+            newOptionHeader[0] = (14 << 4); // Delta = 14 on the 4 MSb.
+            newOptionHeaderLength += 2;
+        }
+        else if (newOptionDelta > 12)
+        {
+            // Extended delta (8 bits).
+            newOptionHeader[1] = (newOptionDelta - 13) & 0xFF;
+            newOptionHeader[0] = (13 << 4); // Delta = 13 on the 4 MSb.
+            newOptionHeaderLength += 1;
+        }
+        else
+        {
+            // No extended delta.
+            newOptionHeader[0] = (newOptionDelta << 4);
+        }
+        // Now process the length.
+        if (newLength > 269)
+        {
+            // Extended length (16 bits).
+            newOptionHeader[newOptionHeaderLength] = ((newLength - 269) >> 8) & 0xFF;
+            newOptionHeader[newOptionHeaderLength + 1] = (newLength - 269) & 0xFF;
+            newOptionHeader[0] |= 14; // Length = 14 on the 4 LSb.
+        }
+        else if (newLength > 12)
+        {
+            // Extended length (8 bits).
+            newOptionHeader[newOptionHeaderLength] = (newLength - 13) & 0xFF;
+            newOptionHeader[0] |= 13; // Length = 13 on the 4 LSb.
+        }
+        else
+        {
+            // No extended length.
+            newOptionHeader[0] |= newLength;
+        }
+
+        // Write the header into the message buffer.
+        ErrorCode err = this->_insert(currentByte, newOptionHeader, newOptionHeaderLength);
+        if (err != ErrorCode::None)
+        {
+            return err; // Insertion failed, message unmodified.
+        }
+        // Write the value into the message buffer.
+        currentByte += newOptionHeaderLength;
+        err = this->_insert(currentByte, newValue, newLength);
+        if (err != ErrorCode::None)
+        {
+            // Value insertion failed. Remove the previously inserted header.
+            this->_remove(currentByte - newOptionHeaderLength, newOptionHeaderLength);
+            return err; // Return the original error.
+        }
         return ErrorCode::None;
     }
 }
