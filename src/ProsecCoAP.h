@@ -396,11 +396,21 @@ namespace Coap
          *
          * The pointer is valid as long as the pointed buffer exists.
          */
-        const uint8_t *value = nullptr;
+        const uint8_t *value;
         /**
          * @brief Length of the option value in bytes.
          */
-        size_t length = 0;
+        size_t length;
+
+        Option() : number(static_cast<OptionNumber>(0)), value(nullptr), length(0) {}
+        /**
+         * @brief Build a CoAP option.
+         * @param number The option number.
+         * @param value The option value.
+         * @param length The length of the option value in bytes.
+         */
+        Option(OptionNumber number, const uint8_t *value, size_t length)
+            : number(number), value(value), length(length) {}
     };
 
     /**
@@ -649,7 +659,14 @@ namespace Coap
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
 
-        // TODO: Alias of addOption using Option struct.
+        /**
+         * @brief Add an option to the message.
+         * @see @ref addOption(OptionNumber number, const uint8_t *value, size_t length).
+         */
+        ErrorCode addOption(Option option)
+        {
+            return this->addOption(option.number, option.value, option.length);
+        };
 
         // /**
         //  * @brief Get one option from the message.
