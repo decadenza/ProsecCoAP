@@ -67,18 +67,20 @@ void loop()
   Coap::Message msg(Coap::MessageType::Con, Coap::MessageCode::Get); // Initialise a new CoAP confirmable message, as GET request.
   msg.addToken(4);                                                   // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.
 
-  const uint8_t *buffer;
-  size_t length;
-  msg.getToken(buffer, length);
+  msg.addOption(Coap::OptionNumber::UriPath, (const uint8_t *)"test", 4); // Add Uri-Path option with value "test".
 
-  Serial.print("GET request ready, id: ");
-  Serial.print(msg.getId());
-  Serial.print(", token: ");
-  for (size_t i = 0; i < length; i++)
-    Serial.print(buffer[i], HEX);
-  Serial.println();
-
-  
+  msg.readOptions([](Coap::OptionNumber number, const uint8_t *value, size_t length)
+                  {
+                    Serial.print("Option number: ");
+                    Serial.print(static_cast<uint16_t>(number));
+                    Serial.print(", value: ");
+                    for (size_t i = 0; i < length; i++)
+                    {
+                      Serial.print((char)value[i]);
+                    }
+                    Serial.println();
+                    return false; // Continue iteration.
+                  });
   // // Optionally, set a token.
   // uint8_t token[2];
   // CoapgenerateRandomToken(token, sizeof(token));
