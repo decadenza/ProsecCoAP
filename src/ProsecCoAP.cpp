@@ -15,7 +15,7 @@ namespace Coap
         this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
     }
 
-    uint16_t Message::getId()
+    uint16_t Message::getId() const
     {
         // 3rd and 4th bytes of the message MUST contain the Message ID.
         return (static_cast<uint16_t>(this->_message[2]) << 8) | static_cast<uint16_t>(this->_message[3]);
@@ -83,7 +83,7 @@ namespace Coap
         this->_message[0] |= (static_cast<uint8_t>(type) << 4) & 0b00110000;
     }
 
-    MessageType Message::getType()
+    MessageType Message::getType() const
     {
         // Extract the type bits from the first byte.
         uint8_t t = (this->_message[0] >> 4) & 0b00000011;
@@ -95,12 +95,12 @@ namespace Coap
         this->_message[1] = static_cast<uint8_t>(code);
     }
 
-    MessageCode Message::getCode()
+    MessageCode Message::getCode() const
     {
         return static_cast<MessageCode>(this->_message[1]);
     }
 
-    size_t Message::getTokenLength()
+    size_t Message::getTokenLength() const
     {
         // Extract token length from the first byte of the message.
         return this->_message[0] & 0x0F;
@@ -147,7 +147,7 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length)
+    ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length) const
     {
         length = this->getTokenLength();
         if (length == 0)
@@ -345,6 +345,119 @@ namespace Coap
             };
             return err; // Return the original error.
         }
+        return ErrorCode::None;
+    }
+
+    OptionIterator::OptionIterator(const Message *message)
+    {
+        _message = message;
+        _currentByte = COAP_HEADER_SIZE + _message->getTokenLength();
+        _currentOptionNumber = 0;
+    }
+
+    OptionIterator Message::getOptionIterator() const
+    {
+        // Return an option iterator for this message.
+        return OptionIterator(this);
+    }
+
+    ErrorCode OptionIterator::next(Option &option)
+    {
+        // There are no more options if, either:
+        // - We reached the end of the message.
+        // - We reached the payload marker (0xFF), see below.
+        if (this->_currentByte >= this->_message->getLength())
+        {
+            // No more options.
+            return ErrorCode::NotFound;
+        }
+        // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+        // Read the option header byte.
+        uint8_t optionHeader = (this->_message)->_message[this->_currentByte];
+        this->_currentByte++;
+        uint8_t delta = (optionHeader >> 4) & 0x0F;
+        option.length = optionHeader & 0x0F;
+
+        // SECTION Process the delta special cases.
+        if (delta == 13)
+        {
+            // Extended delta (8 bits).
+            if (this->_message->getLength() < this->_currentByte + 1)
+            {
+                return ErrorCode::MalformedMessage;
+            }
+            this->_currentByte++;
+            delta = (this->_message)->_message[this->_currentByte] + 13;
+        }
+        else if (delta == 14)
+        {
+            // Extended delta (16 bits).
+            if (this->_message->getLength() < this->_currentByte + 2)
+            {
+                return ErrorCode::MalformedMessage;
+            }
+            delta = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1]) << 8) |
+                     static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 2])) +
+                    269;
+            this->_currentByte += 2;
+        }
+        else if (delta == 15)
+        {
+            if (option.length == 15)
+            {
+                // Payload marker reached. End of options.
+                return ErrorCode::NotFound;
+            }
+            else
+            {
+                return ErrorCode::MalformedMessage;
+            }
+        }
+        // !SECTION End of delta processing.
+
+        // SECTION Process the length special cases.
+        if (option.length == 13)
+        {
+            // Extended length (8 bits).
+            if (this->_message->getLength() < this->_currentByte + 1)
+            {
+                return ErrorCode::MalformedMessage;
+            }
+            this->_currentByte++;
+            option.length = (this->_message)->_message[this->_currentByte] + 13;
+        }
+        else if (option.length == 14)
+        {
+            // Extended length (16 bits).
+            if (this->_message->getLength() < this->_currentByte + 2)
+            {
+                return ErrorCode::MalformedMessage;
+            }
+            option.length = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1]) << 8) |
+                             static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 2])) +
+                            269;
+            this->_currentByte += 2;
+        }
+        else if (option.length == 15)
+        {
+            return ErrorCode::MalformedMessage;
+        }
+        // !SECTION End of length processing.
+
+        if ((this->_message)->getLength() < this->_currentByte + option.length)
+        {
+            // The size of the option value exceeds the message size!
+            return ErrorCode::MalformedMessage;
+        }
+
+        // Current option number is previous plus delta.
+        this->_currentOptionNumber += delta;
+        option.number = static_cast<OptionNumber>(this->_currentOptionNumber);
+
+        // The option value starts after delta and length bytes.
+        option.value = &(this->_message)->_message[this->_currentByte];
+        this->_currentByte += option.length; // Update for next call.
+
         return ErrorCode::None;
     }
 }

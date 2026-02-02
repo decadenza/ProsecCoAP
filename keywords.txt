@@ -10,6 +10,8 @@ Coap	KEYWORD1
 Message	KEYWORD1
 MessageType	KEYWORD1
 MessageCode	KEYWORD1
+Option	KEYWORD1
+OptionIterator	KEYWORD1
 OptionNumber	KEYWORD1
 ObserveValue	KEYWORD1
 ContentFormat	KEYWORD1
@@ -26,6 +28,7 @@ setCode	KEYWORD2
 getCode	KEYWORD2
 addToken	KEYWORD2
 getToken	KEYWORD2
+getTokenLength	KEYWORD2
 addOption	KEYWORD2
 removeOption	KEYWORD2
 

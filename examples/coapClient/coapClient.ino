@@ -64,42 +64,40 @@ void loop()
 {
   IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
 
+  // Build a GET request message to transmit.
   Coap::Message msg(Coap::MessageType::Con, Coap::MessageCode::Get); // Initialise a new CoAP confirmable message, as GET request.
-  msg.addToken(4);                                                   // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.
+  // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.
+  msg.addToken(4);                                                   
+  Serial.print("Added token of length: ");
+  Serial.println(msg.getTokenLength());
 
-  msg.addOption(Coap::OptionNumber::UriPath, (const uint8_t *)"test", 4); // Add Uri-Path option with value "test".
-
-  msg.readOptions([](Coap::OptionNumber number, const uint8_t *value, size_t length)
-                  {
-                    Serial.print("Option number: ");
-                    Serial.print(static_cast<uint16_t>(number));
-                    Serial.print(", value: ");
-                    for (size_t i = 0; i < length; i++)
-                    {
-                      Serial.print((char)value[i]);
-                    }
-                    Serial.println();
-                    return false; // Continue iteration.
-                  });
-  // // Optionally, set a token.
-  // uint8_t token[2];
-  // CoapgenerateRandomToken(token, sizeof(token));
-  // packet.withToken(token, sizeof(token));
-
-  // // Send and show info.
-  // if (coap.sendPacket(packet, destinationIp) == 0) // 0 means success
-  //   Serial.print("[GET request] OK");
-  // else
-  //   Serial.print("[GET request] FAILED");
-
-  // Serial.print(" (message ID: ");
-  // Serial.print(packet.messageId);
-  // Serial.print(", token: ");
-  // for (size_t i = 0; i < packet.tokenLength; i++)
-  // {
-  //   Serial.print(packet.token[i], HEX);
-  // }
-  // Serial.println(")");
+  // Add CoAP options.
+  Coap::ErrorCode err = msg.addOption(Coap::OptionNumber::UriPath, (const uint8_t *)"abcdefg", 7);
+  if(err!= Coap::ErrorCode::None) {
+    Serial.print("Error while adding option: ");
+    Serial.println((int8_t)err);
+    }
+  err = msg.addOption(Coap::OptionNumber::UriPath, (const uint8_t *)"test", 4);
+  if(err!= Coap::ErrorCode::None) {
+    Serial.print("Error while adding option: ");
+    Serial.println((int8_t)err);
+    }
+  
+  // SECTION Read the options from the message.
+  // TEMP: Move to server example.
+  Coap::OptionIterator optIterator = msg.getOptionIterator();
+  Coap::Option opt;
+  while((err = optIterator.next(opt)) == Coap::ErrorCode::None) {
+      Serial.print("Found option: ");
+      Serial.print((int8_t)opt.number);
+      Serial.print(", length: ");
+      Serial.println((int8_t)opt.length);
+    }
+  if(err!= Coap::ErrorCode::NotFound) {
+    Serial.print("Error while reading options: ");
+    Serial.println((int8_t)err);
+    }
+   // !SECTION
 
   delay(1000);
   // coap.loop();

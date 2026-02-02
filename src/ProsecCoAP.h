@@ -379,6 +379,68 @@ namespace Coap
     typedef void (*Callback)(Message &message, IPAddress ip, uint16_t port);
 
     /**
+     * @brief A CoAP option.
+     *
+     * It references an option within a CoAP message.
+     */
+    struct Option
+    {
+        /**
+         * @brief The option number.
+         *
+         * This is initialized to 0 to indicate an empty (invalid) option.
+         */
+        OptionNumber number;
+        /**
+         * @brief Pointer to the option value.
+         *
+         * The pointer is valid as long as the pointed buffer exists.
+         */
+        const uint8_t *value = nullptr;
+        /**
+         * @brief Length of the option value in bytes.
+         */
+        size_t length = 0;
+    };
+
+    /**
+     * @brief The option iterator.
+     *
+     * It allows iterating through the options of a CoAP message,
+     * in order of increasing option number.
+     */
+    class OptionIterator
+    {
+        /**
+         * @brief The message being iterated.
+         */
+        const Message *_message;
+        /**
+         * @brief Track the current byte position in the message.
+         */
+        size_t _currentByte;
+        /**
+         * @brief Track the current option number as raw value.
+         */
+        uint16_t _currentOptionNumber;
+
+    public:
+        OptionIterator(const Message *message);
+
+        /**
+         * @brief Get the next option in the message.
+         *
+         * Note that some options may be repeated.
+         *
+         * @param[out] option The next option.
+         *
+         * @return An error code indicating success or failure. When there are no more options,
+         *        it returns ErrorCode::NotFound.
+         */
+        ErrorCode next(Option &option);
+    };
+
+    /**
      * @brief A CoAP message.
      *
      * This is a view on the binary representation of a CoAP message.
@@ -389,6 +451,8 @@ namespace Coap
      */
     class Message
     {
+        friend class OptionIterator;
+
     private:
         /**
          * @brief Message binary data.
@@ -462,6 +526,15 @@ namespace Coap
         Message(MessageType type, MessageCode code);
 
         /**
+         * @brief Get the message length.
+         * @return The length of the message in bytes.
+         */
+        size_t getLength() const
+        {
+            return this->_messageLength;
+        }
+
+        /**
          * @brief Set the message type.
          *
          * @param type The message type to set.
@@ -473,7 +546,7 @@ namespace Coap
          *
          * The type is always present in a CoAP message.
          */
-        MessageType getType();
+        MessageType getType() const;
 
         /**
          * @brief Set the message code.
@@ -486,7 +559,7 @@ namespace Coap
          *
          * The code is always present in a CoAP message.
          */
-        MessageCode getCode();
+        MessageCode getCode() const;
 
         /**
          * @brief Get the message ID.
@@ -495,13 +568,13 @@ namespace Coap
          *
          * @return The 16-bit message ID.
          */
-        uint16_t getId();
+        uint16_t getId() const;
 
         /**
          * @brief Get the current token length.
          * @return The token length in bytes.
          */
-        size_t getTokenLength();
+        size_t getTokenLength() const;
 
         /**
          * @brief Add a token of the given length to the message.
@@ -541,8 +614,13 @@ namespace Coap
          * msg.getToken(token, length);
          * @endcode
          */
-        ErrorCode getToken(const uint8_t *&buffer, size_t &length);
+        ErrorCode getToken(const uint8_t *&buffer, size_t &length) const;
 
+        /**
+         * @brief Return an iterator over the message options.
+         * @return An option iterator, @ref OptionIterator.
+         */
+        OptionIterator getOptionIterator() const;
         /**
          * @brief Add an option to the message.
          *
@@ -571,6 +649,8 @@ namespace Coap
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
 
+        // TODO: Alias of addOption using Option struct.
+
         // /**
         //  * @brief Get one option from the message.
         //  *
@@ -586,36 +666,6 @@ namespace Coap
         //  *         if the option with the given number and index does not exist.
         //  */
         // ErrorCode getOption(OptionNumber number, size_t index, const uint8_t *&value, size_t &length);
-
-        /**
-         * @brief Iterate over all options.
-         *
-         * This is a zero-copy operation: the callback is given a pointer to each option's value.
-         *
-         *  @tparam Callback A callable type (lambda, functor, or function pointer).
-         *          Must have signature: bool(OptionNumber, const uint8_t*, size_t)
-         *          - OptionNumber: the option number
-         *          - const uint8_t*: pointer to the option value
-         *          - size_t: length of the option value
-         *          - Returns: true to continue iteration, false to stop
-         *
-         * @param callback The function executed for each option.
-         * @return An error code indicating success or failure.
-         *
-         * @example
-         * @code{.cpp}
-         * int maxAge = -1;
-         * msg.readOptions([&maxAge](Coap::OptionNumber num, const uint8_t* val, size_t len) {
-         * if(num == Coap::OptionNumber::MaxAge) {
-         *     std::memcpy(&maxAge, val, len);
-         *     return false; // stop iterating
-         * }
-         *     return true; // continue iterating
-         * });
-         * @endcode
-         */
-        template <typename OptionReadCallback>
-        ErrorCode readOptions(OptionReadCallback callback);
 
         /**
          * @brief Add the Uri-Host option to the message.
@@ -699,110 +749,6 @@ namespace Coap
          */
         void setResponseHandler(Callback handler) { _responseHandler = handler; }
     };
-
-    // Template need to be defined in the header.
-    template <typename OptionReadCallback>
-    ErrorCode Message::readOptions(OptionReadCallback callback)
-    {
-        // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
-        // Go the the start of the options.
-        size_t tokenLength = this->getTokenLength();
-        size_t currentByte = COAP_HEADER_SIZE + tokenLength;
-
-        uint16_t currentOptionNumber = 0;
-
-        while (currentByte < this->_messageLength)
-        {
-            // Read the option header byte.
-            uint8_t optionHeader = this->_message[currentByte];
-            uint8_t delta = (optionHeader >> 4) & 0x0F;
-            uint8_t length = optionHeader & 0x0F;
-
-            // SECTION Process the delta special cases.
-            if (delta == 13)
-            {
-                // Extended delta (8 bits).
-                if (this->_messageLength < currentByte + 1)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                currentByte++;
-                delta = this->_message[currentByte] + 13;
-            }
-            else if (delta == 14)
-            {
-                // Extended delta (16 bits).
-                if (this->_messageLength < currentByte + 2)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                delta = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
-                         static_cast<uint16_t>(this->_message[currentByte + 2])) +
-                        269;
-                currentByte += 2;
-            }
-            else if (delta == 15)
-            {
-                if (length == 15)
-                {
-                    // Payload marker reached. End of options.
-                    return ErrorCode::None;
-                }
-                else
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-            }
-            // Current option number is previous plus delta.
-            currentOptionNumber += delta;
-            // !SECTION End of delta processing.
-
-            // SECTION Process the length special cases.
-            if (length == 13)
-            {
-                // Extended length (8 bits).
-                if (this->_messageLength < currentByte + 1)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                currentByte++;
-                length = this->_message[currentByte] + 13;
-            }
-            else if (length == 14)
-            {
-                // Extended length (16 bits).
-                if (this->_messageLength < currentByte + 2)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                length = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
-                          static_cast<uint16_t>(this->_message[currentByte + 2])) +
-                         269;
-                currentByte += 2;
-            }
-            else if (length == 15)
-            {
-                return ErrorCode::MalformedMessage;
-            }
-            // !SECTION End of length processing.
-
-            if (this->_messageLength < currentByte + 1 + length)
-            {
-                // The option value would exceed the message size!
-                return ErrorCode::MalformedMessage;
-            }
-
-            // Call the callback with the option number, value and length.
-            const uint8_t *optionValue = this->_message + currentByte + 1; // The option value starts after delta and length bytes.
-            if (callback(static_cast<OptionNumber>(currentOptionNumber), optionValue, length))
-            {
-                // Callback requested to stop iteration.
-                return ErrorCode::None;
-            }
-            // Else go to the beginning of next option and continue iteration.
-            currentByte += 1 + length;
-        }
-    }
 
 } // End of namespace Coap
 
