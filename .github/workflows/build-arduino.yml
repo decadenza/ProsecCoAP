@@ -33,13 +33,13 @@ jobs:
             arduino-board-fqbn: esp8266:esp8266:nodemcuv2
             platform-url: https://arduino.esp8266.com/stable/package_esp8266com_index.json
             required-libraries: ""
-            sketch-names-find-start: examples/esp8266
+            sketch-names-find-start: examples/serverEsp8266
             sketches-exclude: ""
           - name: ESP32
             arduino-board-fqbn: esp32:esp32:esp32
             platform-url: https://dl.espressif.com/dl/package_esp32_index.json
             required-libraries: ""
-            sketch-names-find-start: examples/esp32
+            sketch-names-find-start: examples/serverEsp32
             sketches-exclude: ""
 
     steps:

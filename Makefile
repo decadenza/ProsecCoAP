@@ -3,7 +3,7 @@
 # Config
 CLI = arduino-cli
 ARDUINO_BOARDS = arduino:avr:uno arduino:avr:mega arduino:mbed_giga:giga
-ARDUINO_EXAMPLES = coapClient coapServer coapServerWithObserve
+ARDUINO_EXAMPLES = messageBuilder client server serverWithObserve
 
 
 .PHONY: all	arduino esp32 esp8266 
@@ -24,10 +24,10 @@ arduino:
 # Build for ESP32 platform
 esp32:
 	@echo "--- Compiling for board: esp32:esp32:esp32 ---"; \
-	$(CLI) compile --fqbn esp32:esp32:esp32 --library . examples/esp32/esp32.ino || exit 1;
+	$(CLI) compile --fqbn esp32:esp32:esp32 --library . examples/serverEsp32/serverEsp32.ino || exit 1;
 
 # Build for ESP8266 platform (requires: arduino-cli core install esp8266:esp8266)
 esp8266:
 	@echo "--- Compiling for board: esp8266:esp8266:nodemcuv2 ---"; \
 	echo "Compiling esp8266..."; \
-	$(CLI) compile --fqbn esp8266:esp8266:nodemcuv2 --library . examples/esp8266/esp8266.ino || exit 1;
+	$(CLI) compile --fqbn esp8266:esp8266:nodemcuv2 --library . examples/serverEsp8266/serverEsp8266.ino || exit 1;

@@ -12,18 +12,18 @@ jobs:
             board: uno
             platform: atmelavr
             sketch-root: examples
-            exclude-prefixes: "examples/esp32 examples/esp8266"
+            exclude-prefixes: "examples/serverEsp32 examples/serverEsp8266"
             extra-lib-deps: Ethernet
           - name: ESP8266
             board: nodemcuv2
             platform: espressif8266
-            sketch-root: examples/esp8266
+            sketch-root: examples/serverEsp8266
             exclude-prefixes: ""
             extra-lib-deps: ""
           - name: ESP32
             board: esp32thing
             platform: espressif32
-            sketch-root: examples/esp32
+            sketch-root: examples/serverEsp32
             exclude-prefixes: ""
             extra-lib-deps: ""
 
