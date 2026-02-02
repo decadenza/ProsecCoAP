@@ -174,7 +174,7 @@ namespace Coap
         // Read the token length.
         size_t tokenLength = this->getTokenLength();
         // Go to HEADER_SIZE + token length to find the start of the options.
-        size_t currentByte = COAP_HEADER_SIZE + tokenLength;
+        size_t currentByte = COAP_HEADER_SIZE + tokenLength; // Points to the next byte to read.
         // Options are stored in order of increasing option number.
         // Iterate through existing options to find the insertion point.
         // In case of multiple options with the same number, the new option is added after existing ones.
@@ -183,6 +183,7 @@ namespace Coap
         {
             // Read the option header byte.
             uint8_t optionHeader = this->_message[currentByte];
+            currentByte++; // Move to the next byte (which may be extended delta/length or value start).
             uint8_t delta = (optionHeader >> 4) & 0x0F;
             uint8_t length = optionHeader & 0x0F;
 
@@ -194,8 +195,8 @@ namespace Coap
                 {
                     return ErrorCode::MalformedMessage;
                 }
-                currentByte++;
                 delta = this->_message[currentByte] + 13;
+                currentByte++;
             }
             else if (delta == 14)
             {
@@ -204,8 +205,8 @@ namespace Coap
                 {
                     return ErrorCode::MalformedMessage;
                 }
-                delta = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
-                         static_cast<uint16_t>(this->_message[currentByte + 2])) +
+                delta = ((static_cast<uint16_t>(this->_message[currentByte]) << 8) |
+                         static_cast<uint16_t>(this->_message[currentByte + 1])) +
                         269;
                 currentByte += 2;
             }
@@ -233,8 +234,8 @@ namespace Coap
                 {
                     return ErrorCode::MalformedMessage;
                 }
-                currentByte++;
                 length = this->_message[currentByte] + 13;
+                currentByte++;
             }
             else if (length == 14)
             {
@@ -243,8 +244,8 @@ namespace Coap
                 {
                     return ErrorCode::MalformedMessage;
                 }
-                length = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
-                          static_cast<uint16_t>(this->_message[currentByte + 2])) +
+                length = ((static_cast<uint16_t>(this->_message[currentByte]) << 8) |
+                          static_cast<uint16_t>(this->_message[currentByte + 1])) +
                          269;
                 currentByte += 2;
             }
@@ -254,29 +255,34 @@ namespace Coap
             }
             // !SECTION End of length processing.
             // Move to the beginning of the next option (or to the insertion point).
-            currentByte += 1 + length;
+            currentByte += length;
         }
         // currentByte is now the insertion point for the new option.
 
-        // For single-instance options, check if one already exists
-        // and return ErrorCode::NotSupported if so.
-        // See https://datatracker.ietf.org/doc/html/rfc7252#section-5.10
-        switch (static_cast<OptionNumber>(lastOptionNumber))
+        if (static_cast<OptionNumber>(lastOptionNumber) == newNumber)
         {
-        case OptionNumber::UriHost:
-        case OptionNumber::IfNoneMatch:
-        case OptionNumber::Observe: // Observe can only appear once!
-        case OptionNumber::UriPort:
-        case OptionNumber::ContentFormat:
-        case OptionNumber::MaxAge:
-        case OptionNumber::Accept:
-        case OptionNumber::ProxyUri:
-        case OptionNumber::ProxyScheme:
-        case OptionNumber::Size1:
-            return ErrorCode::NotSupported;
-        default:
-            // Multi-instance option, allowed to add again.
-            break;
+            // The last option number is the same as the new one.
+
+            // For single-instance options, check if one already exists
+            // and return ErrorCode::NotSupported if so.
+            // See https://datatracker.ietf.org/doc/html/rfc7252#section-5.10
+            switch (static_cast<OptionNumber>(lastOptionNumber))
+            {
+            case OptionNumber::UriHost:
+            case OptionNumber::IfNoneMatch:
+            case OptionNumber::Observe: // Observe can only appear once!
+            case OptionNumber::UriPort:
+            case OptionNumber::ContentFormat:
+            case OptionNumber::MaxAge:
+            case OptionNumber::Accept:
+            case OptionNumber::ProxyUri:
+            case OptionNumber::ProxyScheme:
+            case OptionNumber::Size1:
+                return ErrorCode::NotSupported;
+            default:
+                // Last option is 0 or is a multi-instance option, allowed to add.
+                break;
+            }
         }
 
         // Build the new option header.
@@ -303,20 +309,21 @@ namespace Coap
             // No extended delta.
             newOptionHeader[0] = (newOptionDelta << 4);
         }
+
         // Now process the length.
         if (newLength > 269)
         {
             // Extended length (16 bits).
+            newOptionHeader[0] |= 14; // Length = 14 on the 4 LSb.
             newOptionHeader[newOptionHeaderLength] = ((newLength - 269) >> 8) & 0xFF;
             newOptionHeader[newOptionHeaderLength + 1] = (newLength - 269) & 0xFF;
-            newOptionHeader[0] |= 14; // Length = 14 on the 4 LSb.
             newOptionHeaderLength += 2;
         }
         else if (newLength > 12)
         {
             // Extended length (8 bits).
-            newOptionHeader[newOptionHeaderLength] = (newLength - 13) & 0xFF;
             newOptionHeader[0] |= 13; // Length = 13 on the 4 LSb.
+            newOptionHeader[newOptionHeaderLength] = (newLength - 13) & 0xFF;
             newOptionHeaderLength += 1;
         }
         else
@@ -361,6 +368,17 @@ namespace Coap
         return OptionIterator(this);
     }
 
+    ErrorCode Message::addHost(IPAddress ip)
+    {
+        // Convert IPv4 address to string.
+        // Note that IPAddress is IPv4.
+        // See https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/IPAddress.h
+        char ipAsString[16] = ""; // Max length of an IP as string is 15 including dots.
+        sprintf(ipAsString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+        // Add it as Uri-Host option.
+        return this->addOption(OptionNumber::UriHost, reinterpret_cast<const uint8_t *>(ipAsString), strlen(ipAsString));
+    }
+
     ErrorCode OptionIterator::next(Option &option)
     {
         // There are no more options if, either:
@@ -374,7 +392,7 @@ namespace Coap
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
         // Read the option header byte.
         uint8_t optionHeader = (this->_message)->_message[this->_currentByte];
-        this->_currentByte++;
+        this->_currentByte++; // Points to next byte to read.
         uint8_t delta = (optionHeader >> 4) & 0x0F;
         option.length = optionHeader & 0x0F;
 
@@ -386,8 +404,8 @@ namespace Coap
             {
                 return ErrorCode::MalformedMessage;
             }
-            this->_currentByte++;
             delta = (this->_message)->_message[this->_currentByte] + 13;
+            this->_currentByte++;
         }
         else if (delta == 14)
         {
@@ -396,8 +414,8 @@ namespace Coap
             {
                 return ErrorCode::MalformedMessage;
             }
-            delta = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1]) << 8) |
-                     static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 2])) +
+            delta = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte]) << 8) |
+                     static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1])) +
                     269;
             this->_currentByte += 2;
         }
@@ -419,12 +437,12 @@ namespace Coap
         if (option.length == 13)
         {
             // Extended length (8 bits).
-            if (this->_message->getLength() < this->_currentByte + 1)
+            if (this->_message->getLength() < this->_currentByte)
             {
                 return ErrorCode::MalformedMessage;
             }
-            this->_currentByte++;
             option.length = (this->_message)->_message[this->_currentByte] + 13;
+            this->_currentByte++;
         }
         else if (option.length == 14)
         {
@@ -433,8 +451,8 @@ namespace Coap
             {
                 return ErrorCode::MalformedMessage;
             }
-            option.length = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1]) << 8) |
-                             static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 2])) +
+            option.length = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte]) << 8) |
+                             static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1])) +
                             269;
             this->_currentByte += 2;
         }

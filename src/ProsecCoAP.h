@@ -444,8 +444,16 @@ namespace Coap
          *
          * @param[out] option The next option.
          *
-         * @return An error code indicating success or failure. When there are no more options,
-         *        it returns ErrorCode::NotFound.
+         * @return An error code indicating success or failure. It returns ErrorCode::None on success.
+         *          When there are no more options, it returns ErrorCode::NotFound.
+         *
+         * @code{.cpp}
+         * Coap::OptionIterator it = message.getOptionIterator();
+         * Coap::Option option;
+         * while((err = optIterator.next(opt)) == Coap::ErrorCode::None) {
+         *         // Process option...
+         * }
+         * @endcode
          */
         ErrorCode next(Option &option);
     };
@@ -668,22 +676,6 @@ namespace Coap
             return this->addOption(option.number, option.value, option.length);
         };
 
-        // /**
-        //  * @brief Get one option from the message.
-        //  *
-        //  * @param number The option number to retrieve.
-        //  * @param index The index, for options that can appear multiple times.
-        //  *              For example, to get the third occurrence of the Uri-Path option:
-        //  *              ```
-        //  *              msg.getOption(OptionNumber::UriPath, 2, value, length);
-        //  *              ```
-        //  * @param[out] value The pointer to the option value. The pointer is valid as long as the message exists.
-        //  * @param[out] length The length of the option value.
-        //  * @return An error code indicating success or failure. It will return @ref ErrorCode::NotFound
-        //  *         if the option with the given number and index does not exist.
-        //  */
-        // ErrorCode getOption(OptionNumber number, size_t index, const uint8_t *&value, size_t &length);
-
         /**
          * @brief Add the Uri-Host option to the message.
          *
@@ -692,7 +684,7 @@ namespace Coap
          * The Uri-Host option is not compulsory. As per Section 6.5, if not present, the
          * the destination IP address where the message is being sent will be used.
          *
-         * Any existing Uri-Host option is removed before adding the new one.
+         * @see addOption
          *
          * @param ip The IP address to set as the Uri-Host.
          * @return An error code indicating success or failure.

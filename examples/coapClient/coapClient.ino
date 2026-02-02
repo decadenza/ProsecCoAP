@@ -71,9 +71,15 @@ void loop()
   Serial.print("Added token of length: ");
   Serial.println(msg.getTokenLength());
 
+  Coap::ErrorCode err = msg.addHost(destinationIp);
+  if(err!= Coap::ErrorCode::None) {
+    Serial.print("Error while adding option: ");
+    Serial.println((int8_t)err);
+    }
+    
   // Add CoAP options using the constructor...
   Coap::Option newOption(Coap::OptionNumber::UriPath,(const uint8_t *)"abcdefg", 7);
-  Coap::ErrorCode err = msg.addOption(newOption);
+  err = msg.addOption(newOption);
   if(err!= Coap::ErrorCode::None) {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);

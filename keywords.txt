@@ -31,6 +31,7 @@ getToken	KEYWORD2
 getTokenLength	KEYWORD2
 addOption	KEYWORD2
 removeOption	KEYWORD2
+getOptionIterator	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
