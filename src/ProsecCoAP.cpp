@@ -169,6 +169,103 @@ namespace Coap
         return ErrorCode::None;
     }
 
+    template <typename OptionVisitorCallback>
+    ErrorCode Message::readOptions(OptionVisitorCallback callback)
+    {
+        // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+        // Go the the start of the options.
+        size_t tokenLength = this->getTokenLength();
+        size_t currentByte = COAP_HEADER_SIZE + tokenLength;
+
+        uint16_t currentOptionNumber = 0;
+
+        while (currentByte < this->_messageLength)
+        {
+            // Read the option header byte.
+            uint8_t optionHeader = this->_message[currentByte];
+            uint8_t delta = (optionHeader >> 4) & 0x0F;
+            uint8_t length = optionHeader & 0x0F;
+
+            // SECTION Process the delta special cases.
+            if (delta == 13)
+            {
+                // Extended delta (8 bits).
+                if (this->_messageLength < currentByte + 1)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                delta = this->_message[currentByte + 1] + 13;
+                currentByte++;
+            }
+            else if (delta == 14)
+            {
+                // Extended delta (16 bits).
+                if (this->_messageLength < currentByte + 2)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                delta = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
+                         static_cast<uint16_t>(this->_message[currentByte + 2])) +
+                        269;
+                currentByte += 2;
+            }
+            else if (delta == 15)
+            {
+                if (length == 15)
+                {
+                    // Payload marker reached. End of options.
+                    return ErrorCode::None;
+                }
+                else
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+            }
+            // Current option number is previous plus delta.
+            currentOptionNumber += delta;
+            // !SECTION End of delta processing.
+
+            // SECTION Process the length special cases.
+            if (length == 13)
+            {
+                // Extended length (8 bits).
+                if (this->_messageLength < currentByte + 1)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                length = this->_message[currentByte + 1] + 13;
+                currentByte++;
+            }
+            else if (length == 14)
+            {
+                // Extended length (16 bits).
+                if (this->_messageLength < currentByte + 2)
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+                length = ((static_cast<uint16_t>(this->_message[currentByte + 1]) << 8) |
+                          static_cast<uint16_t>(this->_message[currentByte + 2])) +
+                         269;
+                currentByte += 2;
+            }
+            else if (length == 15)
+            {
+                return ErrorCode::MalformedMessage;
+            }
+            // !SECTION End of length processing.
+
+            // Call the callback with the option number, value and length.
+            const uint8_t *optionValue = this->_message + currentByte + 1;
+            if (callback(static_cast<OptionNumber>(currentOptionNumber), optionValue, length))
+            {
+                // Callback requested to stop iteration.
+                return ErrorCode::None;
+            }
+            // Else go to the beginning of next option and continue iteration.
+            currentByte += 1 + length;
+        }
+    }
+
     ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
     {
 
