@@ -651,7 +651,12 @@ namespace Coap
          * the error code @ref ErrorCode::NotSupported is returned.
          * For options that can appear multiple times, the option is *appended after* the existing ones.
          *
-         * This is a low-level method to add options.
+         * @warning This is a low-level method to add options.
+         *          It does not perform validation of the option length.
+         *          It is the caller's responsibility to ensure that the option is valid
+         *          according to the CoAP specification.
+         *
+         *
          * Prefer using specialized methods for common options like @ref COAP_CONTENT_FORMAT,
          * @ref COAP_URI_PATH, or @ref COAP_URI_QUERY when available.
          *

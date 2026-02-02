@@ -179,13 +179,13 @@ namespace Coap
         // Iterate through existing options to find the insertion point.
         // In case of multiple options with the same number, the new option is added after existing ones.
         uint16_t lastOptionNumber = 0;
-        while (currentByte < this->_messageLength && lastOptionNumber <= static_cast<uint16_t>(newNumber))
+        while (currentByte < this->_messageLength)
         {
             // Read the option header byte.
             uint8_t optionHeader = this->_message[currentByte];
-            currentByte++; // Move to the next byte (which may be extended delta/length or value start).
-            uint8_t delta = (optionHeader >> 4) & 0x0F;
-            uint8_t length = optionHeader & 0x0F;
+            currentByte++;                               // Move to the next byte (which may be extended delta/length or value start).
+            uint16_t delta = (optionHeader >> 4) & 0x0F; // REVIEW: The protocol leaves the door open to larger deltas, but highly unlikely to happen.
+            size_t length = optionHeader & 0x0F;
 
             // SECTION Process the delta special cases.
             if (delta == 13)
@@ -222,8 +222,28 @@ namespace Coap
                     return ErrorCode::MalformedMessage;
                 }
             }
-            // Current option number is previous plus delta.
-            lastOptionNumber += delta;
+
+            // If we reached an option number greater than the new one, we found the insertion point.
+            if (lastOptionNumber + delta > static_cast<uint16_t>(newNumber))
+            {
+                // Move back to the beginning of this option for insertion.
+                currentByte--;
+                // Move back over any extended delta/length bytes.
+                if (delta == 13)
+                {
+                    currentByte--;
+                }
+                else if (delta == 14)
+                {
+                    currentByte -= 2;
+                }
+                break; // Insertion point found.
+            }
+            else
+            {
+                // Store the last option number for next round.
+                lastOptionNumber += delta;
+            }
             // !SECTION End of delta processing.
 
             // SECTION Process the length special cases.
@@ -286,9 +306,9 @@ namespace Coap
         }
 
         // Build the new option header.
-        uint8_t newOptionHeader[5] = {0}; // Max 5 bytes for option header (1 + 2 for delta + 2 for length).
-        size_t newOptionHeaderLength = 1; // Initial header length.
-        uint16_t newOptionDelta = static_cast<uint16_t>(newNumber) - lastOptionNumber;
+        uint8_t newOptionHeader[5] = {0};                                              // Max 5 bytes for option header (1 + 2 for delta + 2 for length).
+        size_t newOptionHeaderLength = 1;                                              // Initial header length.
+        uint16_t newOptionDelta = static_cast<uint16_t>(newNumber) - lastOptionNumber; // This is guaranteed to be greater or equal to 0.
         if (newOptionDelta > 269)
         {
             // Extended delta (16 bits).
@@ -352,6 +372,102 @@ namespace Coap
             };
             return err; // Return the original error.
         }
+
+        // Option added successfully.
+        // Update the following option delta value. The following delta must be adjusted
+        // and it may only stay the same or decrease, never increase.
+
+        // Move to the beginning of the next option, if present. Will exit if end of message reached.
+        currentByte += newLength;
+        if (currentByte >= this->_messageLength)
+        {
+            return ErrorCode::None; // Message ends here. No following option to adjust.
+        }
+
+        // The following option delta must be adjusted by *subtracting* the delta
+        // added to the new option.
+        if (newOptionDelta == 0)
+        {
+            return ErrorCode::None; // No adjustment needed. All good.
+        }
+
+        // SECTION Read the next option and adjust its delta.
+        uint8_t optionHeader = this->_message[currentByte];
+        currentByte++; // Move to the next byte (which may be extended delta/length or value start).
+        uint16_t oldDelta = (optionHeader >> 4) & 0x0F;
+        uint16_t newDelta = oldDelta - newOptionDelta;
+        uint16_t length = optionHeader & 0x0F;
+        if ((oldDelta < 13) & (newDelta < 13))
+        {
+            // Easy case: both old and new delta fit in 4 bits.
+            this->_message[currentByte - 1] = (static_cast<uint8_t>(newDelta) << 4) | (optionHeader & 0x0F);
+            return ErrorCode::None;
+        }
+        else
+        {
+            if (oldDelta == 13)
+            {
+                // Old delta was extended delta (8 bits).
+                if (newDelta < 13)
+                {
+                    // The new delta fits in 4 bits.
+                    // Remove the extended delta byte.
+                    this->_message[currentByte - 1] = (static_cast<uint8_t>(newDelta) << 4) | (optionHeader & 0x0F);
+                    // Remove the extended delta byte and return.
+                    return this->_remove(currentByte, 1);
+                }
+                else
+                {
+                    // Since the new delta is still extended, just update the extended byte.
+                    // Note that newDelta must be smaller of the old one. So this is safe.
+                    this->_message[currentByte] = static_cast<uint8_t>(newDelta - 13);
+                }
+            }
+            else if (oldDelta == 14)
+            {
+                // Old delta was extended delta (16 bits).
+                if (newDelta < 13)
+                {
+                    // The new delta fits in 4 bits.
+                    this->_message[currentByte - 1] = (static_cast<uint8_t>(newDelta) << 4) | (optionHeader & 0x0F);
+                    // Remove the two extended delta bytes.
+                    return this->_remove(currentByte, 2);
+                }
+                else if (newDelta < 269)
+                {
+                    // The new delta fits in extended delta (8 bits).
+                    this->_message[currentByte - 1] = (13 << 4) | (optionHeader & 0x0F); // Set delta = 13.
+                    this->_message[currentByte] = static_cast<uint8_t>(newDelta - 13);
+                    // Remove the second of the two extended delta bytes.
+                    return this->_remove(currentByte + 1, 1);
+                }
+                else
+                {
+                    // The new delta still needs extended delta (16 bits).
+                    // Just update the two extended delta bytes.
+                    uint16_t newDeltaOffset = newDelta - 269;
+                    this->_message[currentByte] = (newDeltaOffset >> 8) & 0xFF;
+                    this->_message[currentByte + 1] = newDeltaOffset & 0xFF;
+                    return ErrorCode::None;
+                }
+            }
+            else if (oldDelta == 15)
+            {
+                // Old delta is special case: payload marker.
+                if (length == 15)
+                {
+                    // Payload marker reached. End of options.
+                    return ErrorCode::None;
+                }
+                else
+                {
+                    return ErrorCode::MalformedMessage;
+                }
+            }
+        }
+        // !SECTION End of delta adjustment.
+
+        // Successfully added option and adjusted the following one.
         return ErrorCode::None;
     }
 
@@ -376,16 +492,78 @@ namespace Coap
         char ipAsString[16] = ""; // Max length of an IP as string is 15 (including dots) + null terminator.
         sprintf(ipAsString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
         // Add it as Uri-Host option.
+        // Given the limitation above, we are sure that the option is in the 1-255 range
+        // as per https://datatracker.ietf.org/doc/html/rfc7252#section-5.10
         return this->addOption(OptionNumber::UriHost, reinterpret_cast<const uint8_t *>(ipAsString), strlen(ipAsString));
     }
 
     ErrorCode Message::addPort(uint16_t port)
     {
-        // Convert port number to string.
-        char portAsString[6] = ""; // Max length of a port as string is 5 digits + null terminator.
-        sprintf(portAsString, "%u", port);
+        // Uri-Port option value is the port number as an unsigned integer.
+        // We use the minimal representation (1 or 2 bytes).
+        size_t length = (port > 255) ? 2 : 1;
         // Add it as Uri-Port option.
-        return this->addOption(OptionNumber::UriPort, reinterpret_cast<const uint8_t *>(portAsString), strlen(portAsString));
+        return this->addOption(OptionNumber::UriPort, reinterpret_cast<const uint8_t *>(&port), length);
+    }
+
+    ErrorCode Message::addPath(const char *path)
+    {
+        if (path == nullptr || path[0] == '\0')
+        {
+            // Empty path is invalid.
+            // Although it can technically be represented as an empty Uri-Path option,
+            // it makes little sense to do so.
+            return ErrorCode::InvalidArgument;
+        }
+        bool hasQuery = false;
+        size_t i = 0;
+
+        // Iterate through the whole path string, splitting on '/', '?' and '&'.
+        while (true)
+        {
+            size_t segmentStart = i;
+            // Find the end of the current segment.
+            while (path[i] != '/' && path[i] != '?' && path[i] != '\0' && path[i] != '&')
+            {
+                i++;
+            }
+            if (!hasQuery && path[i] == '&')
+            {
+                // '&' is only valid within the query part.
+                return ErrorCode::InvalidArgument;
+            }
+            size_t segmentLength = i - segmentStart;
+            if (segmentLength > 0)
+            {
+                if (segmentLength > 255)
+                {
+                    // Segment too long to be represented as a single option.
+                    // Refer to https://datatracker.ietf.org/doc/html/rfc7252#section-5.10
+                    return ErrorCode::InvalidArgument;
+                }
+                // Add the segment as Uri-Path or Uri-Query option.
+                OptionNumber optionNumber = hasQuery ? OptionNumber::UriQuery : OptionNumber::UriPath;
+                ErrorCode err = this->addOption(optionNumber,
+                                                reinterpret_cast<const uint8_t *>(path + segmentStart),
+                                                segmentLength);
+                if (err != ErrorCode::None)
+                {
+                    // Failed to add option. Block the operation.
+                    // Possibly the message will be malformed!
+                    return err;
+                }
+            }
+            // Check if we reached a query part.
+            if (path[i] == '?')
+            {
+                hasQuery = true;
+            }
+            // If the last character was the string terminator, we are done.
+            if (path[i] == '\0')
+                return ErrorCode::None;
+            // Else, skip the '/', '?' or '&'.
+            i++;
+        };
     }
 
     ErrorCode OptionIterator::next(Option &option)
@@ -402,7 +580,7 @@ namespace Coap
         // Read the option header byte.
         uint8_t optionHeader = (this->_message)->_message[this->_currentByte];
         this->_currentByte++; // Points to next byte to read.
-        uint8_t delta = (optionHeader >> 4) & 0x0F;
+        uint16_t delta = (optionHeader >> 4) & 0x0F;
         option.length = optionHeader & 0x0F;
 
         // SECTION Process the delta special cases.
@@ -477,7 +655,7 @@ namespace Coap
             return ErrorCode::MalformedMessage;
         }
 
-        // Current option number is previous plus delta.
+        // Current option number is previous plus delta. Delta may be zero too.
         this->_currentOptionNumber += delta;
         option.number = static_cast<OptionNumber>(this->_currentOptionNumber);
 
@@ -487,4 +665,5 @@ namespace Coap
 
         return ErrorCode::None;
     }
+
 }
