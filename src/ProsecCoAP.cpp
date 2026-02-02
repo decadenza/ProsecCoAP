@@ -100,6 +100,12 @@ namespace Coap
         return static_cast<MessageCode>(this->_message[1]);
     }
 
+    size_t Message::getTokenLength()
+    {
+        // Extract token length from the first byte of the message.
+        return this->_message[0] & 0x0F;
+    }
+
     ErrorCode Message::addToken(size_t length)
     {
 
@@ -143,8 +149,7 @@ namespace Coap
 
     ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length)
     {
-        // Extract token length from bits 4-7 of the first byte of the message.
-        length = this->_message[0] & 0x0F;
+        length = this->getTokenLength();
         if (length == 0)
         {
             // Special case: no token present. Still a valid message.
@@ -164,9 +169,18 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    // ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
-    // {
+    ErrorCode Message::addOption(OptionNumber number, const uint8_t *value, size_t length)
+    {
 
-    //     return ErrorCode::None;
-    // }
+        // Read the token length.
+        size_t tokenLength = this->getTokenLength();
+        // Go to HEADER_SIZE + token length to find the start of the options.
+        size_t optionsStart = COAP_HEADER_SIZE + tokenLength;
+        // Iterate through existing options to find the insertion point.
+
+        // Check if the option is already present (for single-instance options) and return ErrorCode::NotSupported if so.
+
+        // Add the new option at the correct position using insert (will return error if no space left).
+        return ErrorCode::None;
+    }
 }

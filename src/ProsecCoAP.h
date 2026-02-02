@@ -347,7 +347,7 @@ namespace Coap
         MessageTooLarge = -2,
         /** The message is malformed. */
         MalformedMessage = -3,
-        /** One of the supplied arguments is invalid. */
+        /** One (or more) of the supplied arguments is invalid. */
         InvalidArgument = -4,
         /** The operation is not supported. */
         NotSupported = -5,
@@ -358,6 +358,8 @@ namespace Coap
     };
 
     // !SECTION End of Enums.
+
+    class Message; // Forward declaration.
 
     // SECTION Functions.
     /**
@@ -498,6 +500,12 @@ namespace Coap
         uint16_t getId();
 
         /**
+         * @brief Get the current token length.
+         * @return The token length in bytes.
+         */
+        size_t getTokenLength();
+
+        /**
          * @brief Add a token of the given length to the message.
          *
          * A random token is generated and added to the message as per specifications.
@@ -541,13 +549,17 @@ namespace Coap
          * @brief Add an option to the message.
          *
          * The option is added according to the CoAP option encoding rules.
+         * For options that can be added at most once, this function follows a "first add wins" policy. Any
+         * subsequent addition of the same option number will return @ref ErrorCode::NotSupported.
+         * For options that can appear multiple times, this function appends the new option to the existing ones.
          *
          * If adding the option will result in exceeding the limits specified by RFC 7252 Section 5.10,
          * the error code @ref ErrorCode::TooManyOptions is returned.
          * For options that can appear multiple times, the option is *appended after* the existing ones.
          *
-         * Prefer using specialized methods to populate common options, for example @ref addPath to
-         * add @ref COAP_URI_PATH and @ref COAP_URI_QUERY options.
+         * This is a low-level method to add options.
+         * Prefer using specialized methods for common options like @ref COAP_CONTENT_FORMAT,
+         * @ref COAP_URI_PATH, or @ref COAP_URI_QUERY when available.
          *
          * See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
          *
@@ -578,29 +590,34 @@ namespace Coap
         // ErrorCode getOption(OptionNumber number, size_t index, const uint8_t *&value, size_t &length);
 
         /**
-         * @brief Iterate over all options with the given number.
+         * @brief Iterate over all options.
          *
          * This is a zero-copy operation: the callback is given a pointer to each option's value.
          *
-         * @tparam F A callable having signature `bool func(const uint8_t *value, size_t length)`.
-         *         The callback is invoked for each option found with the given number.
-         *         If the callback returns true, the iteration exits early.
-         * @param number The option number to search for.
-         * @param callback The function executed for each matching item found.
-         *                 The function may capture variables from the surrounding context.
-         * @return An error code indicating success or failure. It will return @ref ErrorCode::NotFound
-         *         if no option with the given number exists.
-         */
-        template <typename F>
-        ErrorCode readOptions(OptionNumber number, F callback);
-
-        /**
-         * @brief Remove all the options of the given number.
+         *  @tparam Callback A callable type (lambda, functor, or function pointer).
+         *          Must have signature: bool(OptionNumber, const uint8_t*, size_t)
+         *          - OptionNumber: the option number
+         *          - const uint8_t*: pointer to the option value
+         *          - size_t: length of the option value
+         *          - Returns: true to continue iteration, false to stop
          *
-         * @param number The option number to remove.
+         * @param callback The function executed for each option.
          * @return An error code indicating success or failure.
+         *
+         * @example
+         * @code{.cpp}
+         * int maxAge = -1;
+         * msg.readOptions([&maxAge](Coap::OptionNumber num, const uint8_t* val, size_t len) {
+         * if(num == Coap::OptionNumber::MaxAge) {
+         *     std::memcpy(&maxAge, val, len);
+         *     return false; // stop iterating
+         * }
+         *     return true; // continue iterating
+         * });
+         * @endcode
          */
-        ErrorCode removeOptions(OptionNumber number);
+        template <typename OptionVisitorCallback>
+        ErrorCode readOptions(OptionVisitorCallback callback);
 
         /**
          * @brief Add the Uri-Host option to the message.
@@ -682,8 +699,8 @@ namespace Coap
          *
          * @param handler The callback function to handle acknowledgements.
          */
-        void responseHandler(CoapCallback handler) { _responseHandler = handler; }
-    }
+        void setResponseHandler(Callback handler) { _responseHandler = handler; }
+    };
 } // End of namespace Coap
 
 #endif
