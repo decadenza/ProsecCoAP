@@ -373,10 +373,19 @@ namespace Coap
         // Convert IPv4 address to string.
         // Note that IPAddress is IPv4.
         // See https://github.com/arduino/ArduinoCore-avr/blob/master/cores/arduino/IPAddress.h
-        char ipAsString[16] = ""; // Max length of an IP as string is 15 including dots.
+        char ipAsString[16] = ""; // Max length of an IP as string is 15 (including dots) + null terminator.
         sprintf(ipAsString, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
         // Add it as Uri-Host option.
         return this->addOption(OptionNumber::UriHost, reinterpret_cast<const uint8_t *>(ipAsString), strlen(ipAsString));
+    }
+
+    ErrorCode Message::addPort(uint16_t port)
+    {
+        // Convert port number to string.
+        char portAsString[6] = ""; // Max length of a port as string is 5 digits + null terminator.
+        sprintf(portAsString, "%u", port);
+        // Add it as Uri-Port option.
+        return this->addOption(OptionNumber::UriPort, reinterpret_cast<const uint8_t *>(portAsString), strlen(portAsString));
     }
 
     ErrorCode OptionIterator::next(Option &option)

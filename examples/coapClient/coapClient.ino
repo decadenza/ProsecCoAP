@@ -76,6 +76,13 @@ void loop()
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
     }
+
+  err = msg.addPort(COAP_DEFAULT_PORT);
+  if(err!= Coap::ErrorCode::None) {
+    Serial.print("Error while adding option: ");
+    Serial.println((int8_t)err);
+    }
+    
     
   // Add CoAP options using the constructor...
   Coap::Option newOption(Coap::OptionNumber::UriPath,(const uint8_t *)"abcdefg", 7);
