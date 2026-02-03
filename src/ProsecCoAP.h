@@ -351,6 +351,8 @@ namespace Coap
         InvalidArgument = -4,
         /** The operation is not supported. */
         NotSupported = -5,
+        /** A network error occurred. */
+        NetworkError = -6,
         /** General failure. */
         Failure = -99
     };
@@ -830,8 +832,10 @@ namespace Coap
          *
          * It starts the underlying UDP instance, enabling communication.
          * The UDP instance is bound to the local port specified at construction time.
+         *
+         * @returns ErrorCode::None on success, or an error code on failure.
          */
-        void start();
+        ErrorCode start();
         /**
          * @brief Set the response callback.
          *

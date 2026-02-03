@@ -779,8 +779,16 @@ namespace Coap
         return this->addPayload(payload, length);
     }
 
-    void Node::start()
+    ErrorCode Node::start()
     {
-        this->_udp->begin(this->_port);
+        // begin() returns 1 on success, 0 on failure.
+        if (this->_udp->begin(this->_port) == 1)
+        {
+            return ErrorCode::None;
+        }
+        else
+        {
+            return ErrorCode::NetworkError;
+        }
     }
 }
