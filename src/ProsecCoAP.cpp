@@ -14,7 +14,7 @@ namespace Coap
         this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
     }
 
-    static ErrorCode Message::fromUdp(UDP *udp, Message &message)
+    ErrorCode Message::fromUdp(UDP *udp, Message &message)
     {
         message._messageLength = 0; // Initialize to zero in case of failure.
 
@@ -47,7 +47,7 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    static ErrorCode Message::fromRequest(const Message *request, MessageCode code, Message &response)
+    ErrorCode Message::fromRequest(const Message *request, MessageCode code, Message &response)
     {
         if (request->getLength() < COAP_HEADER_SIZE)
         {
