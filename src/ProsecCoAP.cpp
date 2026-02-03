@@ -1,6 +1,5 @@
 #include "Arduino.h"
 #include "ProsecCoAP.h"
-#include "utility/helpers.h"
 
 namespace Coap
 {
@@ -790,5 +789,33 @@ namespace Coap
         {
             return ErrorCode::NetworkError;
         }
+    }
+
+    ErrorCode Node::loop()
+    {
+        // SECTION Server mode: process incoming packets.
+        // Start processing the next available incoming packet
+        // Returns the size of the packet in bytes, or 0 if no packets are available
+        int packetSize = this->_udp->parsePacket();
+        while ((packetSize = this->_udp->parsePacket()) > 0)
+        {
+
+            // TODO: If the packet size is larger than COAP_MAX_MESSAGE_SIZE, discard it immediately.
+            // continue; // How to report a warning without ending loop()???
+
+            // TODO: Read the packet directly into a Message object buffer, setting the length accordingly.
+            // It would need an appropriate Message(buffer, len) constructor.
+
+            // TODO: Check the validity of the CoAP message.
+
+            // TODO: For requests, match the message URI to the registered handlers.
+
+            // TODO: For responses, call the response handler.
+        }
+        // !SECTION End of server mode.
+
+        // SECTION Client mode: process retransmission of outgoing messages.
+        // TODO: Implement retransmission logic for confirmable messages.
+        // !SECTION End of client mode.
     }
 }
