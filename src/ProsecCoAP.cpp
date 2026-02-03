@@ -14,6 +14,33 @@ namespace Coap
         this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
     }
 
+    ErrorCode Message::fromUdp(UDP *udp, Message &message)
+    {
+        int len = udp->parsePacket();
+        if (len <= 0)
+        {
+            // Nothing to read.
+            return ErrorCode::NotFound;
+        }
+        if (static_cast<unsigned int>(len) > COAP_MAX_MESSAGE_SIZE) // We know that len is positive, so the cast is safe.
+        {
+            // Allocated buffer is not large enough. User may increase COAP_MAX_MESSAGE_SIZE.
+            return ErrorCode::NotSupported;
+        }
+        // Read the packet into the message buffer.
+        // The returned value is the actual number of bytes read.
+        len = udp->read(message._message, len);
+        if (len <= 0)
+        {
+            // Error while reading from UDP.
+            message._messageLength = 0;
+            return ErrorCode::NetworkError;
+        }
+        // Set the message length.
+        message._messageLength = len;
+        return ErrorCode::None;
+    }
+
     uint16_t Message::getId() const
     {
         // 3rd and 4th bytes of the message MUST contain the Message ID.
@@ -799,24 +826,20 @@ namespace Coap
     ErrorCode Node::loop()
     {
         // SECTION Server mode: process incoming packets.
-        // Start processing the next available incoming packet
-        // Returns the size of the packet in bytes, or 0 if no packets are available
-        int packetSize = this->_udp->parsePacket();
-        while ((packetSize = this->_udp->parsePacket()) > 0)
+        ErrorCode err;
+        Message incomingMessage;
+        // fromUdp() returns ErrorCode::None while there are incoming messages.
+        while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::None)
         {
-
-            // TODO: If the packet size is larger than COAP_MAX_MESSAGE_SIZE, discard it immediately.
-            // continue; // How to report a warning without ending loop()???
-
-            // TODO: Read the packet directly into a Message object buffer, setting the length accordingly.
-            // It would need an appropriate Message(buffer, len) constructor.
-
             // TODO: Check the validity of the CoAP message.
 
             // TODO: For requests, match the message URI to the registered handlers.
 
             // TODO: For responses, call the response handler.
         }
+        // err will be ErrorCode::NotFound if there are no more messages to read.
+        // REVIEW: err may also be another error code if something went wrong.
+
         // !SECTION End of server mode.
 
         // SECTION Client mode: process retransmission of outgoing messages.

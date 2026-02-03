@@ -75,7 +75,7 @@ void loop()
   // // Set your own IP to receive it.
   // coap.sendGetRequest(IPAddress(192, 168, 0, 100), COAP_DEFAULT_PORT, "time"); // Set your own remote IP.
 
-  // coap.loop();
+  coapNode.loop();
   delay(1000);
 }
 

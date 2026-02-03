@@ -227,6 +227,19 @@ namespace Coap
         Message(MessageType type, MessageCode code);
 
         /**
+         * @brief Build a CoAP message reading from a UDP instance.
+         *
+         * @param udp A pointer to the UDP instance containing the received message.
+         * @param message The CoAP message to populate.
+         *
+         * @return Returns @ref ErrorCode::None on success.
+         *         Return @ref ErrorCode::NotFound if no packet is available.
+         *         If length of the received packet is > @ref COAP_MAX_MESSAGE_SIZE,
+         *         it returns @ref ErrorCode::NotSupported.
+         */
+        static ErrorCode fromUdp(UDP *udp, Message &message);
+
+        /**
          * @brief Get the message length.
          * @return The length of the message in bytes.
          */
