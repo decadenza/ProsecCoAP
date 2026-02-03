@@ -17,8 +17,9 @@ namespace Coap
     ErrorCode Message::fromUdp(UDP *udp, Message &message)
     {
         int len = udp->parsePacket();
-        if (len <= 0)
+        if (len <= COAP_HEADER_SIZE)
         {
+            // The size is too small to be a valid CoAP message.
             // Nothing to read.
             return ErrorCode::NotFound;
         }
@@ -30,8 +31,9 @@ namespace Coap
         // Read the packet into the message buffer.
         // The returned value is the actual number of bytes read.
         len = udp->read(message._message, len);
-        if (len <= 0)
+        if (len <= COAP_HEADER_SIZE)
         {
+            // The minimum size must be the header size.
             // Error while reading from UDP.
             message._messageLength = 0;
             return ErrorCode::NetworkError;

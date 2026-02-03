@@ -233,9 +233,11 @@ namespace Coap
          * @param message The CoAP message to populate.
          *
          * @return Returns @ref ErrorCode::None on success.
-         *         Return @ref ErrorCode::NotFound if no packet is available.
-         *         If length of the received packet is > @ref COAP_MAX_MESSAGE_SIZE,
-         *         it returns @ref ErrorCode::NotSupported.
+         *         Return @ref ErrorCode::NotFound if no packet was found (a size < @ref COAP_HEADER_SIZE
+         *         is considered as such).
+         *         It returns @ref ErrorCode::NotSupported if the length
+         *         of the received packet is > @ref COAP_MAX_MESSAGE_SIZE.
+         *         It returns @ref ErrorCode::NetworkError if an error occurred while reading from UDP.
          */
         static ErrorCode fromUdp(UDP *udp, Message &message);
 
