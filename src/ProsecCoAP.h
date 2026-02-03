@@ -449,8 +449,11 @@ namespace Coap
          *
          * @param[out] option The next option.
          *
-         * @return An error code indicating success or failure. It returns ErrorCode::None on success.
-         *          When there are no more options, it returns ErrorCode::NotFound.
+         * @return An error code indicating success or failure.
+         *         It returns ErrorCode::None when an option is found.
+         *         When there are no more options (either end of the message or beginning of payload),
+         *         it returns ErrorCode::NotFound.
+         *         If the message is malformed, it returns ErrorCode::MalformedMessage.
          *
          * @code{.cpp}
          * Coap::OptionIterator it = message.getOptionIterator();
@@ -789,29 +792,57 @@ namespace Coap
     };
 
     /**
-     * @brief The main CoAP class.
+     * @brief The CoAP node that runs on this device.
      *
+     * It uses an underlying UDP instance for communication.
      * It provides methods to send and receive CoAP messages, @see Message.
      */
-    class Coap
+    class Node
     {
     private:
         // The internal UDP instance used for communication.
         UDP *_udp;
+        // The local UDP port used for communication.
+        uint16_t _port;
         // The callback fuction for handling incoming response messages.
         Callback _responseHandler;
 
     public:
         /**
+         * @brief Build a CoAP node using the given UDP instance.
+         *
+         * This instance will use the default CoAP port (@ref COAP_DEFAULT_PORT).
+         *
+         * @param udp The UDP instance to use for communication.
+         */
+        Node(UDP &udp) : Node(udp, COAP_DEFAULT_PORT) {}
+
+        /**
+         * @brief Build a CoAP node using the given UDP instance and port.
+         *
+         * @param udp The UDP instance to use for communication.
+         * @param port The local UDP port to use for communication.
+         */
+        Node(UDP &udp, uint16_t port) : _udp(&udp), _port(port), _responseHandler(nullptr) {}
+
+        /**
+         * @brief Start the CoAP instance.
+         *
+         * It starts the underlying UDP instance, enabling communication.
+         * The UDP instance is bound to the local port specified at construction time.
+         */
+        void start();
+        /**
          * @brief Set the response callback.
          *
          * The response handler is invoked when a message of type @ref COAP_ACK or @ref COAP_RESET
          * is received, allowing the application to handle the response.
-         * The callback is unique for all the requests sent by this Coap instance.
+         * The callback is unique for all the responses sent to this Coap instance.
          *
-         * Note that transmission ACK are also received internally by the retrasmission queue.
+         * Note that transmission ACK are also received internally by the retrasmission queue,
+         * so that retransmission can be stopped.
          *
-         * Responses to different requests can be differentiated by matching the message ID.
+         * Responses to different requests must be differentiated by matching the message ID.
          *
          * @param handler The callback function to handle acknowledgements.
          */

@@ -778,4 +778,9 @@ namespace Coap
 
         return this->addPayload(payload, length);
     }
+
+    void Node::start()
+    {
+        this->_udp->begin(this->_port);
+    }
 }
