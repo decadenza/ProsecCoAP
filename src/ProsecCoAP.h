@@ -421,12 +421,17 @@ namespace Coap
      */
     class OptionIterator
     {
+
+        // Give access to private members to Message.
+        friend class Message;
         /**
          * @brief The message being iterated.
          */
         const Message *_message;
         /**
          * @brief Track the current byte position in the message.
+         *
+         * This points to the next byte to read.
          */
         size_t _currentByte;
         /**
@@ -731,6 +736,55 @@ namespace Coap
          */
         ErrorCode addPath(const char *path);
 
+        /**
+         * @brief Get the payload from the message.
+         *
+         * The payload is a raw set of bytes. To interpret it, refer to the
+         * Content-Format option, if present.
+         *
+         * @param[out] payload Pointer to the payload within the message.
+         *             @warning The pointer is valid **as long as the message exists**.
+         * @param[out] length The payload length.
+         * @return An error code. ErrorCode::None for success.
+         *
+         * Example:
+         * @code{.cpp}
+         * Coap::Message msg;
+         * const uint8_t *payload;
+         * size_t length;
+         * msg.getPayload(payload, length);
+         * @endcode
+         */
+        ErrorCode getPayload(const uint8_t *&payload, size_t &length) const;
+
+        /**
+         * @brief Add a payload to the message.
+         *
+         * If a payload is already present, this function will return an error.
+         *
+         * @param payload Pointer to the payload data.
+         * @param length Length of the payload data.
+         * @param format The content format of the payload.
+         * @return An error code indicating success or failure.
+         *
+         * @see addPayload(const uint8_t *payload, size_t length, ContentFormat format)
+         *      for the variant that also adds the Content-Format option.
+         */
+        ErrorCode addPayload(const uint8_t *payload, size_t length);
+
+        /**
+         * @brief Add a payload and the Content-Format option to the message.
+         *
+         * If a payload or a Content-Format option are already present,
+         * this function will return an error.
+         *
+         * @param payload Pointer to the payload data.
+         * @param length Length of the payload data.
+         * @param format The content format of the payload.
+         * @return An error code indicating success or failure.
+         *
+         * @see addPayload(const uint8_t *payload, size_t length) for the variant without Content-Format option.
+         */
         ErrorCode addPayload(const uint8_t *payload, size_t length, ContentFormat format);
     };
 

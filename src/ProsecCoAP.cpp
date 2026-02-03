@@ -666,4 +666,102 @@ namespace Coap
         return ErrorCode::None;
     }
 
+    ErrorCode Message::getPayload(const uint8_t *&payload, size_t &length) const
+    {
+        // Find the payload marker (0xFF), if present.
+        OptionIterator it = this->getOptionIterator();
+        ErrorCode err;
+        Option opt;
+        while ((err = it.next(opt)) == ErrorCode::None)
+        {
+            // Just iterate to find the payload marker.
+            // This loop will exit if:
+            // - We reach the end of options or a payload marker (err == NotFound).
+            // - We find a malformed option (err == MalformedMessage).
+        }
+        if (err != ErrorCode::NotFound)
+        {
+            // Something went wrong during iteration, possibly malformed message.
+            return err;
+        }
+        // The current byte points to the byte after the payload marker or the end of message.
+        // See next() for details.
+        size_t firstByteOfPayload = it._currentByte - 1; // Go back to the payload marker.
+        if (firstByteOfPayload >= this->getLength())
+        {
+            // Message ends here. No payload present.
+            Serial.println("First byte is beyond message length.");
+            return ErrorCode::NotFound;
+        }
+        Serial.print("Byte at firstByteOfPayload: ");
+        if (this->_message[firstByteOfPayload] != COAP_PAYLOAD_MARKER)
+        {
+            // Payload marker not present.
+            Serial.println("Missing payload marker.");
+            return ErrorCode::NotFound;
+        }
+        // Payload found. Share access to it.
+        // Payload starts after the payload marker.
+        payload = this->_message + firstByteOfPayload + 1;
+        length = this->getLength() - (firstByteOfPayload + 1);
+        return ErrorCode::None;
+    }
+
+    ErrorCode Message::addPayload(const uint8_t *payload, size_t length)
+    {
+        if (length == 0 || payload == nullptr)
+        {
+            // No payload to add.
+            return ErrorCode::InvalidArgument;
+        }
+        // Check if there is already a payload by iterating through the options.
+        // If we find the payload marker (0xFF), there is already a payload.
+        OptionIterator it = this->getOptionIterator();
+        ErrorCode err;
+        Option opt;
+        while ((err = it.next(opt)) == ErrorCode::None)
+        {
+            // Just iterate to find the payload marker.
+            // This loop will exit if:
+            // - We reach the end of options or a payload marker (err == NotFound).
+            // - We find a malformed option (err == MalformedMessage).
+        }
+        if (err != ErrorCode::NotFound)
+        {
+            // Something went wrong during iteration, possibly malformed message.
+            return err;
+        }
+
+        // The current byte points to the payload marker or the end of message.
+        size_t firstByteOfPayload = it._currentByte;
+
+        if (firstByteOfPayload < this->getLength() && this->_message[firstByteOfPayload] == COAP_PAYLOAD_MARKER)
+        {
+            // Payload marker already present. Cannot add another payload.
+            return ErrorCode::NotSupported;
+        }
+        // We need to add the payload. We'll need length + 1 bytes (including the payload marker).
+        if (this->getLength() + 1 + length > COAP_MAX_MESSAGE_SIZE)
+        {
+            // Adding the payload would exceed maximum message size.
+            return ErrorCode::MessageTooLarge;
+        }
+        // All good. Insert the payload marker.
+        err = this->_insert(firstByteOfPayload, reinterpret_cast<const uint8_t *>(&COAP_PAYLOAD_MARKER), 1);
+        if (err != ErrorCode::None)
+        {
+            return err;
+        }
+        // Insert the payload itself.
+        err = this->_insert(firstByteOfPayload + 1, payload, length);
+        if (err != ErrorCode::None)
+        {
+            // Try to cancel the previous insertion of the payload marker.
+            this->_remove(firstByteOfPayload, 1);
+            // Return the original error.
+            return err;
+        }
+        return ErrorCode::None;
+    }
+
 }

@@ -37,7 +37,14 @@ void loop()
   Serial.print("Added token of length: ");
   Serial.println(msg.getTokenLength());
 
-  Coap::ErrorCode err = msg.addHost(destinationIp); // Uri-Host is optional (often not necessary, if destination host is the same IP).
+  // You can add a payload.
+  Coap::ErrorCode err = msg.addPayload((const uint8_t*)(&"PAYLOAD_DATA"), 12);
+  if(err!= Coap::ErrorCode::None) {
+    Serial.print("Error while adding payload: ");
+    Serial.println((int8_t)err);
+    }
+    
+  err = msg.addHost(destinationIp); // Uri-Host is optional (often not necessary, if destination host is the same IP).
   if(err!= Coap::ErrorCode::None) {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -55,7 +62,7 @@ void loop()
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
     }
-    
+
   // You may add advanced CoAP options using the constructor...
   char value[] = "this is 15 long";
   Coap::Option newOption(Coap::OptionNumber::LocationPath,(const uint8_t *)value, strlen(value));
@@ -70,6 +77,18 @@ void loop()
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
     }
+
+  /** 
+   * PRO-TIP: The library supports building a message in any order.
+   * However, given the structure of the CoAP message, some memmove calls
+   * will be necessary.
+   * 
+   * It is slightly more efficient to perform operations in this order:
+   * 1. Instantiate the message with type and code.
+   * 2. Add a token.
+   * 3. Add options from the option with lower OptionNumber to the higher one.
+   * 4. Lastly, add a payload.
+   */
   
   // Read the current options from the message using an iterator.
   Coap::OptionIterator optIterator = msg.getOptionIterator();
@@ -86,6 +105,20 @@ void loop()
     }
 
   
-
+  
+  
+  // Read the payload from the message.
+  const uint8_t *payload;
+  size_t payloadLength;
+  err = msg.getPayload(payload, payloadLength);
+  if (err != Coap::ErrorCode::None)
+  {
+    Serial.print("Error while reading payload: ");
+    Serial.println((int8_t)err);
+  } else {
+    const char *payloadStr = reinterpret_cast<const char *>(payload);
+    Serial.print("Payload found: ");
+    Serial.println(payloadStr);
+  }
   delay(1000);
 }
