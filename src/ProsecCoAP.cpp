@@ -778,6 +778,11 @@ namespace Coap
         return this->addPayload(payload, length);
     }
 
+    ErrorCode Node::serve(const char *path, Callback callback)
+    {
+        return this->_serverRegistry.add(path, callback);
+    }
+
     ErrorCode Node::start()
     {
         // begin() returns 1 on success, 0 on failure.
@@ -817,5 +822,7 @@ namespace Coap
         // SECTION Client mode: process retransmission of outgoing messages.
         // TODO: Implement retransmission logic for confirmable messages.
         // !SECTION End of client mode.
+
+        return ErrorCode::None;
     }
 }

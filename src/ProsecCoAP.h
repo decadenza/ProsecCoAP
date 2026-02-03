@@ -146,6 +146,8 @@ namespace Coap
      * The intended use is to build a CoAP message to be sent, or to parse
      * a received CoAP message.
      *
+     * As a minimum, a @ref Message instance has a valid header.
+     *
      * See https://datatracker.ietf.org/doc/html/rfc7252#section-3
      */
     class Message
