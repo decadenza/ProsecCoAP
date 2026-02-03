@@ -558,9 +558,23 @@ namespace Coap
 
         /**
          * @brief Serve a given URI path with the specified callback.
-         * @param path The URI path to serve.
+         *
+         * The callback is invoked when a request message targeting the given path is received.
+         *
+         * @param path The URI path to serve with **no leading slash**,
+         *             **no trailing slash** and no other special characters.
+         *             If the path already exists, the callback is updated.
+         *             Paths are *case-sensitive.
+         *             Examples of valid paths are:
+         *                 - `test`
+         *                 - `sensors/temp`
          * @param callback The callback function to handle requests to the given path.
+         *
          * @return An error code indicating success or failure.
+         *
+         * @warning A path that does not respect the format won't work.
+         * @warning The path string pointer must remain valid for the entire lifetime
+         *          of the registry. It is recommended to use constant strings.
          */
         ErrorCode serve(const char *path, Callback callback);
 

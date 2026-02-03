@@ -832,18 +832,73 @@ namespace Coap
     {
         // SECTION Server mode: process incoming packets.
         ErrorCode err;
-        Message incomingMessage; // Will be populated by fromUdp().
-        // fromUdp() returns ErrorCode::None while there are incoming messages.
-        while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::None)
-        {
-            // Build the URI path from the options, if present.
+        {                            // Reducing scope of incomingMessage and uriPath.
+            Message incomingMessage; // Will be populated by fromUdp().
+            String uriPath;
+            uriPath.reserve(32); // Pre-allocate some space to reduce dynamic allocations. If you use long path, you obviously don't care.
 
-            // TODO: For requests, match the message URI to the registered handlers.
+            // fromUdp() returns ErrorCode::None while there are incoming messages.
+            while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::None)
+            {
+                // Empty URI path by default.
+                uriPath = "";
+                // Build the URI path from the Uri-Path option(s), if present.
+                OptionIterator it = incomingMessage.getOptionIterator();
+                Option opt;
+                while (it.next(opt) == ErrorCode::None)
+                {
+                    if (opt.number == OptionNumber::UriPath)
+                    {
+                        // Append '/' if uriPath is not empty.
+                        if (uriPath.length() > 0)
+                        {
+                            uriPath += "/";
+                        }
+                        // Append the option value as a string.
+                        for (size_t i = 0; i < opt.length; i++)
+                        {
+                            uriPath += static_cast<char>(opt.value[i]);
+                        }
+                    }
+                }
 
-            // TODO: For responses, call the response handler.
+                MessageCode code = incomingMessage.getCode();
+
+                if (code == MessageCode::Get ||
+                    code == MessageCode::Post ||
+                    code == MessageCode::Put ||
+                    code == MessageCode::Delete)
+                {
+                    // ANCHOR This is a request message.
+                    // https://datatracker.ietf.org/doc/html/rfc7252#section-5.1
+
+                    // Match the message URI to the registered handlers.
+                    // uriPath.c_str() will give the C-style string pointer.
+                    Callback handler;
+                    err = this->_serverRegistry.find(uriPath.c_str(), handler);
+                    if (err != ErrorCode::None)
+                    {
+                        // No handler found for this path.
+                        continue; // Ignore the message.
+                    }
+                    // Handler found. Call it.
+                    handler(incomingMessage, (this->_udp)->remoteIP(), (this->_udp)->remotePort());
+                }
+                else
+                {
+                    // ANCHOR This is a response message.
+                    if (this->_responseHandler != nullptr)
+                    {
+                        // A response handler was set. Call it.
+                        this->_responseHandler(incomingMessage,
+                                               (this->_udp)->remoteIP(),
+                                               (this->_udp)->remotePort());
+                    }
+                }
+            }
+            // err will be ErrorCode::NotFound if there are no more messages to read.
+            // REVIEW: err may also be another error code if something went wrong.
         }
-        // err will be ErrorCode::NotFound if there are no more messages to read.
-        // REVIEW: err may also be another error code if something went wrong.
 
         // !SECTION End of server mode.
 

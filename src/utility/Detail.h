@@ -41,20 +41,24 @@ namespace Coap
             UriRegistry() : _count(0) {}
             /**
              * @brief Add a new URI path and its associated callback.
-             * @param path The URI path to register with no leading slash and no other special characters.
-             *             Examples are:
-             *             - `test`
-             *             - `sensors/temp`
+             *
+             * @param path The URI path to serve with **no leading slash**,
+             *             **no trailing slash** and no other special characters.
              *             If the path already exists, the callback is updated.
-             *             Paths are *case-sensitive*.
-             * @warning A path that does not respect the format won't work.
-             * @warning The path string must remain valid for the entire lifetime
-             *          of the registry. It is recommended to use constant strings.
+             *             Paths are *case-sensitive.
+             *             Examples of valid paths are:
+             *                 - `test`
+             *                 - `sensors/temp`
+             *
+             *
              * @param callback The callback function associated with the path.
              * @return An error code indicating success or failure.
              *         It returns @ref ErrorCode::None on success.
              *         It returns @ref ErrorCode::NotSupported if the registry is full.
              *         Increase @ref COAP_MAX_CALLBACKS to allow more callbacks.
+             *
+             * @warning The path string pointer must remain valid for the entire lifetime
+             *          of the registry. It is recommended to use constant strings.
              */
             ErrorCode add(const char *path, Callback callback);
             /**
