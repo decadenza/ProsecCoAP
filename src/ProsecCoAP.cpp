@@ -242,6 +242,7 @@ namespace Coap
             else
             {
                 // Store the last option number for next round.
+                // This also handles the case of multiple options with the same number.
                 lastOptionNumber += delta;
             }
             // !SECTION End of delta processing.
