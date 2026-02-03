@@ -238,8 +238,21 @@ namespace Coap
          *         It returns @ref ErrorCode::NotSupported if the length
          *         of the received packet is > @ref COAP_MAX_MESSAGE_SIZE.
          *         It returns @ref ErrorCode::NetworkError if an error occurred while reading from UDP.
+         *         It returns @ref ErrorCode::NotSupported if the message version is not @ref COAP_VERSION.
          */
         static ErrorCode fromUdp(UDP *udp, Message &message);
+
+        /**
+         * @brief Get the CoAP version of this message.
+         *
+         * The version is always present in a CoAP message.
+         *
+         * @return The 2-bit CoAP version as uint8_t.
+         */
+        uint8_t getVersion() const
+        {
+            return (this->_message[0] >> 6) & 0x03;
+        }
 
         /**
          * @brief Get the message length.

@@ -40,6 +40,9 @@ namespace Coap
         }
         // Set the message length.
         message._messageLength = len;
+        // Check that the message start with the expected CoAP version.
+        if (message.getVersion() != COAP_VERSION)
+            return ErrorCode::NotSupported;
         return ErrorCode::None;
     }
 
@@ -829,11 +832,11 @@ namespace Coap
     {
         // SECTION Server mode: process incoming packets.
         ErrorCode err;
-        Message incomingMessage;
+        Message incomingMessage; // Will be populated by fromUdp().
         // fromUdp() returns ErrorCode::None while there are incoming messages.
         while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::None)
         {
-            // TODO: Check the validity of the CoAP message.
+            // Build the URI path from the options, if present.
 
             // TODO: For requests, match the message URI to the registered handlers.
 

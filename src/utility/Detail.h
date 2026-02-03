@@ -60,7 +60,7 @@ namespace Coap
             /**
              * @brief Find a callback for the given URI path.
              *
-             * @param path The URI path to search for.
+             * @param path The URI path to search for. Note that a path == "" is valid.
              * @param[out] callback Output parameter to store the found callback.
              * @return @ref ErrorCode::None if found, @ref ErrorCode::NotFound if not found.
              *         It may return other error codes.
