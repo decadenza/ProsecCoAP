@@ -691,14 +691,11 @@ namespace Coap
         if (firstByteOfPayload >= this->getLength())
         {
             // Message ends here. No payload present.
-            Serial.println("First byte is beyond message length.");
             return ErrorCode::NotFound;
         }
-        Serial.print("Byte at firstByteOfPayload: ");
         if (this->_message[firstByteOfPayload] != COAP_PAYLOAD_MARKER)
         {
             // Payload marker not present.
-            Serial.println("Missing payload marker.");
             return ErrorCode::NotFound;
         }
         // Payload found. Share access to it.
@@ -765,4 +762,20 @@ namespace Coap
         return ErrorCode::None;
     }
 
+    ErrorCode Message::addPayload(const uint8_t *payload, size_t length, ContentFormat format)
+    {
+        // NOTE: A content format of 0 means "text/plain; charset=utf-8".
+        // See https://datatracker.ietf.org/doc/html/rfc7252#section-12.3
+        // Therefore, it is a valid content format and needs to be added as an option.
+        ErrorCode err;
+        err = this->addOption(OptionNumber::ContentFormat,
+                              reinterpret_cast<const uint8_t *>(&format),
+                              (static_cast<uint16_t>(format) > 255) ? 2 : 1); // Use minimal representation.
+        if (err != ErrorCode::None)
+        {
+            return err;
+        }
+
+        return this->addPayload(payload, length);
+    }
 }

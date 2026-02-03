@@ -38,7 +38,7 @@ void loop()
   Serial.println(msg.getTokenLength());
 
   // You can add a payload.
-  Coap::ErrorCode err = msg.addPayload((const uint8_t*)(&"PAYLOAD_DATA"), 12);
+  Coap::ErrorCode err = msg.addPayload((const uint8_t*)(&"PAYLOAD_DATA"), 12, Coap::ContentFormat::TextPlain);
   if(err!= Coap::ErrorCode::None) {
     Serial.print("Error while adding payload: ");
     Serial.println((int8_t)err);
