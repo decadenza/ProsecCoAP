@@ -58,7 +58,9 @@ namespace Coap
              */
             ErrorCode add(const char *path, Callback callback);
             /**
-             * @brief Find a callback for the given URI path.
+             * @brief Find the callback for the given URI path.
+             *
+             * It looks for an exact match of the path, case sensitive.
              *
              * @param path The URI path to search for. Note that a path == "" is valid.
              * @param[out] callback Output parameter to store the found callback.

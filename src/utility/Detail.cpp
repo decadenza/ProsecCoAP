@@ -5,6 +5,11 @@ namespace Coap::Detail
 
     ErrorCode UriRegistry::add(const char *path, Callback callback)
     {
+        if (path == nullptr)
+        {
+            return ErrorCode::InvalidArgument;
+        }
+        // Note that "" (empty path) is a valid path.
         if (this->_count >= COAP_MAX_CALLBACKS)
         {
             return ErrorCode::NotSupported; // Registry full.
@@ -28,6 +33,10 @@ namespace Coap::Detail
 
     ErrorCode UriRegistry::find(const char *path, Callback &callback) const
     {
+        if (path == nullptr)
+        {
+            return ErrorCode::InvalidArgument;
+        }
         for (size_t i = 0; i < this->_count; i++)
         {
             if (strcmp(this->_path[i], path) == 0)
