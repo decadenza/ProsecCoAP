@@ -14,8 +14,10 @@ namespace Coap
         this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
     }
 
-    ErrorCode Message::fromUdp(UDP *udp, Message &message)
+    static ErrorCode Message::fromUdp(UDP *udp, Message &message)
     {
+        message._messageLength = 0; // Initialize to zero in case of failure.
+
         int len = udp->parsePacket();
         if (len <= COAP_HEADER_SIZE)
         {
@@ -35,7 +37,6 @@ namespace Coap
         {
             // The minimum size must be the header size.
             // Error while reading from UDP.
-            message._messageLength = 0;
             return ErrorCode::NetworkError;
         }
         // Set the message length.
@@ -43,6 +44,29 @@ namespace Coap
         // Check that the message start with the expected CoAP version.
         if (message.getVersion() != COAP_VERSION)
             return ErrorCode::NotSupported;
+        return ErrorCode::None;
+    }
+
+    static ErrorCode Message::fromRequest(const Message *request, MessageCode code, Message &response)
+    {
+        if (request->getLength() < COAP_HEADER_SIZE)
+        {
+            return ErrorCode::MalformedMessage;
+        }
+        // Initialize response message.
+        response = Message(MessageType::Ack, code);
+        // Copy message ID from request.
+        response._message[2] = request->_message[2];
+        response._message[3] = request->_message[3];
+        // The response length is currently just the header size.
+
+        // If the request has a token, copy it and update the token length in the response.
+        size_t tokenLength = request->getTokenLength();
+        memcpy(response._message + COAP_HEADER_SIZE, // Destination.
+               request->_message + COAP_HEADER_SIZE, // Source.
+               tokenLength);                         // Length.
+        response._messageLength = COAP_HEADER_SIZE + tokenLength;
+
         return ErrorCode::None;
     }
 

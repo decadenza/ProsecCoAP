@@ -161,6 +161,9 @@ namespace Coap
         uint8_t _message[COAP_MAX_MESSAGE_SIZE];
         /**
          * @brief Current length of the message in bytes.
+         *
+         * The minimum length is @ref COAP_HEADER_SIZE.
+         * A shorter length means the message is invalid.
          */
         size_t _messageLength;
         /**
@@ -241,6 +244,23 @@ namespace Coap
          *         It returns @ref ErrorCode::NotSupported if the message version is not @ref COAP_VERSION.
          */
         static ErrorCode fromUdp(UDP *udp, Message &message);
+
+        /**
+         * @brief Build a response message based on a request message.
+         *
+         * The message ID is copied from the request.
+         * The type is set to @ref MessageType::Ack.
+         * The response code is set to the given input code.
+         * If the request has a token, the same token is copied to the response.
+         * The rest of the message is initialized as per default constructor @ref Message().
+         *
+         * @param request The request message to base the response on.
+         * @param code The response message code.
+         * @param[out] response The response message to populate.
+         * @return An error code indicating success or failure.
+         *         It returns @ref ErrorCode::None on success.
+         */
+        static ErrorCode fromRequest(const Message *request, MessageCode code, Message &response);
 
         /**
          * @brief Get the CoAP version of this message.
