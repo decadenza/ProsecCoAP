@@ -30,7 +30,7 @@ void loop()
 {
   Serial.println("[Building new message]");
   // Build a GET request message to transmit.
-  Coap::Message msg(Coap::MessageType::Con, Coap::MessageCode::Get); // Initialise a new CoAP confirmable message, as GET request.
+  Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
 
   // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.
   msg.addToken(4);
@@ -38,22 +38,22 @@ void loop()
   Serial.println(msg.getTokenLength());
 
   // You can add a payload.
-  Coap::ErrorCode err = msg.addPayload((const uint8_t *)(&"PAYLOAD_DATA"), 12, Coap::ContentFormat::TextPlain);
-  if (err != Coap::ErrorCode::None)
+  Coap::ErrorCode err = msg.addPayload((const uint8_t *)(&"PAYLOAD_DATA"), 12, Coap::ContentFormat::TEXT_PLAIN);
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while adding payload: ");
     Serial.println((int8_t)err);
   }
 
   err = msg.addHost(destinationIp); // Uri-Host is optional (often not necessary, if destination host is the same IP).
-  if (err != Coap::ErrorCode::None)
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
   }
 
   err = msg.addPort(COAP_DEFAULT_PORT); // Optional. If not present will default to the default port anyway.
-  if (err != Coap::ErrorCode::None)
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -61,7 +61,7 @@ void loop()
 
   // Add Uri-Path options using the helper method.
   err = msg.addPath("sensors/temp");
-  if (err != Coap::ErrorCode::None)
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -69,16 +69,16 @@ void loop()
 
   // You may add advanced CoAP options using the constructor...
   char value[] = "this is 15 long";
-  Coap::Option newOption(Coap::OptionNumber::LocationPath, (const uint8_t *)value, strlen(value));
+  Coap::Option newOption(Coap::OptionNumber::LOCATION_PATH, (const uint8_t *)value, strlen(value));
   err = msg.addOption(newOption);
-  if (err != Coap::ErrorCode::None)
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
   }
   // ...or passing the values directly.
-  err = msg.addOption(Coap::OptionNumber::LocationPath, (const uint8_t *)value, strlen(value));
-  if (err != Coap::ErrorCode::None)
+  err = msg.addOption(Coap::OptionNumber::LOCATION_PATH, (const uint8_t *)value, strlen(value));
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -99,14 +99,14 @@ void loop()
   // Read the current options from the message using an iterator.
   Coap::OptionIterator optIterator = msg.getOptionIterator();
   Coap::Option opt;
-  while ((err = optIterator.next(opt)) == Coap::ErrorCode::None)
+  while ((err = optIterator.next(opt)) == Coap::ErrorCode::NONE)
   {
     Serial.print("Found option: ");
     Serial.print((int8_t)opt.number);
     Serial.print(", length: ");
     Serial.println((int8_t)opt.length);
   }
-  if (err != Coap::ErrorCode::NotFound)
+  if (err != Coap::ErrorCode::NOT_FOUND)
   {
     Serial.print("Error while reading options: ");
     Serial.println((int8_t)err);
@@ -116,7 +116,7 @@ void loop()
   const uint8_t *payload;
   size_t payloadLength;
   err = msg.getPayload(payload, payloadLength);
-  if (err != Coap::ErrorCode::None)
+  if (err != Coap::ErrorCode::NONE)
   {
     Serial.print("Error while reading payload: ");
     Serial.println((int8_t)err);

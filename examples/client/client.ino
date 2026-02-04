@@ -63,7 +63,7 @@ void setup()
 void loop()
 {
   // Build a GET request message to transmit.
-  Coap::Message msg(Coap::MessageType::Con, Coap::MessageCode::Get); // Initialise a new CoAP confirmable message, as GET request.
+  Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
   // msg.addPath("sensors/temp");                                       // Set the URI path to "sensors/temp".
   delay(1000);
   // coap.loop();

@@ -83,7 +83,7 @@ void loop()
 // The response will be a string, either "1" or "0".
 void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 {
-  if (message.getCode() == Coap::MessageCode::Put)
+  if (message.getCode() == Coap::MessageCode::PUT)
   {
     Serial.println("Incoming PUT");
     const uint8_t *payload;
@@ -94,17 +94,18 @@ void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
     digitalWrite(LEDP, LED_STATUS);
     // Send a response to a PUT requests.
     Coap::Message response;
-    Coap::Message::buildResponse(&message, Coap::MessageCode::Changed, response);
+    Coap::Message::buildResponse(&message, Coap::MessageCode::CHANGED, response);
     coapNode.sendMessage(response, ip, port);
   }
-  else if(message.getCode() == Coap::MessageCode::Get) {
+  else if (message.getCode() == Coap::MessageCode::GET)
+  {
     // Send a piggybacked response to a GET requests.
     Coap::Message response;
-    Coap::Message::buildResponse(&message, Coap::MessageCode::Content, response);
-    response.addPayload((const uint8_t *)(LED_STATUS ? "1" : "0"), 1, Coap::ContentFormat::TextPlain);
+    Coap::Message::buildResponse(&message, Coap::MessageCode::CONTENT, response);
+    response.addPayload((const uint8_t *)(LED_STATUS ? "1" : "0"), 1, Coap::ContentFormat::TEXT_PLAIN);
     coapNode.sendMessage(response, ip, port);
-    }
-  
+  }
+
   // NOTE: If you cannot reply immediately, the protocol allows to:
   // 1. First, send an empty acknowledgement (to stop retransmission).
   // 2. When data is ready, send a separate response.
@@ -116,7 +117,7 @@ void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 // CoAP client response callback. This will receive the ACK responses.
 void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
 {
-  if (message.getType() == Coap::MessageType::Ack)
+  if (message.getType() == Coap::MessageType::ACK)
   {
     Serial.println("[Coap Response ACK] Message ID ");
     Serial.print(message.getId());

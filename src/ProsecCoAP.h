@@ -131,15 +131,15 @@ namespace Coap
          * @param[out] option The next option.
          *
          * @return An error code indicating success or failure.
-         *         It returns ErrorCode::None when an option is found.
+         *         It returns ErrorCode::NONE when an option is found.
          *         When there are no more options (either end of the message or beginning of payload),
-         *         it returns ErrorCode::NotFound.
-         *         If the message is malformed, it returns ErrorCode::MalformedMessage.
+         *         it returns ErrorCode::NOT_FOUND.
+         *         If the message is malformed, it returns ErrorCode::MALFORMED_MESSAGE.
          *
          * @code{.cpp}
          * Coap::OptionIterator it = message.getOptionIterator();
          * Coap::Option option;
-         * while((err = optIterator.next(opt)) == Coap::ErrorCode::None) {
+         * while((err = optIterator.next(opt)) == Coap::ErrorCode::NONE) {
          *         // Process option...
          * }
          * @endcode
@@ -185,7 +185,7 @@ namespace Coap
          * @param data Pointer to the data to insert.
          * @param length The length of the data to insert in bytes.
          * @return An error code indicating success or failure. Particularly,
-         *         it returns @ref ErrorCode::MessageTooLarge if the insertion would exceed
+         *         it returns @ref ErrorCode::MESSAGE_TOO_LARGE if the insertion would exceed
          *         the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).
          *         On failure, the message remains unmodified.
          */
@@ -219,12 +219,12 @@ namespace Coap
          * @brief Builds a default CoAP message.
          *
          * The version is set to @ref COAP_VERSION.
-         * The type is set to @ref COAP_NONCON.
+         * The type is set to @ref COAP_NON.
          * The code is set to @ref COAP_EMPTY.
          * The token length is set to 0.
          * The message ID is assigned automatically.
          */
-        Message() : Message(MessageType::NonCon, MessageCode::Empty) {}
+        Message() : Message(MessageType::NON, MessageCode::EMPTY) {}
 
         /**
          * @brief Builds a CoAP message with the given type and code.
@@ -236,7 +236,7 @@ namespace Coap
          * @param type The message type.
          * @param code The message code.
          */
-        Message(MessageType type, MessageCode code) : Message(MessageType::NonCon, MessageCode::Empty, _getNextId()) {}
+        Message(MessageType type, MessageCode code) : Message(MessageType::NON, MessageCode::EMPTY, _getNextId()) {}
 
         /**
          * @brief Builds a CoAP message explictly specifying type, code and message ID.
@@ -256,13 +256,13 @@ namespace Coap
          * @param udp A pointer to the UDP instance containing the received message.
          * @param message The CoAP message to populate.
          *
-         * @return Returns @ref ErrorCode::None on success.
-         *         Return @ref ErrorCode::NotFound if no packet was found (a size < @ref COAP_HEADER_SIZE
+         * @return Returns @ref ErrorCode::NONE on success.
+         *         Return @ref ErrorCode::NOT_FOUND if no packet was found (a size < @ref COAP_HEADER_SIZE
          *         is considered as such).
-         *         It returns @ref ErrorCode::NotSupported if the length
+         *         It returns @ref ErrorCode::NOT_SUPPORTED if the length
          *         of the received packet is > @ref COAP_MAX_MESSAGE_SIZE.
-         *         It returns @ref ErrorCode::NetworkError if an error occurred while reading from UDP.
-         *         It returns @ref ErrorCode::NotSupported if the message version is not @ref COAP_VERSION.
+         *         It returns @ref ErrorCode::NETWORK if an error occurred while reading from UDP.
+         *         It returns @ref ErrorCode::NOT_SUPPORTED if the message version is not @ref COAP_VERSION.
          */
         static ErrorCode fromUdp(UDP *udp, Message &message);
 
@@ -270,7 +270,7 @@ namespace Coap
          * @brief Build a response message based on a request message.
          *
          * The message ID is copied from the request.
-         * The type is set to @ref MessageType::Ack.
+         * The type is set to @ref MessageType::ACK.
          * The response code is set to the given input code.
          * If the request has a token, the same token is copied to the response.
          * The rest of the message is initialized as per default constructor @ref Message().
@@ -279,7 +279,7 @@ namespace Coap
          * @param code The response message code.
          * @param[out] response The response message to populate.
          * @return An error code indicating success or failure.
-         *         It returns @ref ErrorCode::None on success.
+         *         It returns @ref ErrorCode::NONE on success.
          */
         static ErrorCode buildResponse(const Message *request, MessageCode code, Message &response);
 
@@ -358,7 +358,7 @@ namespace Coap
          *
          * @param length The length (in bytes) of the token.
          *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes.
-         * @return An error code. ErrorCode::None for success.
+         * @return An error code. ErrorCode::NONE for success.
          *
          * Example:
          * @code{.cpp}
@@ -374,7 +374,7 @@ namespace Coap
          * @param[out] buffer Pointer to the token within the message.
          *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The token length.
-         * @return An error code. ErrorCode::None for success.
+         * @return An error code. ErrorCode::NONE for success.
          *
          * Example:
          * @code{.cpp}
@@ -396,11 +396,11 @@ namespace Coap
          *
          * The option is added according to the CoAP option encoding rules.
          * For options that can be added at most once, this function follows a "first add wins" policy. Any
-         * subsequent addition of the same option number will return @ref ErrorCode::NotSupported.
+         * subsequent addition of the same option number will return @ref ErrorCode::NOT_SUPPORTED.
          * For options that can appear multiple times, this function appends the new option to the existing ones.
          *
          * If adding the option will result in exceeding the limits specified by RFC 7252 Section 5.10,
-         * the error code @ref ErrorCode::NotSupported is returned.
+         * the error code @ref ErrorCode::NOT_SUPPORTED is returned.
          * For options that can appear multiple times, the option is *appended after* the existing ones.
          *
          * @warning This is a low-level method to add options.
@@ -417,9 +417,9 @@ namespace Coap
          * @param number The option number, as defined in the CoAP specification.
          * @param value The pointer to the option value.
          * @param length The length of the option value.
-         * @return An error code indicating success or failure. @ref ErrorCode::NotSupported is returned
+         * @return An error code indicating success or failure. @ref ErrorCode::NOT_SUPPORTED is returned
          *        if adding the option would exceed the maximum number of allowed options for that
-         *        number. An @ref ErrorCode::MessageTooLarge is returned if adding the option would exceed
+         *        number. An @ref ErrorCode::MESSAGE_TOO_LARGE is returned if adding the option would exceed
          *        the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
@@ -492,7 +492,7 @@ namespace Coap
          * @param[out] payload Pointer to the payload within the message.
          *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The payload length.
-         * @return An error code. ErrorCode::None for success.
+         * @return An error code. ErrorCode::NONE for success.
          *
          * Example:
          * @code{.cpp}
@@ -577,7 +577,7 @@ namespace Coap
          * It starts the underlying UDP instance, enabling communication.
          * The UDP instance is bound to the local port specified at construction time.
          *
-         * @returns ErrorCode::None on success, or an error code on failure.
+         * @returns ErrorCode::NONE on success, or an error code on failure.
          */
         ErrorCode start();
 

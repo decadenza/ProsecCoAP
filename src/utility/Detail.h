@@ -53,8 +53,8 @@ namespace Coap
              *
              * @param callback The callback function associated with the path.
              * @return An error code indicating success or failure.
-             *         It returns @ref ErrorCode::None on success.
-             *         It returns @ref ErrorCode::NotSupported if the registry is full.
+             *         It returns @ref ErrorCode::NONE on success.
+             *         It returns @ref ErrorCode::NOT_SUPPORTED if the registry is full.
              *         Increase @ref COAP_MAX_CALLBACKS to allow more callbacks.
              *
              * @warning The path string pointer must remain valid for the entire lifetime
@@ -68,7 +68,7 @@ namespace Coap
              *
              * @param path The URI path to search for. Note that a path == "" is valid.
              * @param[out] callback Output parameter to store the found callback.
-             * @return @ref ErrorCode::None if found, @ref ErrorCode::NotFound if not found.
+             * @return @ref ErrorCode::NONE if found, @ref ErrorCode::NOT_FOUND if not found.
              *         It may return other error codes.
              */
             ErrorCode find(const char *path, Callback &callback) const;

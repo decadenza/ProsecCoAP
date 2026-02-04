@@ -160,13 +160,13 @@ namespace Coap
     enum class MessageType : uint8_t
     {
         /** Confirmable message */
-        Con = 0,
+        CON = 0,
         /** Non-confirmable message */
-        NonCon = 1,
+        NON = 1,
         /** Acknowledgement message */
-        Ack = 2,
+        ACK = 2,
         /** Reset message */
-        Reset = 3
+        RESET = 3
     };
 
     /**
@@ -182,64 +182,64 @@ namespace Coap
     enum class MessageCode : uint8_t
     {
         /** Empty message */
-        Empty = COAP_CODE_ENCODE(0, 0),
+        EMPTY = COAP_CODE_ENCODE(0, 0),
 
         // SECTION 0.xx Request MessageCodes
-        Get = COAP_CODE_ENCODE(0, 1),
-        Post = COAP_CODE_ENCODE(0, 2),
-        Put = COAP_CODE_ENCODE(0, 3),
-        Delete = COAP_CODE_ENCODE(0, 4),
+        GET = COAP_CODE_ENCODE(0, 1),
+        POST = COAP_CODE_ENCODE(0, 2),
+        PUT = COAP_CODE_ENCODE(0, 3),
+        DELETE = COAP_CODE_ENCODE(0, 4),
         // !SECTION End of 0.xx Request MessageCodes
 
         // SECTION 2.xx Success response codes
         /** Like HTTP 201 "Created", only used in response to POST and PUT requests. */
-        Created = COAP_CODE_ENCODE(2, 1),
+        CREATED = COAP_CODE_ENCODE(2, 1),
         /** Like HTTP 204 "No Content", only used in response to DELETE or POST requests that cause the resource to cease being available. */
-        Deleted = COAP_CODE_ENCODE(2, 2),
+        DELETED = COAP_CODE_ENCODE(2, 2),
         /** Related to HTTP 304 "Not Modified", indicates the response identified by the entity-tag is valid. */
-        Valid = COAP_CODE_ENCODE(2, 3),
+        VALID = COAP_CODE_ENCODE(2, 3),
         /** Like HTTP 204 "No Content", only used in response to POST and PUT requests. */
-        Changed = COAP_CODE_ENCODE(2, 4),
+        CHANGED = COAP_CODE_ENCODE(2, 4),
         /** Like HTTP 200 "OK", only used in response to GET requests. */
-        Content = COAP_CODE_ENCODE(2, 5),
+        CONTENT = COAP_CODE_ENCODE(2, 5),
         // !SECTION End of 2.xx Success response codes
 
         // SECTION 4.xx Client Error response codes
         /** Like HTTP 400 "Bad Request". */
-        BadRequest = COAP_CODE_ENCODE(4, 0),
+        BAD_REQUEST = COAP_CODE_ENCODE(4, 0),
         /** The client is not authorized to perform the requested action. */
-        Unauthorized = COAP_CODE_ENCODE(4, 1),
+        UNAUTHORIZED = COAP_CODE_ENCODE(4, 1),
         /** The request could not be understood due to one or more unrecognized or malformed options. */
-        BadOption = COAP_CODE_ENCODE(4, 2),
+        BAD_OPTION = COAP_CODE_ENCODE(4, 2),
         /** Like HTTP 403 "Forbidden". */
-        Forbidden = COAP_CODE_ENCODE(4, 3),
+        FORBIDDEN = COAP_CODE_ENCODE(4, 3),
         /** Like HTTP 404 "Not Found". */
-        NotFound = COAP_CODE_ENCODE(4, 4),
+        NOT_FOUND = COAP_CODE_ENCODE(4, 4),
         /** Like HTTP 405 "Method Not Allowed" but with no parallel to the "Allow" header field. */
-        MethodNotAllowed = COAP_CODE_ENCODE(4, 5),
+        METHOD_NOT_ALLOWED = COAP_CODE_ENCODE(4, 5),
         /** Like HTTP 406 "Not Acceptable", but with no response entity. */
-        NotAcceptable = COAP_CODE_ENCODE(4, 6),
+        NOT_ACCEPTABLE = COAP_CODE_ENCODE(4, 6),
         /** Like HTTP 412 "Precondition Failed". */
-        PreconditionFailed = COAP_CODE_ENCODE(4, 12),
+        PRECONDITION_FAILED = COAP_CODE_ENCODE(4, 12),
         /** Like HTTP 413 "Request Entity Too Large". */
-        RequestEntityTooLarge = COAP_CODE_ENCODE(4, 13),
+        REQUEST_ENTITY_TOO_LARGE = COAP_CODE_ENCODE(4, 13),
         /** Like HTTP 415 "Unsupported Media MessageType". */
-        UnsupportedContentFormat = COAP_CODE_ENCODE(4, 15),
+        UNSUPPORTED_CONTENT_FORMAT = COAP_CODE_ENCODE(4, 15),
         // !SECTION End of 4.xx Client Error response codes
 
         // SECTION 5.xx Server Error response codes
         /** Like HTTP 500 "Internal Server Error". */
-        InternalServerError = COAP_CODE_ENCODE(5, 0),
+        INTERNAL_SERVER_ERROR = COAP_CODE_ENCODE(5, 0),
         /** Like HTTP 501 "Not Implemented". */
-        NotImplemented = COAP_CODE_ENCODE(5, 1),
+        NOT_IMPLEMENTED = COAP_CODE_ENCODE(5, 1),
         /** Like HTTP 502 "Bad Gateway". */
-        BadGateway = COAP_CODE_ENCODE(5, 2),
+        BAD_GATEWAY = COAP_CODE_ENCODE(5, 2),
         /** Like HTTP 503 "Service Unavailable" but uses Max-Age Option instead of "Retry-After" header. */
-        ServiceUnavailable = COAP_CODE_ENCODE(5, 3),
+        SERVICE_UNAVAILABLE = COAP_CODE_ENCODE(5, 3),
         /** Like HTTP 504 "Gateway Timeout". */
-        GatewayTimeout = COAP_CODE_ENCODE(5, 4),
+        GATEWAY_TIMEOUT = COAP_CODE_ENCODE(5, 4),
         /** The server is unable or unwilling to act as a forward-proxy for the URI specified in the Proxy-Uri Option. */
-        ProxyingNotSupported = COAP_CODE_ENCODE(5, 5),
+        PROXYING_NOT_SUPPORTED = COAP_CODE_ENCODE(5, 5),
         // !SECTION End of 5.xx Server Error response codes
     };
 
@@ -250,22 +250,22 @@ namespace Coap
      */
     enum class OptionNumber : uint16_t
     {
-        IfMatch = 1,
-        UriHost = 3,
-        ETag = 4,
-        IfNoneMatch = 5,
-        Observe = 6,
-        UriPort = 7,
-        LocationPath = 8,
-        UriPath = 11,
-        ContentFormat = 12,
-        MaxAge = 14,
-        UriQuery = 15,
-        Accept = 17,
-        LocationQuery = 20,
-        ProxyUri = 35,
-        ProxyScheme = 39,
-        Size1 = 60
+        IF_MATCH = 1,
+        URI_HOST = 3,
+        E_TAG = 4,
+        IF_NONE_MATCH = 5,
+        OBSERVE = 6,
+        URI_PORT = 7,
+        LOCATION_PATH = 8,
+        URI_PATH = 11,
+        CONTENT_FORMAT = 12,
+        MAX_AGE = 14,
+        URI_QUERY = 15,
+        ACCEPT = 17,
+        LOCATION_QUERY = 20,
+        PROXY_URI = 35,
+        PROXY_SCHEME = 39,
+        SIZE1 = 60
     };
 
     /**
@@ -275,8 +275,8 @@ namespace Coap
      */
     enum class ObserveValue : uint8_t
     {
-        Register = 0,
-        Deregister = 1
+        REGISTER = 0,
+        DEREGISTER = 1
     };
     /**
      * @brief The CoAP content format.
@@ -291,13 +291,13 @@ namespace Coap
      */
     enum class ContentFormat : uint16_t
     {
-        TextPlain = 0,
-        ApplicationLinkFormat = 40,
-        ApplicationXml = 41,
-        ApplicationOctetStream = 42,
-        ApplicationExi = 47,
-        ApplicationJson = 50,
-        ApplicationCbor = 60
+        TEXT_PLAIN = 0,
+        APPLICATION_LINK_FORMAT = 40,
+        APPLICATION_XML = 41,
+        APPLICATION_OCTET_STREAM = 42,
+        APPLICATION_EXI = 47,
+        APPLICATION_JSON = 50,
+        APPLICATION_CBOR = 60
     };
 
     /**
@@ -308,25 +308,25 @@ namespace Coap
     enum class ErrorCode : int8_t
     {
         /** No error */
-        None = 0,
+        NONE = 0,
         /** The requested resource was not found. */
-        NotFound = -1,
+        NOT_FOUND = -1,
         /**
          * The message is too large to fit in the allocated buffer.
          *
          * The operation could not be performed because the message size will exceed @ref COAP_MAX_MESSAGE_SIZE.
          */
-        MessageTooLarge = -2,
+        MESSAGE_TOO_LARGE = -2,
         /** The message is malformed. */
-        MalformedMessage = -3,
+        MALFORMED_MESSAGE = -3,
         /** One (or more) of the supplied arguments is invalid. */
-        InvalidArgument = -4,
+        INVALID_ARGUMENT = -4,
         /** The operation is not supported. */
-        NotSupported = -5,
+        NOT_SUPPORTED = -5,
         /** A network error occurred. */
-        NetworkError = -6,
-        /** General failure. */
-        Failure = -99
+        NETWORK = -6,
+        /** General unexpected failure. */
+        UNEXPECTED = -99
     };
 
     // !SECTION End of Enums.

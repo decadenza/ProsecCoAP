@@ -7,12 +7,12 @@ namespace Coap::Detail
     {
         if (path == nullptr)
         {
-            return ErrorCode::InvalidArgument;
+            return ErrorCode::INVALID_ARGUMENT;
         }
         // Note that "" (empty path) is a valid path.
         if (this->_count >= COAP_MAX_CALLBACKS)
         {
-            return ErrorCode::NotSupported; // Registry full.
+            return ErrorCode::NOT_SUPPORTED; // Registry full.
         }
         // Check for duplicates. If a duplicate exists, replace it.
         for (size_t i = 0; i < this->_count; i++)
@@ -21,21 +21,21 @@ namespace Coap::Detail
             {
                 // Duplicate found. Replace the callback.
                 this->_callback[i] = callback;
-                return ErrorCode::None;
+                return ErrorCode::NONE;
             }
         }
         // Else, add the new entry.
         this->_path[this->_count] = path;
         this->_callback[this->_count] = callback;
         this->_count++;
-        return ErrorCode::None;
+        return ErrorCode::NONE;
     }
 
     ErrorCode UriRegistry::find(const char *path, Callback &callback) const
     {
         if (path == nullptr)
         {
-            return ErrorCode::InvalidArgument;
+            return ErrorCode::INVALID_ARGUMENT;
         }
         for (size_t i = 0; i < this->_count; i++)
         {
@@ -43,10 +43,10 @@ namespace Coap::Detail
             {
                 // Found the entry.
                 callback = this->_callback[i];
-                return ErrorCode::None;
+                return ErrorCode::NONE;
             }
         }
         // Not found.
-        return ErrorCode::NotFound;
+        return ErrorCode::NOT_FOUND;
     }
 }
