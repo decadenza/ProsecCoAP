@@ -75,6 +75,16 @@ namespace Coap
             ErrorCode find(const char *path, Callback &callback) const;
         };
 
+        /**
+         * @brief Get a random timeout value for retransmissions.
+         *
+         * Returns a random timeout value between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS
+         * as per RFC 7252, Section 4.8.
+         *
+         * @return A random timeout value in milliseconds.
+         */
+        unsigned long getRandomTimeout();
+
     }
 }
 #endif // DETAIL_H_INCLUDED

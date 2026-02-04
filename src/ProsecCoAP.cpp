@@ -3,11 +3,6 @@
 
 namespace Coap
 {
-    unsigned long Detail::getRandomTimeout()
-    {
-        return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
-    }
-
     Message::Message(MessageType type, MessageCode code, uint16_t id)
     {
         // Initialize message with default CoAP header values.

@@ -537,9 +537,6 @@ namespace Coap
 
     namespace Detail
     {
-        // Get a random timeout value for retransmissions.
-        unsigned long getRandomTimeout();
-
         /**
          * @brief An entry in the retransmission queue.
          *

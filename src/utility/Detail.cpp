@@ -1,7 +1,12 @@
 #include "Detail.h"
+#include "Arduino.h"
 
 namespace Coap::Detail
 {
+    unsigned long getRandomTimeout()
+    {
+        return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
+    }
 
     ErrorCode UriRegistry::add(const char *path, Callback callback)
     {
