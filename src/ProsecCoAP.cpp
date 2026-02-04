@@ -752,7 +752,8 @@ namespace Coap
     {
         this->message = message;
         this->attempts = 0; // Mark as valid entry.
-        this->timeoutInterval = Detail::getRandomTimeout();
+        this->timeoutBaseInterval = Detail::getRandomTimeout();
+        this->nextAttemptDeadline = millis() + this->timeoutBaseInterval;
         this->ip = ip;
         this->port = port;
     }
@@ -771,6 +772,20 @@ namespace Coap
         }
         // No empty slot found. Queue is full.
         return ErrorCode::NOT_SUPPORTED;
+    }
+
+    ErrorCode Detail::RetransmissionEntry::retransmit(const Node &node)
+    {
+        ErrorCode err;
+        err = node.sendMessage(this->message, this->ip, this->port);
+        if (err != ErrorCode::NONE)
+        {
+            return err;
+        }
+        this->attempts++;
+        // Set the next attempt deadline using exponential backoff.
+        this->nextAttemptDeadline = millis() + (this->timeoutBaseInterval << this->attempts);
+        return ErrorCode::NONE;
     }
 
     ErrorCode Node::serve(const char *path, Callback callback)
@@ -884,7 +899,7 @@ namespace Coap
         return ErrorCode::NONE;
     }
 
-    ErrorCode Node::sendMessage(const Message &message, IPAddress ip, uint16_t port)
+    ErrorCode Node::sendMessage(const Message &message, IPAddress ip, uint16_t port) const
     {
         this->_udp->beginPacket(ip, port);
         size_t written = this->_udp->write(message._message, message._messageLength);

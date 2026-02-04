@@ -535,6 +535,8 @@ namespace Coap
         ErrorCode addPayload(const uint8_t *payload, size_t length, ContentFormat format);
     };
 
+    class Node; // Forward declaration.
+
     namespace Detail
     {
         /**
@@ -552,7 +554,10 @@ namespace Coap
             // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
             unsigned short attempts = COAP_MAX_RETRANSMIT;
             // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
-            unsigned long timeoutInterval = COAP_ACK_MAX_TIMEOUT_MS;
+            // This will be doubled on each retransmission attempt.
+            unsigned long timeoutBaseInterval = COAP_ACK_MAX_TIMEOUT_MS;
+            // Timestamp for the next attempt.
+            unsigned long nextAttemptDeadline = 0;
             // Destination IP address.
             IPAddress ip;
             // Destination port.
@@ -568,6 +573,7 @@ namespace Coap
              * This copies the message by value into the entry, so it is available for retransmission.
              * Attempts are initialised as 0 to mark the entry as valid.
              * Timeout interval is initialised with a random value as per protocol specifications.
+             * The next attempt deadline is initialised accordingly.
              *
              * @param message The CoAP message to be retransmitted, copied into the entry.
              * @param ip The destination IP address.
@@ -597,6 +603,17 @@ namespace Coap
             {
                 this->attempts = COAP_MAX_RETRANSMIT;
             }
+
+            /**
+             * @brief Retransmit the message using the given Node instance.
+             *
+             * This sends the message and increments the attempts counter.
+             * It also schedules the next timeout interval as per protocol specifications.
+             *
+             * @param node The Node instance used for retransmission.
+             * @return An error code indicating success or failure.
+             */
+            ErrorCode retransmit(const Node &node);
         };
 
         /**
@@ -733,7 +750,7 @@ namespace Coap
          * @param port The destination UDP port. This may be different from the local or the default port.
          * @return An error code indicating success or failure.
          */
-        ErrorCode sendMessage(const Message &message, IPAddress ip, uint16_t port);
+        ErrorCode sendMessage(const Message &message, IPAddress ip, uint16_t port) const;
     };
 
 } // End of namespace Coap
