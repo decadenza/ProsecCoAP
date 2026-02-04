@@ -915,7 +915,7 @@ namespace Coap
         // !SECTION End of server mode.
 
         // SECTION Client mode: process retransmission of outgoing messages.
-        // TODO: Implement retransmission logic for confirmable messages.
+        this->_retransmissionQueue.process(this->_udp);
         // !SECTION End of client mode.
 
         return ErrorCode::NONE;
