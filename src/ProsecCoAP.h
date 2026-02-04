@@ -236,7 +236,7 @@ namespace Coap
          * @param type The message type.
          * @param code The message code.
          */
-        Message(MessageType type, MessageCode code) : Message(MessageType::NON, MessageCode::EMPTY, _getNextId()) {}
+        Message(MessageType type, MessageCode code) : Message(type, code, _getNextId()) {}
 
         /**
          * @brief Builds a CoAP message explictly specifying type, code and message ID.

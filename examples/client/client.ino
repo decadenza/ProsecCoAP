@@ -1,7 +1,7 @@
 /**
  * Example CoAP Client.
  *
- * This example sends a GET request to a CoAP server and handles the response.
+ * This example sends a confirmable GET request to a CoAP server and handles any response.
  *
  * To test this example, you can use a CoAP server such as libcoap or microcoap.
  * You may also test with:
@@ -23,48 +23,60 @@ IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server I
 // CoAP client response callback
 void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port);
 
-// UDP and CoAP class
+// UDP and CoAP instances.
 EthernetUDP Udp;
-// Coap coap(Udp);
-
-// CoAP client response callback
-void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
-{
-  // Serial.print("[Coap Response] ");
-  // Serial.write((const char *)message.payload, message.payloadLength);
-  // Serial.print(" (token: ");
-  // for (size_t i = 0; i < message.tokenLength; i++)
-  // {
-  //   Serial.print(packet.token[i], HEX);
-  // }
-  // Serial.print(", message ID:");
-  // Serial.print(packet.messageId);
-  // Serial.println(")");
-}
+Coap::Node coapNode(Udp);
 
 void setup()
 {
   Serial.begin(115200);
+  while (!Serial)
+  {
+  } // Wait for serial.
 
   Ethernet.begin(mac, deviceIp);
-  Serial.print("IP address: ");
-  Serial.print(Ethernet.localIP());
-  Serial.println();
+  
+  // This is a single handler for all responses.
+  coapNode.setResponseHandler(callbackResponse);
 
-  // Handler acknowledgment responses.
-  // This is a single handler for all ACK responses.
-  Serial.println("Setup Response Callback");
-  // coap.responseHandler(callbackResponse);
-
-  // start coap server/client
-  // coap.start();
+  // Start coap node.
+  coapNode.start();
+  Serial.print("Coap node started on ");
+  Serial.println(Ethernet.localIP());
 }
+
 
 void loop()
 {
   // Build a GET request message to transmit.
   Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
-  // msg.addPath("sensors/temp");                                       // Set the URI path to "sensors/temp".
+  msg.addPath("time");                                       // Set the URI path to "sensors/temp".
+
+  coapNode.sendMessage(msg, destinationIp, COAP_DEFAULT_PORT);
+  Serial.print("[Request] id=");
+  Serial.println(msg.getId());
+  
+  // Even when acting as client, we still need to run the loop housekeeping.
+  coapNode.loop();
+  
   delay(1000);
-  // coap.loop();
+}
+
+
+// CoAP client response callback.
+// If a payload is present, print it as plain text.
+// NOTE: In theory, you should check the Content-Format option first before attempting to
+// parse the payload. This in only an example.
+void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
+{
+  Serial.print("[Response] id=");
+  Serial.print(message.getId());
+  Serial.print(" length=");
+  Serial.print(message.getLength());
+  // Read the payload.
+  const uint8_t* payload;
+  size_t payloadLength;
+  message.getPayload(payload, payloadLength);
+  Serial.print(" payload=");
+  Serial.println((const char*)payload);
 }

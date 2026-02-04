@@ -785,6 +785,7 @@ namespace Coap
                 Option opt;
                 while (it.next(opt) == ErrorCode::NONE)
                 {
+                    // Options must be in number order.
                     if (opt.number < OptionNumber::URI_PATH)
                     {
                         continue;

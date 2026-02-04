@@ -28,7 +28,7 @@
 #define LEDP LED_BUILTIN
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
-IPAddress dev_ip(192, 168, 0, 99); // Set your own.
+IPAddress deviceIp(192, 168, 0, 99); // Set your own.
 
 // CoAP server path callback.
 void callbackLight(Coap::Message &packet, IPAddress ip, uint16_t port);
@@ -49,7 +49,7 @@ void setup()
   {
   } // Wait for serial.
 
-  Ethernet.begin(mac, dev_ip);
+  Ethernet.begin(mac, deviceIp);
 
   // LED state.
   pinMode(LEDP, OUTPUT);
