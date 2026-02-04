@@ -871,7 +871,11 @@ namespace Coap
                 Option opt;
                 while (it.next(opt) == ErrorCode::None)
                 {
-                    if (opt.number == OptionNumber::UriPath)
+                    if (opt.number < OptionNumber::UriPath)
+                    {
+                        continue;
+                    }
+                    else if (opt.number == OptionNumber::UriPath)
                     {
                         // Append '/' if uriPath is not empty.
                         if (uriPath.length() > 0)
@@ -883,6 +887,11 @@ namespace Coap
                         {
                             uriPath += static_cast<char>(opt.value[i]);
                         }
+                    }
+                    else
+                    {
+                        // No more Uri-Path options.
+                        break;
                     }
                 }
 
