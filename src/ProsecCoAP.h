@@ -236,7 +236,19 @@ namespace Coap
          * @param type The message type.
          * @param code The message code.
          */
-        Message(MessageType type, MessageCode code);
+        Message(MessageType type, MessageCode code) : Message(MessageType::NonCon, MessageCode::Empty, _getNextId()) {}
+
+        /**
+         * @brief Builds a CoAP message explictly specifying type, code and message ID.
+         *
+         * The version is set to @ref COAP_VERSION.
+         * The token length is set to 0.
+         *
+         * @param type The message type.
+         * @param code The message code.
+         * @param id The message ID.
+         */
+        Message(MessageType type, MessageCode code, uint16_t id);
 
         /**
          * @brief Build a CoAP message reading from a UDP instance.

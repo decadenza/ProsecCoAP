@@ -3,15 +3,14 @@
 
 namespace Coap
 {
-    Message::Message(MessageType type, MessageCode code)
+    Message::Message(MessageType type, MessageCode code, uint16_t id)
     {
         // Initialize message with default CoAP header values.
         this->_message[0] = (COAP_VERSION << 6) | (static_cast<uint8_t>(type) << 4); // Version 1, given code, Token Length 0
         this->_message[1] = static_cast<uint8_t>(code);                              // Code data.
-        uint16_t messageId = _getNextId();
-        this->_message[2] = (messageId >> 8) & 0xFF; // Message ID high byte.
-        this->_message[3] = messageId & 0xFF;        // Message ID low byte.
-        this->_messageLength = COAP_HEADER_SIZE;     // Keep track of the current message size.
+        this->_message[2] = (id >> 8) & 0xFF;                                        // Message ID high byte.
+        this->_message[3] = id & 0xFF;                                               // Message ID low byte.
+        this->_messageLength = COAP_HEADER_SIZE;                                     // Keep track of the current message size.
     }
 
     ErrorCode Message::fromUdp(UDP *udp, Message &message)
@@ -53,11 +52,9 @@ namespace Coap
         {
             return ErrorCode::MalformedMessage;
         }
-        // Initialize response message (version, type, code).
-        response = Message(MessageType::Ack, code); // TODO: Improve with a constructor that does not auto-assign the message ID.
-        // Overwrite the message ID, copying it from the request.
-        response._message[2] = request->_message[2];
-        response._message[3] = request->_message[3];
+        // Initialize response message (version, type, code)
+        // and use the message id from the request.
+        response = Message(MessageType::Ack, code, request->getId());
 
         // The response length is currently just the header size.
         // If the request has a token, copy it and update the token length in the response.
