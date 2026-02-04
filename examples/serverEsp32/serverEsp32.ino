@@ -1,3 +1,6 @@
+/**
+ * A simple CoAP server example for ESP32 using WiFi.
+ */
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ProsecCoAP.h>
@@ -11,54 +14,12 @@ void callbackResponse(Coap::Message &message, IPAddress, uint16_t);
 // CoAP server path url callback
 void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port);
 
-// UDP and CoAP class
-// other initialize is "Coap coap(Udp, 512);"
-// 2nd default parameter is COAP_DEFAULT_BUFFER_SIZE(defaulit:128)
-// For UDP fragmentation, it is good to set the maximum under
-// 1280byte when using the internet connection.
 WiFiUDP udp;
-// Coap coap(udp);
+Coap::Node coapNode(udp);
 
-// LED STATE
-bool LEDSTATE;
-
-// CoAP server path URL
-void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
-{
-  // Serial.println("[Light] ON/OFF");
-
-  // // Expects one byte payload: "0" or "1" in ASCII.
-  // char p[2]; // Include space for null terminator
-  // memcpy(p, packet.payload, 1);
-  // p[1] = '\0';
-
-  // String message(p);
-
-  // if (message.equals("0"))
-  //   LEDSTATE = false;
-  // else if (message.equals("1"))
-  //   LEDSTATE = true;
-
-  // if (LEDSTATE)
-  // {
-  //   digitalWrite(9, HIGH);
-  //   coap.sendResponse(ip, port, packet, COAP_CONTENT, "1", 1, COAP_TEXT_PLAIN);
-  // }
-  // else
-  // {
-  //   digitalWrite(9, LOW);
-  //   coap.sendResponse(ip, port, packet, COAP_CONTENT, "0", 1, COAP_TEXT_PLAIN);
-  // }
-}
-
-// CoAP client response callback
-void callbackResponse(Coap::Message &message, IPAddress, uint16_t)
-{
-  Serial.print("[Coap Response got] ");
-
-  // Serial.write((const char *)message.payload, message.payloadLength);
-  Serial.println(); // newline
-}
+// Track LED status at runtime.
+bool LED_STATUS;
+const int LEDP = 2; // On-board LED pin for ESP32.
 
 void setup()
 {
@@ -77,29 +38,77 @@ void setup()
   Serial.println(WiFi.localIP());
 
   // LED State
-  pinMode(9, OUTPUT);
-  digitalWrite(9, HIGH);
-  LEDSTATE = true;
+  pinMode(LEDP, OUTPUT);
+  digitalWrite(LEDP, HIGH);
+  LED_STATUS = true;
 
-  // // add server url paths.
-  // // can add multiple path urls.
-  // // exp) coap.server(callback_switch, "switch");
-  // //      coap.server(callback_env, "env/temp");
-  // //      coap.server(callback_env, "env/humidity");
-  // Serial.println("Setup Callback Light");
-  // coap.server(callbackLight, "light");
+  // Add server url paths.
+  Serial.println("Setup callback light");
+  coapNode.serve("light", callbackLight);
 
-  // // Handler acknowledgment responses.
-  // // This is a single handler for all ACK responses.
-  // Serial.println("Setup Response Callback");
-  // coap.responseHandler(callbackResponse);
+  // Handler acknowledgment responses.
+  // This is a single handler for all ACK responses.
+  Serial.println("Setup Response Callback");
+  coapNode.setResponseHandler(callbackResponse);
 
-  // // start coap server/client
-  // coap.start();
+  coapNode.start();
+  Serial.println("Coap node started");
 }
 
 void loop()
 {
   delay(1000);
-  // coap.loop();
+  coapNode.loop();
+}
+
+// CoAP server path URL.
+// The expected payload input is one string character.
+//
+// A GET request will only return the current value.
+// A PUT request will set a new value.
+// The response will be a string, either "1" or "0".
+void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
+{
+  if (message.getCode() == Coap::MessageCode::PUT)
+  {
+    Serial.println("Incoming PUT");
+    const uint8_t *payload;
+    size_t length;
+    message.getPayload(payload, length); // You should check for any returned error.
+    // Process incoming value, considering first byte only.
+    LED_STATUS = (reinterpret_cast<const char *>(payload))[0] == '1' ? HIGH : LOW;
+    digitalWrite(LEDP, LED_STATUS);
+    // Send a response to a PUT requests.
+    Coap::Message response;
+    Coap::Message::buildResponse(&message, Coap::MessageCode::CHANGED, response);
+    coapNode.sendMessage(response, ip, port);
+  }
+  else if (message.getCode() == Coap::MessageCode::GET)
+  {
+    // Send a piggybacked response to a GET requests.
+    Coap::Message response;
+    Coap::Message::buildResponse(&message, Coap::MessageCode::CONTENT, response);
+    response.addPayload((const uint8_t *)(LED_STATUS ? "1" : "0"), 1, Coap::ContentFormat::TEXT_PLAIN);
+    coapNode.sendMessage(response, ip, port);
+  }
+
+  // NOTE: If you cannot reply immediately, the protocol allows to:
+  // 1. First, send an empty acknowledgement (to stop retransmission).
+  // 2. When data is ready, send a separate response.
+
+  Serial.print("[Light] ");
+  Serial.println(LED_STATUS);
+}
+
+// CoAP client response callback. This will receive the ACK responses.
+void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
+{
+  if (message.getType() == Coap::MessageType::ACK)
+  {
+    Serial.println("[Coap Response ACK] Message ID ");
+    Serial.print(message.getId());
+    Serial.print(" from ");
+    Serial.print(ip + ":" + port);
+    Serial.println();
+  }
 }
