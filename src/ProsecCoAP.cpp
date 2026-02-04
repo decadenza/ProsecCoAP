@@ -226,115 +226,30 @@ namespace Coap
 
     ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)
     {
-        // Read the token length.
-        size_t tokenLength = this->getTokenLength();
-        // Go to HEADER_SIZE + token length to find the start of the options.
-        size_t currentByte = COAP_HEADER_SIZE + tokenLength; // Points to the next byte to read.
-        // Options are stored in order of increasing option number.
-        // Iterate through existing options to find the insertion point.
-        // In case of multiple options with the same number, the new option is added after existing ones.
+        OptionIterator it(this);
+        Option opt;
         uint16_t lastOptionNumber = 0;
-        while (currentByte < this->_messageLength)
+        size_t currentByte = it._currentByte;   // Next byte to read.
+        while (it.next(opt) == ErrorCode::None) // Exit the loop if there are no more options.
         {
-            // Read the option header byte.
-            uint8_t optionHeader = this->_message[currentByte];
-            currentByte++;                               // Move to the next byte (which may be extended delta/length or value start).
-            uint16_t delta = (optionHeader >> 4) & 0x0F; // REVIEW: The protocol leaves the door open to larger deltas, but highly unlikely to happen.
-            size_t length = optionHeader & 0x0F;
-
-            // SECTION Process the delta special cases.
-            if (delta == 13)
+            if (opt.number <= newNumber)
             {
-                // Extended delta (8 bits).
-                if (this->_messageLength < currentByte + 1)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                delta = this->_message[currentByte] + 13;
-                currentByte++;
-            }
-            else if (delta == 14)
-            {
-                // Extended delta (16 bits).
-                if (this->_messageLength < currentByte + 2)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                delta = ((static_cast<uint16_t>(this->_message[currentByte]) << 8) |
-                         static_cast<uint16_t>(this->_message[currentByte + 1])) +
-                        269;
-                currentByte += 2;
-            }
-            else if (delta == 15)
-            {
-                if (length == 15)
-                {
-                    // Payload marker reached. End of options.
-                    return ErrorCode::None;
-                }
-                else
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-            }
-
-            // If we reached an option number greater than the new one, we found the insertion point.
-            if (lastOptionNumber + delta > static_cast<uint16_t>(newNumber))
-            {
-                // Move back to the beginning of this option for insertion.
-                currentByte--;
-                // Move back over any extended delta/length bytes.
-                if (delta == 13)
-                {
-                    currentByte--;
-                }
-                else if (delta == 14)
-                {
-                    currentByte -= 2;
-                }
-                break; // Insertion point found.
+                // Keep track of the last option number.
+                // This also handles the case of multiple options with the same number.
+                lastOptionNumber = static_cast<uint16_t>(opt.number);
+                currentByte = it._currentByte; // Update to the next byte to read.
             }
             else
             {
-                // Store the last option number for next round.
-                // This also handles the case of multiple options with the same number.
-                lastOptionNumber += delta;
+                // We found an option with a number greater than the new one.
+                // The insertion point is before this option, at currentByte.
+                break;
             }
-            // !SECTION End of delta processing.
-
-            // SECTION Process the length special cases.
-            if (length == 13)
-            {
-                // Extended length (8 bits).
-                if (this->_messageLength < currentByte + 1)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                length = this->_message[currentByte] + 13;
-                currentByte++;
-            }
-            else if (length == 14)
-            {
-                // Extended length (16 bits).
-                if (this->_messageLength < currentByte + 2)
-                {
-                    return ErrorCode::MalformedMessage;
-                }
-                length = ((static_cast<uint16_t>(this->_message[currentByte]) << 8) |
-                          static_cast<uint16_t>(this->_message[currentByte + 1])) +
-                         269;
-                currentByte += 2;
-            }
-            else if (length == 15)
-            {
-                return ErrorCode::MalformedMessage;
-            }
-            // !SECTION End of length processing.
-            // Move to the beginning of the next option (or to the insertion point).
-            currentByte += length;
         }
+
         // currentByte is now the insertion point for the new option.
 
+        // Check for duplicate single-instance options.
         if (static_cast<OptionNumber>(lastOptionNumber) == newNumber)
         {
             // The last option number is the same as the new one.

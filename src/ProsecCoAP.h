@@ -104,7 +104,7 @@ namespace Coap
         /**
          * @brief Track the current byte position in the message.
          *
-         * This points to the next byte to read.
+         * `_message->_message[_currentByte]` points to the next byte to read.
          */
         size_t _currentByte;
         /**
@@ -113,6 +113,14 @@ namespace Coap
         uint16_t _currentOptionNumber;
 
     public:
+        /**
+         * @brief Initialize the option iterator for the given message.
+         *
+         * The first byte to be read will be the one after the header
+         * and token (if present).
+         *
+         * @param message The pointer to the message to iterate.
+         */
         OptionIterator(const Message *message);
 
         /**
