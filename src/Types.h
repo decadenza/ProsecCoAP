@@ -79,7 +79,7 @@
 /**
  * @brief The precomputed maximum ACK timeout derived from the minimum timeout and the random factor.
  */
-#define COAP_ACK_MAX_TIMEOUT_MS (uint32_t)(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR)
+#define COAP_ACK_MAX_TIMEOUT_MS (unsigned long)(COAP_ACK_MIN_TIMEOUT_MS * COAP_ACK_RANDOM_FACTOR)
 #ifndef COAP_MAX_RETRANSMIT
 /**
  * @brief The maximum number of retransmission attempts for confirmable messages.

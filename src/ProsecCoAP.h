@@ -535,6 +535,46 @@ namespace Coap
         ErrorCode addPayload(const uint8_t *payload, size_t length, ContentFormat format);
     };
 
+    namespace Detail
+    {
+        // Get a random timeout value for retransmissions.
+        unsigned long getRandomTimeout();
+
+        /**
+         * @brief An entry in the retransmission queue.
+         *
+         * @ref RetransmissionQueue uses this structure to store entries.
+         *
+         * This needs to be declared after @ref Message is fully declared.
+         */
+        struct RetransmissionEntry
+        {
+            // The CoAP message to be retransmitted.
+            Coap::Message message;
+            // Count of retransmission attempts done.
+            // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
+            unsigned short attempts = COAP_MAX_RETRANSMIT;
+            // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
+            unsigned long timeoutInterval = COAP_ACK_MAX_TIMEOUT_MS;
+            // Destination IP address.
+            IPAddress ip;
+            // Destination port.
+            uint16_t port = 0;
+
+            /**
+             * @brief Constructor of a retransmission entry.
+             *
+             * Attempts are initialised as 0 to mark the entry as valid.
+             * Timeout interval is initialised with a random value as per protocol specifications.
+             *
+             * @param message The CoAP message to be retransmitted, copied into the entry.
+             * @param ip The destination IP address.
+             * @param port The destination UDP port.
+             */
+            RetransmissionEntry(Coap::Message message, IPAddress ip, uint16_t port);
+        };
+    }
+
     /**
      * @brief The CoAP node that runs on this device.
      *

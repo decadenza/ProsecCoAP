@@ -14,6 +14,7 @@
 
 namespace Coap
 {
+
     /**
      * @brief Internal details of the library. Not for public use.
      */
@@ -73,6 +74,7 @@ namespace Coap
              */
             ErrorCode find(const char *path, Callback &callback) const;
         };
+
     }
 }
 #endif // DETAIL_H_INCLUDED

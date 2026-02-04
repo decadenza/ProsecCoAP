@@ -3,6 +3,11 @@
 
 namespace Coap
 {
+    unsigned long Detail::getRandomTimeout()
+    {
+        return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
+    }
+
     Message::Message(MessageType type, MessageCode code, uint16_t id)
     {
         // Initialize message with default CoAP header values.
@@ -746,6 +751,15 @@ namespace Coap
         }
 
         return this->addPayload(payload, length);
+    }
+
+    Detail::RetransmissionEntry::RetransmissionEntry(Coap::Message message, IPAddress ip, uint16_t port)
+    {
+        this->message = message;
+        this->attempts = 0; // Mark as valid entry.
+        this->timeoutInterval = Detail::getRandomTimeout();
+        this->ip = ip;
+        this->port = port;
     }
 
     ErrorCode Node::serve(const char *path, Callback callback)
