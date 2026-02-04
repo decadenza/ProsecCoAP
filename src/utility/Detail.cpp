@@ -3,6 +3,25 @@
 
 namespace Coap::Detail
 {
+    ErrorCode sendUdp(UDP *udp, const uint8_t *data, size_t length, IPAddress ip, uint16_t port)
+    {
+        udp->beginPacket(ip, port);
+        size_t written = udp->write(data, length);
+        if (written != length)
+        {
+            // Not all bytes were written to the UDP buffer.
+            return ErrorCode::NETWORK;
+        }
+        if (udp->endPacket() == 1) // Returns 1 if the packet was sent successfully, 0 if there was an error.
+        {
+            return ErrorCode::NONE;
+        }
+        else
+        {
+            return ErrorCode::NETWORK;
+        }
+    }
+
     unsigned long getRandomTimeout()
     {
         return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);

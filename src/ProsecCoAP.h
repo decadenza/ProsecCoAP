@@ -160,9 +160,6 @@ namespace Coap
      */
     class Message
     {
-        friend class OptionIterator; // Give access to raw message data.
-        friend class Node;           // Give access to raw message data.
-
     private:
         /**
          * @brief Message binary data.
@@ -249,6 +246,18 @@ namespace Coap
          * @param id The message ID.
          */
         Message(MessageType type, MessageCode code, uint16_t id);
+
+        /**
+         * @brief Get the raw binary representation of the message.
+         *
+         * The returned pointer is valid as long as the message exists.
+         *
+         * @return Pointer to the raw message data.
+         */
+        const uint8_t *asRaw() const
+        {
+            return this->_message;
+        }
 
         /**
          * @brief Build a CoAP message reading from a UDP instance.
@@ -582,16 +591,26 @@ namespace Coap
             void set(Coap::Message message, IPAddress ip, uint16_t port);
 
             /**
-             * @brief Check if the entry has expired.
+             * @brief Check if the entry can be considered empty.
              *
-             * An entry is considered expired when the number of attempts
+             * An entry is considered empty when the number of attempts
              * reaches @ref COAP_MAX_RETRANSMIT.
              *
              * @return true if the entry has expired, false otherwise.
              */
-            bool hasExpired() const
+            bool isEmpty() const
             {
                 return this->attempts >= COAP_MAX_RETRANSMIT;
+            }
+
+            /**
+             * @brief Retrieve the entry deadline.
+             *
+             * @return The timestamp (in milliseconds) of the next attempt deadline.
+             */
+            unsigned long getDeadline() const
+            {
+                return this->nextAttemptDeadline;
             }
 
             /**
@@ -610,10 +629,10 @@ namespace Coap
              * This sends the message and increments the attempts counter.
              * It also schedules the next timeout interval as per protocol specifications.
              *
-             * @param node The Node instance used for retransmission.
+             * @param udp The UDP instance used for retransmission.
              * @return An error code indicating success or failure.
              */
-            ErrorCode retransmit(const Node &node);
+            ErrorCode retransmit(UDP *udp);
         };
 
         /**
@@ -642,6 +661,16 @@ namespace Coap
              *         Increase @ref COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE to allow more entries.
              */
             ErrorCode add(const Coap::Message &message, IPAddress ip, uint16_t port);
+
+            /**
+             * @brief Process the retransmission queue.
+             *
+             * @param udp The UDP instance used for retransmission.
+             *
+             * @return An error code indicating success or failure. It will return
+             *        @ref ErrorCode::NONE on success (even if no retransmissions were necessary).
+             */
+            ErrorCode process(UDP *udp);
         };
     }
 
@@ -745,12 +774,18 @@ namespace Coap
 
         /**
          * @brief Send a CoAP message to the specified IP address and port.
+         *
+         * If the message is of type @ref COAP_CONFIRMABLE, it is added to the retransmission queue.
+         * The retransmission queue behaves as per RFC 7252 and is processed in the @ref loop() method.
+         * Its behaviour can be configured via @ref COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE,
+         * @ref COAP_MAX_RETRANSMIT and @ref COAP_ACK_TIMEOUT_MS.
+         *
          * @param message The CoAP message to send.
          * @param ip The destination IP address.
          * @param port The destination UDP port. This may be different from the local or the default port.
          * @return An error code indicating success or failure.
          */
-        ErrorCode sendMessage(const Message &message, IPAddress ip, uint16_t port) const;
+        ErrorCode sendMessage(const Message &message, IPAddress ip, uint16_t port);
     };
 
 } // End of namespace Coap

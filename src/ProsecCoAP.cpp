@@ -546,9 +546,11 @@ namespace Coap
             // No more options.
             return ErrorCode::NOT_FOUND;
         }
+        const uint8_t *messageRaw = this->_message->asRaw();
+
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
         // Read the option header byte.
-        uint8_t optionHeader = (this->_message)->_message[this->_currentByte];
+        uint8_t optionHeader = messageRaw[this->_currentByte];
         this->_currentByte++; // Points to next byte to read.
         uint16_t delta = (optionHeader >> 4) & 0x0F;
         option.length = optionHeader & 0x0F;
@@ -561,7 +563,7 @@ namespace Coap
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
-            delta = (this->_message)->_message[this->_currentByte] + 13;
+            delta = messageRaw[this->_currentByte] + 13;
             this->_currentByte++;
         }
         else if (delta == 14)
@@ -571,8 +573,8 @@ namespace Coap
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
-            delta = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte]) << 8) |
-                     static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1])) +
+            delta = ((static_cast<uint16_t>(messageRaw[this->_currentByte]) << 8) |
+                     static_cast<uint16_t>(messageRaw[this->_currentByte + 1])) +
                     269;
             this->_currentByte += 2;
         }
@@ -598,7 +600,7 @@ namespace Coap
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
-            option.length = (this->_message)->_message[this->_currentByte] + 13;
+            option.length = messageRaw[this->_currentByte] + 13;
             this->_currentByte++;
         }
         else if (option.length == 14)
@@ -608,8 +610,8 @@ namespace Coap
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
-            option.length = ((static_cast<uint16_t>((this->_message)->_message[this->_currentByte]) << 8) |
-                             static_cast<uint16_t>((this->_message)->_message[this->_currentByte + 1])) +
+            option.length = ((static_cast<uint16_t>(messageRaw[this->_currentByte]) << 8) |
+                             static_cast<uint16_t>(messageRaw[this->_currentByte + 1])) +
                             269;
             this->_currentByte += 2;
         }
@@ -630,7 +632,7 @@ namespace Coap
         option.number = static_cast<OptionNumber>(this->_currentOptionNumber);
 
         // The option value starts after delta and length bytes.
-        option.value = &(this->_message)->_message[this->_currentByte];
+        option.value = &messageRaw[this->_currentByte];
         this->_currentByte += option.length; // Update for next call.
 
         return ErrorCode::NONE;
@@ -763,7 +765,7 @@ namespace Coap
         // Find an empty slot in the retransmission queue.
         for (size_t i = 0; i < COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE; i++)
         {
-            if (this->_entries[i].hasExpired())
+            if (this->_entries[i].isEmpty())
             {
                 // Empty slot found. Add the new entry here.
                 this->_entries[i].set(message, ip, port);
@@ -774,10 +776,30 @@ namespace Coap
         return ErrorCode::NOT_SUPPORTED;
     }
 
-    ErrorCode Detail::RetransmissionEntry::retransmit(const Node &node)
+    ErrorCode Detail::RetransmissionQueue::process(UDP *udp)
     {
-        ErrorCode err;
-        err = node.sendMessage(this->message, this->ip, this->port);
+        unsigned long now = millis();
+        for (size_t i = 0; i < COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE; i++)
+        {
+            if (this->_entries[i].isEmpty())
+            {
+                // This entry is either empty or has exhausted its attempts.
+                continue;
+            }
+            else if (now >= this->_entries[i].getDeadline())
+            {
+                // Time to retransmit this message.
+                // NOTE: We don't handle errors here. If sending fails, we just try again later.
+                this->_entries[i].retransmit(udp);
+            }
+        }
+        return ErrorCode::NONE;
+    }
+
+    ErrorCode Detail::RetransmissionEntry::retransmit(UDP *udp)
+    {
+        // Call the low-level send function.
+        ErrorCode err = Detail::sendUdp(udp, this->message.asRaw(), this->message.getLength(), this->ip, this->port);
         if (err != ErrorCode::NONE)
         {
             return err;
@@ -899,22 +921,12 @@ namespace Coap
         return ErrorCode::NONE;
     }
 
-    ErrorCode Node::sendMessage(const Message &message, IPAddress ip, uint16_t port) const
+    ErrorCode Node::sendMessage(const Message &message, IPAddress ip, uint16_t port)
     {
-        this->_udp->beginPacket(ip, port);
-        size_t written = this->_udp->write(message._message, message._messageLength);
-        if (written != message._messageLength)
+        if (message.getType() == MessageType::CON)
         {
-            // Not all bytes were written to the UDP buffer.
-            return ErrorCode::NETWORK;
+            this->_retransmissionQueue.add(message, ip, port);
         }
-        if (this->_udp->endPacket() == 1) // Returns 1 if the packet was sent successfully, 0 if there was an error.
-        {
-            return ErrorCode::NONE;
-        }
-        else
-        {
-            return ErrorCode::NETWORK;
-        }
+        return Detail::sendUdp(this->_udp, message.asRaw(), message.getLength(), ip, port);
     }
 }

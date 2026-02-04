@@ -21,6 +21,17 @@ namespace Coap
     namespace Detail
     {
         /**
+         * @brief Wrapper around low level function to send raw UDP data.
+         *
+         * @param udp The UDP instance to use for sending data.
+         * @param data Pointer to the data to send.
+         * @param length Length of the data in bytes.
+         * @param ip Destination IP address.
+         * @param port Destination port number.
+         * @return An error code indicating success or failure.
+         */
+        ErrorCode sendUdp(UDP *udp, const uint8_t *data, size_t length, IPAddress ip, uint16_t port);
+        /**
          * @brief Internal URI registry for mapping paths to callbacks.
          *
          * This class is used internally to manage the mapping between
