@@ -166,7 +166,7 @@ namespace Coap
         /** Acknowledgement message */
         ACK = 2,
         /** Reset message */
-        RESET = 3
+        RST = 3
     };
 
     /**

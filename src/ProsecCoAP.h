@@ -671,6 +671,18 @@ namespace Coap
              *        @ref ErrorCode::NONE on success (even if no retransmissions were necessary).
              */
             ErrorCode process(UDP *udp);
+
+            /**
+             * @brief Match a received response to an outstanding request.
+             *
+             * If the response is not of type @ref MessageType::ACK or @ref MessageType::RST,
+             * this function exits immediately.
+             * See https://datatracker.ietf.org/doc/html/rfc7252#section-2.1
+             * If a matching entry is found, it is marked as completed and removed from the queue.
+             *
+             * @param response The received CoAP response message.
+             */
+            void matchResponse(const Coap::Message &response);
         };
     }
 
@@ -725,7 +737,7 @@ namespace Coap
         /**
          * @brief Set the response callback.
          *
-         * The response handler is invoked when a message of type @ref COAP_ACK or @ref COAP_RESET
+         * The response handler is invoked when a message of type @ref MessageType::ACK or @ref MessageType::RST
          * is received, allowing the application to handle the response.
          * The callback is unique for all the responses sent to this Coap instance.
          *

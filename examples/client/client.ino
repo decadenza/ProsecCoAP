@@ -45,7 +45,6 @@ void setup()
   Serial.println(Ethernet.localIP());
 }
 
-
 void loop()
 {
   // Build a GET request message to transmit.
@@ -55,7 +54,7 @@ void loop()
   coapNode.sendMessage(msg, destinationIp, COAP_DEFAULT_PORT);
   Serial.print("[Request] id=");
   Serial.println(msg.getId());
-  
+ 
   // Even when acting as client, we still need to run the loop housekeeping.
   coapNode.loop();
   

@@ -786,7 +786,7 @@ namespace Coap
                 // This entry is either empty or has exhausted its attempts.
                 continue;
             }
-            else if (now >= this->_entries[i].getDeadline())
+            else if (now >= this->_entries[i].getDeadline()) // REVIEW: Handle millis() overflow?
             {
                 // Time to retransmit this message.
                 // NOTE: We don't handle errors here. If sending fails, we just try again later.
@@ -794,6 +794,32 @@ namespace Coap
             }
         }
         return ErrorCode::NONE;
+    }
+
+    void Detail::RetransmissionQueue::matchResponse(const Message &response)
+    {
+        if (response.getType() != MessageType::ACK &&
+            response.getType() != MessageType::RST)
+        {
+            // Not an acknowledgment or reset message. Ignore.
+            return;
+        }
+        // The ID is used to match the response to the request.
+        uint16_t responseId = response.getId();
+        for (size_t i = 0; i < COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE; i++)
+        {
+            if (this->_entries[i].isEmpty())
+            {
+                // Empty slot. Ignore.
+                continue;
+            }
+            if (this->_entries[i].message.getId() == responseId)
+            {
+                // Match found. Set this entry as completed.
+                this->_entries[i].setAsCompleted();
+                return; // Exit after first match.
+            }
+        }
     }
 
     ErrorCode Detail::RetransmissionEntry::retransmit(UDP *udp)
@@ -897,10 +923,15 @@ namespace Coap
                 else
                 {
                     // ANCHOR This is a response message.
+                    // As per specs, "A response is identified by the Code field in the CoAP header being
+                    // set to a Response Code."
+
+                    // Match the response to an outstanding request in the retransmission queue, if present.
+                    // This will match ACK or RST messages to their corresponding CON requests.
+                    this->_retransmissionQueue.matchResponse(incomingMessage);
+
                     if (this->_responseHandler != nullptr)
                     {
-                        // TODO: Match the response to an outstanding request in the retransmission queue.
-
                         // A response handler was set. Call it.
                         this->_responseHandler(incomingMessage,
                                                (this->_udp)->remoteIP(),
