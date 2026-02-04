@@ -26,7 +26,8 @@ esp32:
 	@echo "--- Compiling for board: esp32:esp32:esp32 ---"; \
 	$(CLI) compile --fqbn esp32:esp32:esp32 --library . examples/serverEsp32/serverEsp32.ino || exit 1;
 
-# Build for ESP8266 platform (requires: arduino-cli core install esp8266:esp8266)
+# Build for ESP8266 platform. Requires the ESP8266 core. Install with:
+# arduino-cli core install esp8266:esp8266 --additional-urls https://arduino.esp8266.com/stable/package_esp8266com_index.json
 esp8266:
 	@echo "--- Compiling for board: esp8266:esp8266:nodemcuv2 ---"; \
 	echo "Compiling esp8266..."; \
