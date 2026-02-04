@@ -558,9 +558,14 @@ namespace Coap
             // Destination port.
             uint16_t port = 0;
 
+            // Default constructor.
+            // It sets the entry as expired.
+            RetransmissionEntry() = default;
+
             /**
-             * @brief Constructor of a retransmission entry.
+             * @brief Set a retransmission entry.
              *
+             * This copies the message by value into the entry, so it is available for retransmission.
              * Attempts are initialised as 0 to mark the entry as valid.
              * Timeout interval is initialised with a random value as per protocol specifications.
              *
@@ -568,7 +573,58 @@ namespace Coap
              * @param ip The destination IP address.
              * @param port The destination UDP port.
              */
-            RetransmissionEntry(Coap::Message message, IPAddress ip, uint16_t port);
+            void set(Coap::Message message, IPAddress ip, uint16_t port);
+
+            /**
+             * @brief Check if the entry has expired.
+             *
+             * An entry is considered expired when the number of attempts
+             * reaches @ref COAP_MAX_RETRANSMIT.
+             *
+             * @return true if the entry has expired, false otherwise.
+             */
+            bool hasExpired() const
+            {
+                return this->attempts >= COAP_MAX_RETRANSMIT;
+            }
+
+            /**
+             * @brief Mark the entry as completed.
+             *
+             * This sets the number of attempts to @ref COAP_MAX_RETRANSMIT.
+             */
+            void setAsCompleted()
+            {
+                this->attempts = COAP_MAX_RETRANSMIT;
+            }
+        };
+
+        /**
+         * @brief Class to track outgoing confirmable messages.
+         *
+         * This is used by @ref Node::loop to implement retransmission as per specifications.
+         */
+        class RetransmissionQueue
+        {
+        private:
+            // Array of retransmission entries.
+            RetransmissionEntry _entries[COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE];
+
+        public:
+            RetransmissionQueue() = default;
+
+            /**
+             * @brief Add a new entry to the retransmission queue.
+             *
+             * @param message The CoAP message to be retransmitted.
+             * @param ip The destination IP address.
+             * @param port The destination UDP port.
+             * @return An error code indicating success or failure.
+             *         It returns @ref ErrorCode::NONE on success.
+             *         It returns @ref ErrorCode::NOT_SUPPORTED if the queue is full.
+             *         Increase @ref COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE to allow more entries.
+             */
+            ErrorCode add(const Coap::Message &message, IPAddress ip, uint16_t port);
         };
     }
 
@@ -589,6 +645,8 @@ namespace Coap
         Callback _responseHandler;
         // The registry of URI paths and their associated callbacks.
         Detail::UriRegistry _serverRegistry;
+        // Retransmission queue for confirmable messages.
+        Detail::RetransmissionQueue _retransmissionQueue;
 
     public:
         /**
@@ -606,7 +664,7 @@ namespace Coap
          * @param udp The UDP instance to use for communication.
          * @param port The local UDP port to use for communication.
          */
-        Node(UDP &udp, uint16_t port) : _udp(&udp), _port(port), _responseHandler(nullptr) {}
+        Node(UDP &udp, uint16_t port) : _udp(&udp), _port(port), _responseHandler(nullptr), _retransmissionQueue() {}
 
         /**
          * @brief Start the CoAP instance.

@@ -88,17 +88,17 @@
  */
 #define COAP_MAX_RETRANSMIT 4U
 #endif
-#ifndef COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE
+#ifndef COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE
 /**
  * @brief The maximum number of confirmable messages that are stored for retransmission.
  *
  * The total memory used by the queue will be *about*:
- * COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE * COAP_MAX_MESSAGE_SIZE bytes.
+ * COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE * COAP_MAX_MESSAGE_SIZE bytes.
  * The actual memory usage may be slightly higher due to the @ref Message representation.
  *
  * Reduce this value to save memory.
  */
-#define COAP_MAX_CONFIRMABLE_MESSAGE_QUEUE 2U
+#define COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE 2U
 #endif
 /** @} */ // End of "Configurable constants" group
 

@@ -748,13 +748,29 @@ namespace Coap
         return this->addPayload(payload, length);
     }
 
-    Detail::RetransmissionEntry::RetransmissionEntry(Coap::Message message, IPAddress ip, uint16_t port)
+    void Detail::RetransmissionEntry::set(Coap::Message message, IPAddress ip, uint16_t port)
     {
         this->message = message;
         this->attempts = 0; // Mark as valid entry.
         this->timeoutInterval = Detail::getRandomTimeout();
         this->ip = ip;
         this->port = port;
+    }
+
+    ErrorCode Detail::RetransmissionQueue::add(const Message &message, IPAddress ip, uint16_t port)
+    {
+        // Find an empty slot in the retransmission queue.
+        for (size_t i = 0; i < COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE; i++)
+        {
+            if (this->_entries[i].hasExpired())
+            {
+                // Empty slot found. Add the new entry here.
+                this->_entries[i].set(message, ip, port);
+                return ErrorCode::NONE;
+            }
+        }
+        // No empty slot found. Queue is full.
+        return ErrorCode::NOT_SUPPORTED;
     }
 
     ErrorCode Node::serve(const char *path, Callback callback)
