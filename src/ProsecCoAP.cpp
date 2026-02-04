@@ -47,26 +47,28 @@ namespace Coap
         return ErrorCode::None;
     }
 
-    ErrorCode Message::fromRequest(const Message *request, MessageCode code, Message &response)
+    ErrorCode Message::buildResponse(const Message *request, MessageCode code, Message &response)
     {
         if (request->getLength() < COAP_HEADER_SIZE)
         {
             return ErrorCode::MalformedMessage;
         }
-        // Initialize response message.
-        response = Message(MessageType::Ack, code);
-        // Copy message ID from request.
+        // Initialize response message (version, type, code).
+        response = Message(MessageType::Ack, code); // TODO: Improve with a constructor that does not auto-assign the message ID.
+        // Overwrite the message ID, copying it from the request.
         response._message[2] = request->_message[2];
         response._message[3] = request->_message[3];
-        // The response length is currently just the header size.
 
+        // The response length is currently just the header size.
         // If the request has a token, copy it and update the token length in the response.
         size_t tokenLength = request->getTokenLength();
         memcpy(response._message + COAP_HEADER_SIZE, // Destination.
                request->_message + COAP_HEADER_SIZE, // Source.
                tokenLength);                         // Length.
+        // Set token length, stored in the 4 lower bits of the first byte.
+        response._message[0] |= static_cast<uint8_t>(tokenLength) & 0x0F;
+        // Update the total message length.
         response._messageLength = COAP_HEADER_SIZE + tokenLength;
-
         return ErrorCode::None;
     }
 
@@ -837,6 +839,8 @@ namespace Coap
                     // ANCHOR This is a response message.
                     if (this->_responseHandler != nullptr)
                     {
+                        // TODO: Match the response to an outstanding request in the retransmission queue.
+
                         // A response handler was set. Call it.
                         this->_responseHandler(incomingMessage,
                                                (this->_udp)->remoteIP(),
@@ -855,5 +859,24 @@ namespace Coap
         // !SECTION End of client mode.
 
         return ErrorCode::None;
+    }
+
+    ErrorCode Node::sendMessage(const Message &message, IPAddress ip, uint16_t port)
+    {
+        this->_udp->beginPacket(ip, port);
+        size_t written = this->_udp->write(message._message, message._messageLength);
+        if (written != message._messageLength)
+        {
+            // Not all bytes were written to the UDP buffer.
+            return ErrorCode::NetworkError;
+        }
+        if (this->_udp->endPacket() == 1) // Returns 1 if the packet was sent successfully, 0 if there was an error.
+        {
+            return ErrorCode::None;
+        }
+        else
+        {
+            return ErrorCode::NetworkError;
+        }
     }
 }

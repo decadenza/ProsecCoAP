@@ -35,11 +35,13 @@ getType	KEYWORD2
 loop	KEYWORD2
 loop	KEYWORD2
 removeOption	KEYWORD2
+sendMessage	KEYWORD2
 serve	KEYWORD2
 setCode	KEYWORD2
 setResponseHandler	KEYWORD2
 setType	KEYWORD2
 start	KEYWORD2
+buildResponse	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

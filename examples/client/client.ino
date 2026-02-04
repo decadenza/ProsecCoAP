@@ -44,7 +44,7 @@ void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Ethernet.begin(mac, deviceIp);
   Serial.print("IP address: ");

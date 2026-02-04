@@ -160,7 +160,8 @@ namespace Coap
      */
     class Message
     {
-        friend class OptionIterator;
+        friend class OptionIterator; // Give access to raw message data.
+        friend class Node;           // Give access to raw message data.
 
     private:
         /**
@@ -268,7 +269,7 @@ namespace Coap
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::None on success.
          */
-        static ErrorCode fromRequest(const Message *request, MessageCode code, Message &response);
+        static ErrorCode buildResponse(const Message *request, MessageCode code, Message &response);
 
         /**
          * @brief Get the CoAP version of this message.
@@ -617,6 +618,15 @@ namespace Coap
          * @return An error code indicating success or failure.
          */
         ErrorCode loop();
+
+        /**
+         * @brief Send a CoAP message to the specified IP address and port.
+         * @param message The CoAP message to send.
+         * @param ip The destination IP address.
+         * @param port The destination UDP port. This may be different from the local or the default port.
+         * @return An error code indicating success or failure.
+         */
+        ErrorCode sendMessage(const Message &message, IPAddress ip, uint16_t port);
     };
 
 } // End of namespace Coap

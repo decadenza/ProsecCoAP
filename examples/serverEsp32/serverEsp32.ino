@@ -62,7 +62,7 @@ void callbackResponse(Coap::Message &message, IPAddress, uint16_t)
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
