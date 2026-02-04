@@ -786,7 +786,7 @@ namespace Coap
                 // This entry is either empty or has exhausted its attempts.
                 continue;
             }
-            else if (now >= this->_entries[i].getDeadline()) // REVIEW: Handle millis() overflow?
+            else if (static_cast<long>(now - this->_entries[i].getDeadline()) >= 0) // This handles millis() overflow correctly.
             {
                 // Time to retransmit this message.
                 // NOTE: We don't handle errors here. If sending fails, we just try again later.
