@@ -836,6 +836,16 @@ namespace Coap
         return ErrorCode::NONE;
     }
 
+    void Observer::setAsSeen(unsigned long currentTimeMs)
+    {
+        this->_lastSeenMs = currentTimeMs;
+    }
+
+    void Observer::setAsSeen()
+    {
+        this->_lastSeenMs = millis();
+    }
+
     ErrorCode Node::serve(const char *path, Callback callback)
     {
         return this->_serverRegistry.add(path, callback);

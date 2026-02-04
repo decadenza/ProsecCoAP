@@ -668,6 +668,142 @@ namespace Coap
     }
 
     /**
+     * @brief A remote CoAP observer.
+     *
+     * It tracks a remote observer registered for notifications.
+     */
+    class Observer
+    {
+    private:
+        /**
+         * @brief Whether this observer is active.
+         */
+        bool _active = false;
+        /**
+         * @brief The IP address of the observer.
+         */
+        IPAddress _ip;
+        /**
+         * @brief The port of the observer.
+         */
+        uint16_t _port = 0;
+        /**
+         * @brief The token used by the observer.
+         *
+         * The token is used by the remote node to match
+         * the notifications to the original request.
+         */
+        uint8_t _token[COAP_MAX_TOKEN_LENGTH] = {0};
+        /**
+         * @brief The length of the token.
+         */
+        uint8_t _tokenLength = 0;
+        /**
+         * @brief The sequential number for notifications, as per specifications.
+         */
+        uint32_t _observationSequentialNumber = 0;
+        /**
+         * @brief The last time the remote observer was seen as active.
+         *
+         * This is updated at creation or whenever the remote observer gives signs of life.
+         * It may be used to remove stale observers.
+         * By default it is set to 0.
+         *
+         * @warning This value is in milliseconds and will eventually overflow.
+         */
+        unsigned long _lastSeenMs = 0;
+        /**
+         * @brief The observed resource path.
+         */
+        String _resourcePath;
+
+    public:
+        /**
+         * @brief Check if the observer is active.
+         *
+         * @return true if active, false otherwise.
+         */
+        bool isActive() const
+        {
+            return this->_active;
+        }
+
+        /**
+         * @brief Get the IP address of the observer.
+         * @return The IP address.
+         */
+        IPAddress getIp() const
+        {
+            return this->_ip;
+        }
+
+        /**
+         * @brief Get the port of the observer.
+         * @return The port number.
+         */
+        uint16_t getPort() const
+        {
+            return this->_port;
+        }
+
+        /**
+         * @brief Get the token pointer used by the observer.
+         * @return Pointer to the token.
+         */
+        const uint8_t *getToken() const
+        {
+            return this->_token;
+        }
+
+        /**
+         * @brief Get the token length used by the observer.
+         * @return The token length in bytes.
+         */
+        uint8_t getTokenLength() const
+        {
+            return this->_tokenLength;
+        }
+
+        /**
+         * @brief Activate the observer with the given parameters.
+         *
+         * @param ip Remote IP address.
+         * @param port Remote port.
+         * @param token Pointer to the token used by the observer. It will be copied internally.
+         * @param tokenLength Length of the token in bytes.
+         * @param resourcePath The observed resource path.
+         */
+        void activate(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength, const String &resourcePath);
+
+        /**
+         * @brief Deactivate the observer.
+         */
+        void deactivate()
+        {
+            this->_active = false;
+        }
+        /**
+         * @brief Get the last time the remote observer was seen as active.
+         *
+         * @return The last seen time in milliseconds.
+         */
+        unsigned long getLastSeen() const
+        {
+            return this->_lastSeenMs;
+        }
+
+        /**
+         * @brief Update the last seen time to given time.
+         */
+        void setAsSeen(unsigned long currentTimeMs);
+
+        /**
+         * @brief Update the last seen time to the current time.
+         */
+        void setAsSeen();
+    };
+
+    /**
      * @brief The CoAP node that runs on this device.
      *
      * It uses an underlying UDP instance for communication.
