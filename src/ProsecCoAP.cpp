@@ -795,7 +795,7 @@ namespace Coap
                         // Append '/' if uriPath is not empty.
                         if (uriPath.length() > 0)
                         {
-                            uriPath += "/";
+                            uriPath += '/';
                         }
                         // Append the option value as a string.
                         for (size_t i = 0; i < opt.length; i++)
