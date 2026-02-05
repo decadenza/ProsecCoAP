@@ -41,22 +41,35 @@ namespace Coap
          * @return An error code indicating success or failure.
          */
         ErrorCode sendUdp(UDP *udp, const uint8_t *data, size_t length, IPAddress ip, uint16_t port);
+
         /**
          * @brief Internal URI registry for mapping paths to callbacks.
          *
          * This class is used internally to manage the mapping between
          * URI paths and their associated callback functions.
+         *
+         * The registry is set at setup time and is not meant to be modified at runtime.
          */
         class UriRegistry
         {
         private:
-            // Array of pointers to constant URI paths.
-            // Note that these are just pointers; the actual null terminated strings must
-            // exist elsewhere, normally as a constant.
+            /**
+             * @brief Array of pointers to constant URI paths.
+             *
+             * @note These are just pointers; the actual null terminated strings must
+             * exist elsewhere, normally as a constant.
+             */
             const char *_path[COAP_MAX_CALLBACKS];
-            // Array of callback functions associated with each path.
+            /**
+             * @brief Array of callback functions associated to each path.
+             */
             Callback _callback[COAP_MAX_CALLBACKS];
-            // Counter of registered URIs.
+            /**
+             * @brief Counter of registered URIs.
+             *
+             * @note This counter saves us from iterating through the entire arrays when searching for a path,
+             * as well as indicating the next available slot in the arrays.
+             */
             size_t _count;
 
         public:
@@ -92,6 +105,9 @@ namespace Coap
              * @param[out] callback Output parameter to store the found callback.
              * @return @ref ErrorCode::NONE if found, @ref ErrorCode::NOT_FOUND if not found.
              *         It may return other error codes.
+             *
+             * @note No delete function is provided, as the registry is meant to be set
+             *       at setup time and not modified at runtime.
              */
             ErrorCode find(const char *path, Callback &callback) const;
         };
