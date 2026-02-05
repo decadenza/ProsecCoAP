@@ -40,6 +40,7 @@
 // UDP and CoAP instances.
 EthernetUDP Udp;
 Coap::Node coapNode(Udp);
+Coap::ObserverRegistry<5> observerRegistry; // Define an observer registry with maximum capacity for 5 observers.
 
 // Using a sequential identifier. IP will be based on this.
 #define DEVICE_ID 1
@@ -81,62 +82,57 @@ void setup()
 
 void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
 {
+
     if (message.isObserveRegister())
     {
-        // This is a subscription request.
+        // This is a subscription request. Add a new observer in the registry.
+        Coap::ErrorCode err = observerRegistry.add(ip, port, message.getToken(), message.getTokenLength());
+        Coap::Message response;
+        if (err == Coap::ErrorCode::OK)
+        {
+            // Send ACK response.
+            Coap::Message::buildResponse(message, Coap::MessageCode::VALID, response);
+            coapNode.sendMessage(response, ip, port);
+            SERIAL_PRINTLN("Subscribed!");
+        }
+        else
+        {
+            // Tell the client that the subscription failed.
+            Coap::Message::buildResponse(message, Coap::MessageCode::SERVICE_UNAVAILABLE, response);
+            coapNode.sendMessage(response, ip, port);
+            SERIAL_PRINTLN("Observer could not be added!");
+        }
     }
     else if (message.isObserveDeregister())
     {
-        // This is an unsubscription request.
+        Coap::ErrorCode err = observerRegistry.remove(ip, port, message.getToken(), message.getTokenLength());
+        Coap::Message response;
+        if (err == Coap::ErrorCode::OK)
+        {
+            Coap::Message::buildResponse(message, Coap::MessageCode::VALID, response);
+            coapNode.sendMessage(response, ip, port);
+            SERIAL_PRINTLN("Unsubscribed!");
+        }
+        else
+        {
+            // Tell the client that the subscription failed.
+            Coap::Message::buildResponse(message, Coap::MessageCode::SERVICE_UNAVAILABLE, response);
+            coapNode.sendMessage(response, ip, port);
+            SERIAL_PRINTLN("Observer could not be removed!");
+        }
     }
     else
     {
+        // Not a valid observe request. Ignore.
         SERIAL_PRINTLN("Missing/invalid observe value.");
     }
-
-    // COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
-
-    // switch (observeValue)
-    // {
-    // case COAP_OBSERVE_VALUE_REGISTER:
-    // {
-    //     // Add a new observer in the table.
-    //     CoapObserver *observer = NULL;
-    //     int rc = coap.addObserver(&observer, "subscribe", ip, port, packet.token, packet.tokenLength);
-    //     if (rc != 0 || observer == NULL)
-    //     {
-    //         coap.sendResponse(ip, port, packet, COAP_SERVICE_UNAVAILABLE, "busy", strlen("busy"), COAP_TEXT_PLAIN);
-    //         SERIAL_PRINTLN("Observer could not be added!");
-    //     }
-    //     else
-    //     {
-    //         // The loop will return the current representation of the resource
-    //         // (this also acts as confirmation, see https://datatracker.ietf.org/doc/html/rfc7641#section-4.1).
-    //         SERIAL_PRINTLN("Subscribed!");
-    //     }
-    //     return;
-    // }
-    // case COAP_OBSERVE_VALUE_DEREGISTER:
-    // {
-    //     coap.removeObserver("subscribe", ip, port, packet.token, packet.tokenLength); // Remove the observer of "subscribe" path.
-    //     coap.sendResponse(ip, port, packet, COAP_CONTENT, "unsubscribed", strlen("unsubscribed"), COAP_TEXT_PLAIN);
-    //     SERIAL_PRINTLN("Unsubscribed!");
-    //     return;
-    // }
-    // default:
-    // {
-    //     SERIAL_PRINT("Missing/invalid observe value: ");
-    //     SERIAL_PRINTLN(observeValue);
-    //     return;
-    // }
-    // }
 }
 
 void loop()
 {
-    // coap.loop(); // Process coap requests.
+    coapNode.loop(); // Process coap requests.
 
-    sendNotification();
+    sendNotification(); // Simulate a recurring notification.
 }
 
 // Demo notification with gibberish data.

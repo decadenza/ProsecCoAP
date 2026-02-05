@@ -274,7 +274,7 @@ namespace Coap
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        static ErrorCode buildResponse(const Message *request, MessageCode code, Message &response);
+        static ErrorCode buildResponse(const Message &request, MessageCode code, Message &response);
 
         /**
          * @brief Get the CoAP version of this message.
@@ -362,7 +362,9 @@ namespace Coap
         ErrorCode addToken(size_t length);
 
         /**
-         * @brief Get the current token from the message.
+         * @brief Get the pointer to the current token.
+         *
+         * @see getTokenLength() to get the token length in bytes (which may also be zero).
          *
          * @param[out] buffer Pointer to the token within the message.
          *             @warning The pointer is valid **as long as the message exists**.
@@ -377,7 +379,7 @@ namespace Coap
          * msg.getToken(token, length);
          * @endcode
          */
-        ErrorCode getToken(const uint8_t *&buffer, size_t &length) const;
+        const uint8_t *getToken() const;
 
         /**
          * @brief Return an iterator over the message options.

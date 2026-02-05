@@ -46,21 +46,21 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::buildResponse(const Message *request, MessageCode code, Message &response)
+    ErrorCode Message::buildResponse(const Message &request, MessageCode code, Message &response)
     {
-        if (request->getLength() < COAP_HEADER_SIZE)
+        if (request.getLength() < COAP_HEADER_SIZE)
         {
             return ErrorCode::MALFORMED_MESSAGE;
         }
         // Initialize response message (version, type, code)
         // and use the message id from the request.
-        response = Message(MessageType::ACK, code, request->getId());
+        response = Message(MessageType::ACK, code, request.getId());
 
         // The response length is currently just the header size.
         // If the request has a token, copy it and update the token length in the response.
-        size_t tokenLength = request->getTokenLength();
+        size_t tokenLength = request.getTokenLength();
         memcpy(response._message + COAP_HEADER_SIZE, // Destination.
-               request->_message + COAP_HEADER_SIZE, // Source.
+               request._message + COAP_HEADER_SIZE,  // Source.
                tokenLength);                         // Length.
         // Set token length, stored in the 4 lower bits of the first byte.
         response._message[0] |= static_cast<uint8_t>(tokenLength) & 0x0F;
@@ -201,26 +201,11 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length) const
+    const uint8_t *Message::getToken() const
     {
-        length = this->getTokenLength();
-        if (length == 0)
-        {
-            // Special case: no token present. Still a valid message.
-            buffer = nullptr;
-            return ErrorCode::OK;
-        }
-        if (length > COAP_MAX_TOKEN_LENGTH || this->_messageLength < COAP_HEADER_SIZE + length)
-        {
-            // The message is malformed: it indicates the presence of a token
-            // whose length would be greater allowed or whose value will exceed the whole message size.
-            length = 0;
-            buffer = nullptr;
-            return ErrorCode::MALFORMED_MESSAGE;
-        }
         // Give access by reference to the token within the message.
-        buffer = this->_message + COAP_HEADER_SIZE;
-        return ErrorCode::OK;
+        // Caller can use getTokenLength() to get the token length in bytes (which may also be zero).
+        return this->_message + COAP_HEADER_SIZE;
     }
 
     ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)

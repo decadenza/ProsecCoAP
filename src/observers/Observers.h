@@ -65,9 +65,24 @@ namespace Coap
 
     public:
         /**
-         * @brief Default constructor.
+         * @brief Default constructor that creates an inactive observer.
          */
         Observer() : _active(false), _observationSequentialNumber(0) {}
+
+        /**
+         * @brief Constructor that creates an active observer with the given parameters.
+         *
+         * @param ip The IP address of the observer.
+         * @param port The port of the observer.
+         * @param token The token used by the observer.
+         * @param tokenLength The length of the token in bytes.
+         */
+        Observer(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+            : _active(true), _observationSequentialNumber(0), _ip(ip), _port(port), _tokenLength(tokenLength)
+        {
+            // Copy the token value, ensuring that we do not exceed the maximum token length.
+            memcpy(this->_token, token, tokenLength > COAP_MAX_TOKEN_LENGTH ? COAP_MAX_TOKEN_LENGTH : tokenLength);
+        }
 
         /**
          * @brief Check if the observer is currently active.
@@ -180,11 +195,68 @@ namespace Coap
          *         It will return @ref ErrorCode::NOT_SUPPORTED if the registry is full
          *         and the observer cannot be added.
          */
-        ErrorCode add(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+        ErrorCode add(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+        {
+            // Find the first inactive observer slot and add the new observer there.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                {
+                    // Inactive slot found. Add the new observer here (active by default).
+                    this->_observers[i] = Observer(ip, port, token, tokenLength);
+                    return ErrorCode::OK;
+                }
+            }
 
-        ErrorCode remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength);
+            return ErrorCode::NOT_SUPPORTED;
+        }
 
-        ErrorCode remove(const Observer &observer);
+        /**
+         * @brief Remove an observer from the registry.
+         *
+         * The observer must match the provided combination of IP address, port, token and token length.
+         *
+         * @param ip The IP address of the observer that needs to be removed.
+         * @param port The port of the observer.
+         * @param token The token used by the observer.
+         * @param tokenLength The length of the token in bytes.
+         * @return An error code indicating success or failure.
+         *         It will return @ref ErrorCode::OK if the observer is successfully removed.
+         *         It will return @ref ErrorCode::NOT_FOUND if no matching observer is found
+         */
+        ErrorCode remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+        {
+            // Find the observer matching the given parameters and remove it.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                    continue; // Skip inactive observers.
+                if (this->_observers[i].getIp() == ip &&
+                    this->_observers[i].getPort() == port &&
+                    this->_observers[i].getTokenLength() == tokenLength &&
+                    memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
+                {
+                    // Matching observer found. Remove it by marking it as inactive.
+                    this->_observers[i].setActive(false);
+                    return ErrorCode::OK;
+                }
+            }
+            return ErrorCode::NOT_FOUND;
+        }
+
+        /**
+         * @brief Remove an observer from the registry.
+         *
+         * @param observer The observer to be removed.
+         * @return An error code indicating success or failure.
+         *
+         * @see remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength) for more details.
+         */
+        ErrorCode remove(const Observer &observer)
+        {
+            return this->remove(observer.getIp(), observer.getPort(), observer.getToken(), observer.getTokenLength());
+        }
     };
 }
+
 #endif // OBSERVERS_H_INCLUDED
