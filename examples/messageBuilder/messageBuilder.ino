@@ -40,21 +40,21 @@ void loop()
 
   // You can add a payload.
   Coap::ErrorCode err = msg.addPayload((const uint8_t *)(&"PAYLOAD_DATA"), 12, Coap::ContentFormat::TEXT_PLAIN);
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding payload: ");
     Serial.println((int8_t)err);
   }
 
   err = msg.addHost(destinationIp); // Uri-Host is optional (often not necessary, if destination host is the same IP).
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
   }
 
   err = msg.addPort(COAP_DEFAULT_PORT); // Optional. If not present will default to the default port anyway.
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -62,7 +62,7 @@ void loop()
 
   // Add Uri-Path options using the helper method.
   err = msg.addPath("sensors/temp");
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -72,14 +72,14 @@ void loop()
   char value[] = "this is 15 long";
   Coap::Option newOption(Coap::OptionNumber::LOCATION_PATH, (const uint8_t *)value, strlen(value));
   err = msg.addOption(newOption);
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
   }
   // ...or passing the values directly.
   err = msg.addOption(Coap::OptionNumber::LOCATION_PATH, (const uint8_t *)value, strlen(value));
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding option: ");
     Serial.println((int8_t)err);
@@ -100,7 +100,7 @@ void loop()
   // Read the current options from the message using an iterator.
   Coap::OptionIterator optIterator = msg.getOptionIterator();
   Coap::Option opt;
-  while ((err = optIterator.next(opt)) == Coap::ErrorCode::NONE)
+  while ((err = optIterator.next(opt)) == Coap::ErrorCode::OK)
   {
     Serial.print("Found option: ");
     Serial.print((int8_t)opt.number);
@@ -117,7 +117,7 @@ void loop()
   const uint8_t *payload;
   size_t payloadLength;
   err = msg.getPayload(payload, payloadLength);
-  if (err != Coap::ErrorCode::NONE)
+  if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while reading payload: ");
     Serial.println((int8_t)err);

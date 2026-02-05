@@ -115,7 +115,7 @@ namespace Coap
          * @param[out] option The next option.
          *
          * @return An error code indicating success or failure.
-         *         It returns ErrorCode::NONE when an option is found.
+         *         It returns ErrorCode::OK when an option is found.
          *         When there are no more options (either end of the message or beginning of payload),
          *         it returns ErrorCode::NOT_FOUND.
          *         If the message is malformed, it returns ErrorCode::MALFORMED_MESSAGE.
@@ -123,7 +123,7 @@ namespace Coap
          * @code{.cpp}
          * Coap::OptionIterator it = message.getOptionIterator();
          * Coap::Option option;
-         * while((err = optIterator.next(opt)) == Coap::ErrorCode::NONE) {
+         * while((err = optIterator.next(opt)) == Coap::ErrorCode::OK) {
          *         // Process option...
          * }
          * @endcode
@@ -249,7 +249,7 @@ namespace Coap
          * @param udp A pointer to the UDP instance containing the received message.
          * @param message The CoAP message to populate.
          *
-         * @return Returns @ref ErrorCode::NONE on success.
+         * @return Returns @ref ErrorCode::OK on success.
          *         Return @ref ErrorCode::NOT_FOUND if no packet was found (a size < @ref COAP_HEADER_SIZE
          *         is considered as such).
          *         It returns @ref ErrorCode::NOT_SUPPORTED if the length
@@ -272,7 +272,7 @@ namespace Coap
          * @param code The response message code.
          * @param[out] response The response message to populate.
          * @return An error code indicating success or failure.
-         *         It returns @ref ErrorCode::NONE on success.
+         *         It returns @ref ErrorCode::OK on success.
          */
         static ErrorCode buildResponse(const Message *request, MessageCode code, Message &response);
 
@@ -351,7 +351,7 @@ namespace Coap
          *
          * @param length The length (in bytes) of the token.
          *               The maximum length is @ref COAP_MAX_TOKEN_LENGTH bytes.
-         * @return An error code. ErrorCode::NONE for success.
+         * @return An error code. ErrorCode::OK for success.
          *
          * Example:
          * @code{.cpp}
@@ -367,7 +367,7 @@ namespace Coap
          * @param[out] buffer Pointer to the token within the message.
          *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The token length.
-         * @return An error code. ErrorCode::NONE for success.
+         * @return An error code. ErrorCode::OK for success.
          *
          * Example:
          * @code{.cpp}
@@ -487,7 +487,7 @@ namespace Coap
          * @param[out] payload Pointer to the payload within the message.
          *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The payload length.
-         * @return An error code. ErrorCode::NONE for success.
+         * @return An error code. ErrorCode::OK for success.
          *
          * Example:
          * @code{.cpp}
@@ -651,7 +651,7 @@ namespace Coap
              * @param ip The destination IP address.
              * @param port The destination UDP port.
              * @return An error code indicating success or failure.
-             *         It returns @ref ErrorCode::NONE on success.
+             *         It returns @ref ErrorCode::OK on success.
              *         It returns @ref ErrorCode::NOT_SUPPORTED if the queue is full.
              *         Increase @ref COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE to allow more entries.
              */
@@ -663,7 +663,7 @@ namespace Coap
              * @param udp The UDP instance used for retransmission.
              *
              * @return An error code indicating success or failure. It will return
-             *        @ref ErrorCode::NONE on success (even if no retransmissions were necessary).
+             *        @ref ErrorCode::OK on success (even if no retransmissions were necessary).
              */
             ErrorCode process(UDP *udp);
 
@@ -734,7 +734,7 @@ namespace Coap
          * It starts the underlying UDP instance, enabling communication.
          * The UDP instance is bound to the local port specified at construction time.
          *
-         * @returns ErrorCode::NONE on success, or an error code on failure.
+         * @returns ErrorCode::OK on success, or an error code on failure.
          */
         ErrorCode start();
 

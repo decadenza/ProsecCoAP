@@ -88,7 +88,7 @@ namespace Coap
              *
              * @param callback The callback function associated with the path.
              * @return An error code indicating success or failure.
-             *         It returns @ref ErrorCode::NONE on success.
+             *         It returns @ref ErrorCode::OK on success.
              *         It returns @ref ErrorCode::NOT_SUPPORTED if the registry is full.
              *         Increase @ref COAP_MAX_CALLBACKS to allow more callbacks.
              *
@@ -103,7 +103,7 @@ namespace Coap
              *
              * @param path The URI path to search for. Note that a path == "" is valid.
              * @param[out] callback Output parameter to store the found callback.
-             * @return @ref ErrorCode::NONE if found, @ref ErrorCode::NOT_FOUND if not found.
+             * @return @ref ErrorCode::OK if found, @ref ErrorCode::NOT_FOUND if not found.
              *         It may return other error codes.
              *
              * @note No delete function is provided, as the registry is meant to be set

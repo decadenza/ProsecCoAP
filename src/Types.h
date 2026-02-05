@@ -298,7 +298,7 @@ namespace Coap
     enum class ErrorCode : int8_t
     {
         /** No error */
-        NONE = 0,
+        OK = 0,
         /** The requested resource was not found. */
         NOT_FOUND = -1,
         /**

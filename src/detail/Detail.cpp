@@ -14,7 +14,7 @@ namespace Coap::Detail
         }
         if (udp->endPacket() == 1) // Returns 1 if the packet was sent successfully, 0 if there was an error.
         {
-            return ErrorCode::NONE;
+            return ErrorCode::OK;
         }
         else
         {
@@ -45,14 +45,14 @@ namespace Coap::Detail
             {
                 // Duplicate found. Replace the callback.
                 this->_callback[i] = callback;
-                return ErrorCode::NONE;
+                return ErrorCode::OK;
             }
         }
         // Else, add the new entry.
         this->_path[this->_count] = path;
         this->_callback[this->_count] = callback;
         this->_count++;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode UriRegistry::find(const char *path, Callback &callback) const
@@ -67,7 +67,7 @@ namespace Coap::Detail
             {
                 // Found the entry.
                 callback = this->_callback[i];
-                return ErrorCode::NONE;
+                return ErrorCode::OK;
             }
         }
         // Not found.

@@ -12,22 +12,48 @@
 
 namespace Coap
 {
+
     /**
-     * @brief Coap Observe option values.
-     *
-     * @note On an observe request, the client includes the Observe option
-     *       with either the register or deregister value.
-     *       On a notification, the server includes the Observe option with a
-     *       sequential number value. Such value is a 24 bit unsigned integer
-     *       and shall not be confused with the Observe option value in the request.
-     *
-     * @see https://datatracker.ietf.org/doc/html/rfc7641#section-2
+     * @namespace Observe
+     * @brief Namespace for Observe-related constants.
      */
-    enum class ObserveValue : uint8_t
+    namespace Observe
     {
-        REGISTER = 0,
-        DEREGISTER = 1
-    };
+        /**
+         * @brief The register value for the Observe option.
+         *
+         * @note On an observe request, the client includes the Observe option
+         *       with either the register or deregister value.
+         *       On a notification, the server includes the Observe option with a
+         *       sequential number value. Such value is a 24 bit unsigned integer
+         *       and shall not be confused with the Observe option value in the request.
+         *
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-2
+         */
+        constexpr uint8_t REGISTER = 0;
+        /**
+         * @brief The deregister value for the Observe option.
+         * @see @ref REGISTER.
+         */
+        constexpr uint8_t DEREGISTER = 1;
+    }
+
+    /**
+     * @defgroup Observe-related functions.
+     * @brief Functions related to the Observe mechanism.
+     * @{
+     */
+
+    /**
+     * @brief Extract the Observe option value from a CoAP message, if present.
+     * @param message The CoAP message to extract the Observe option value from.
+     * @param observeValue The output parameter to store the Observe option value.
+     * @return An error code indicating success or failure.
+     *         It returns @ref ErrorCode::OK if the Observe option is present and the value is successfully extracted.
+     *         It returns @ref ErrorCode::NOT_FOUND if the Observe option is not present in the message.
+     */
+    ErrorCode getObserveValue(const Message &message, uint32_t &observeValue);
+    /** @} */ // End of Functions group
 
     /**
      * @brief A remote CoAP observer, activelly observing a resource.

@@ -43,7 +43,7 @@ namespace Coap
         // Check that the message start with the expected CoAP version.
         if (message.getVersion() != COAP_VERSION)
             return ErrorCode::NOT_SUPPORTED;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::buildResponse(const Message *request, MessageCode code, Message &response)
@@ -66,7 +66,7 @@ namespace Coap
         response._message[0] |= static_cast<uint8_t>(tokenLength) & 0x0F;
         // Update the total message length.
         response._messageLength = COAP_HEADER_SIZE + tokenLength;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     uint16_t Message::getId() const
@@ -94,14 +94,14 @@ namespace Coap
 
         // Update current message length.
         this->_messageLength += length;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::_remove(size_t startPosition, size_t length)
     {
         if (length == 0)
         {
-            return ErrorCode::NONE; // Nothing to remove.
+            return ErrorCode::OK; // Nothing to remove.
         }
 
         // Check if removal is valid.
@@ -118,7 +118,7 @@ namespace Coap
 
         // Update current message length.
         this->_messageLength -= length;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     uint16_t Message::_getNextId()
@@ -190,7 +190,7 @@ namespace Coap
 
         // Write the generated token into the message buffer and update overall message length.
         ErrorCode err = this->_insert(COAP_HEADER_SIZE, tokenBuffer, length);
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             // Error. The message was not modified.
             return err;
@@ -198,7 +198,7 @@ namespace Coap
         // SECTION Update message header to reflect new token length.
         // The token length is stored in the 4 lower bits of the first byte.
         this->_message[0] |= static_cast<uint8_t>(length) & 0x0F;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::getToken(const uint8_t *&buffer, size_t &length) const
@@ -208,7 +208,7 @@ namespace Coap
         {
             // Special case: no token present. Still a valid message.
             buffer = nullptr;
-            return ErrorCode::NONE;
+            return ErrorCode::OK;
         }
         if (length > COAP_MAX_TOKEN_LENGTH || this->_messageLength < COAP_HEADER_SIZE + length)
         {
@@ -220,7 +220,7 @@ namespace Coap
         }
         // Give access by reference to the token within the message.
         buffer = this->_message + COAP_HEADER_SIZE;
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)
@@ -228,8 +228,8 @@ namespace Coap
         OptionIterator it(this);
         Option opt;
         uint16_t lastOptionNumber = 0;
-        size_t currentByte = it._currentByte;   // Next byte to read.
-        while (it.next(opt) == ErrorCode::NONE) // Exit the loop if there are no more options.
+        size_t currentByte = it._currentByte; // Next byte to read.
+        while (it.next(opt) == ErrorCode::OK) // Exit the loop if there are no more options.
         {
             if (opt.number <= newNumber)
             {
@@ -324,18 +324,18 @@ namespace Coap
 
         // Write the header into the message buffer.
         ErrorCode err = this->_insert(currentByte, newOptionHeader, newOptionHeaderLength);
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             return err; // Insertion failed, message unmodified.
         }
         // Write the value into the message buffer.
         currentByte += newOptionHeaderLength;
         err = this->_insert(currentByte, newValue, newLength);
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             // Value insertion failed. Remove the previously inserted header.
             // REVIEW: If this fails, there is not much we can do... Message will be corrupted.
-            if (this->_remove(currentByte - newOptionHeaderLength, newOptionHeaderLength) != ErrorCode::NONE)
+            if (this->_remove(currentByte - newOptionHeaderLength, newOptionHeaderLength) != ErrorCode::OK)
             {
                 // Serious error: message is now corrupted.
                 return ErrorCode::MALFORMED_MESSAGE;
@@ -351,14 +351,14 @@ namespace Coap
         currentByte += newLength;
         if (currentByte >= this->_messageLength)
         {
-            return ErrorCode::NONE; // Message ends here. No following option to adjust.
+            return ErrorCode::OK; // Message ends here. No following option to adjust.
         }
 
         // The following option delta must be adjusted by *subtracting* the delta
         // added to the new option.
         if (newOptionDelta == 0)
         {
-            return ErrorCode::NONE; // No adjustment needed. All good.
+            return ErrorCode::OK; // No adjustment needed. All good.
         }
 
         // SECTION Read the next option and adjust its delta.
@@ -371,7 +371,7 @@ namespace Coap
         {
             // Easy case: both old and new delta fit in 4 bits.
             this->_message[currentByte - 1] = (static_cast<uint8_t>(newDelta) << 4) | (optionHeader & 0x0F);
-            return ErrorCode::NONE;
+            return ErrorCode::OK;
         }
         else
         {
@@ -418,7 +418,7 @@ namespace Coap
                     uint16_t newDeltaOffset = newDelta - 269;
                     this->_message[currentByte] = (newDeltaOffset >> 8) & 0xFF;
                     this->_message[currentByte + 1] = newDeltaOffset & 0xFF;
-                    return ErrorCode::NONE;
+                    return ErrorCode::OK;
                 }
             }
             else if (oldDelta == 15)
@@ -427,7 +427,7 @@ namespace Coap
                 if (length == 15)
                 {
                     // Payload marker reached. End of options.
-                    return ErrorCode::NONE;
+                    return ErrorCode::OK;
                 }
                 else
                 {
@@ -438,7 +438,7 @@ namespace Coap
         // !SECTION End of delta adjustment.
 
         // Successfully added option and adjusted the following one.
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     OptionIterator::OptionIterator(const Message *message)
@@ -494,7 +494,7 @@ namespace Coap
             if (path[i] == '\0')
             {
                 // End of string reached. We are done.
-                return ErrorCode::NONE;
+                return ErrorCode::OK;
             }
             if (path[i] == '/')
             {
@@ -540,7 +540,7 @@ namespace Coap
                 ErrorCode err = this->addOption(optionNumber,
                                                 reinterpret_cast<const uint8_t *>(path + segmentStart),
                                                 segmentLength);
-                if (err != ErrorCode::NONE)
+                if (err != ErrorCode::OK)
                 {
                     // Failed to add option. Block the operation.
                     // Possibly the message will be malformed!
@@ -649,7 +649,7 @@ namespace Coap
         option.value = &messageRaw[this->_currentByte];
         this->_currentByte += option.length; // Update for next call.
 
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::getPayload(const uint8_t *&payload, size_t &length) const
@@ -658,7 +658,7 @@ namespace Coap
         OptionIterator it = this->getOptionIterator();
         ErrorCode err;
         Option opt;
-        while ((err = it.next(opt)) == ErrorCode::NONE)
+        while ((err = it.next(opt)) == ErrorCode::OK)
         {
             // Just iterate to find the payload marker.
             // This loop will exit if:
@@ -687,7 +687,7 @@ namespace Coap
         // Payload starts after the payload marker.
         payload = this->_message + firstByteOfPayload + 1;
         length = this->getLength() - (firstByteOfPayload + 1);
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::addPayload(const uint8_t *payload, size_t length)
@@ -702,7 +702,7 @@ namespace Coap
         OptionIterator it = this->getOptionIterator();
         ErrorCode err;
         Option opt;
-        while ((err = it.next(opt)) == ErrorCode::NONE)
+        while ((err = it.next(opt)) == ErrorCode::OK)
         {
             // Just iterate to find the payload marker.
             // This loop will exit if:
@@ -731,20 +731,20 @@ namespace Coap
         }
         // All good. Insert the payload marker.
         err = this->_insert(firstByteOfPayload, reinterpret_cast<const uint8_t *>(&COAP_PAYLOAD_MARKER), 1);
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             return err;
         }
         // Insert the payload itself.
         err = this->_insert(firstByteOfPayload + 1, payload, length);
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             // Try to cancel the previous insertion of the payload marker.
             this->_remove(firstByteOfPayload, 1);
             // Return the original error.
             return err;
         }
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Message::addPayload(const uint8_t *payload, size_t length, ContentFormat format)
@@ -756,7 +756,7 @@ namespace Coap
         err = this->addOption(OptionNumber::CONTENT_FORMAT,
                               reinterpret_cast<const uint8_t *>(&format),
                               (static_cast<uint16_t>(format) > 255) ? 2 : 1); // Use minimal representation.
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             return err;
         }
@@ -783,7 +783,7 @@ namespace Coap
             {
                 // Empty slot found. Add the new entry here.
                 this->_entries[i].set(message, ip, port);
-                return ErrorCode::NONE;
+                return ErrorCode::OK;
             }
         }
         // No empty slot found. Queue is full.
@@ -807,7 +807,7 @@ namespace Coap
                 this->_entries[i].retransmit(udp);
             }
         }
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     void Detail::RetransmissionQueue::matchResponse(const Message &response)
@@ -840,14 +840,14 @@ namespace Coap
     {
         // Call the low-level send function.
         ErrorCode err = Detail::sendUdp(udp, this->message.asRaw(), this->message.getLength(), this->ip, this->port);
-        if (err != ErrorCode::NONE)
+        if (err != ErrorCode::OK)
         {
             return err;
         }
         this->attempts++;
         // Set the next attempt deadline using exponential backoff.
         this->nextAttemptDeadline = millis() + (this->timeoutBaseInterval << this->attempts);
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Node::serve(const char *path, Callback callback)
@@ -860,7 +860,7 @@ namespace Coap
         // begin() returns 1 on success, 0 on failure.
         if (this->_udp->begin(this->_port) == 1)
         {
-            return ErrorCode::NONE;
+            return ErrorCode::OK;
         }
         else
         {
@@ -877,8 +877,8 @@ namespace Coap
             String uriPath;
             uriPath.reserve(32); // Pre-allocate some space to reduce dynamic allocations. If you use long path, you obviously don't care.
 
-            // fromUdp() returns ErrorCode::NONE while there are incoming messages.
-            while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::NONE)
+            // fromUdp() returns ErrorCode::OK while there are incoming messages.
+            while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::OK)
             {
                 // Process the incoming message.
                 MessageCode code = incomingMessage.getCode();
@@ -897,7 +897,7 @@ namespace Coap
                     // Build the URI path from the Uri-Path option(s), if present.
                     OptionIterator it = incomingMessage.getOptionIterator();
                     Option opt;
-                    while (it.next(opt) == ErrorCode::NONE)
+                    while (it.next(opt) == ErrorCode::OK)
                     {
                         // Options must be in number order.
                         if (opt.number < OptionNumber::URI_PATH)
@@ -929,7 +929,7 @@ namespace Coap
                     // uriPath.c_str() will give the C-style string pointer.
                     Callback handler;
                     err = this->_serverRegistry.find(uriPath.c_str(), handler);
-                    if (err != ErrorCode::NONE)
+                    if (err != ErrorCode::OK)
                     {
                         // No handler found for this path.
                         continue; // Ignore the message.
@@ -966,7 +966,7 @@ namespace Coap
         this->_retransmissionQueue.process(this->_udp);
         // !SECTION End of client mode.
 
-        return ErrorCode::NONE;
+        return ErrorCode::OK;
     }
 
     ErrorCode Node::sendMessage(const Message &message, IPAddress ip, uint16_t port)
