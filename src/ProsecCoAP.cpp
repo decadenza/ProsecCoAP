@@ -520,13 +520,12 @@ namespace Coap
                 i++;
                 continue;
             }
-            size_t segmentStart = i; // First character of the current segment.
-            i++;
+            size_t segmentStart = i; // First character of the current segment that is not '/', '?' or '&'.
             // Find the end of the current segment.
-            while (path[i] != '/' && path[i] != '?' && path[i] != '\0' && path[i] != '&')
+            do
             {
                 i++;
-            }
+            } while (path[i] != '/' && path[i] != '?' && path[i] != '\0' && path[i] != '&');
             size_t segmentLength = i - segmentStart;
             if (segmentLength > 0)
             {
