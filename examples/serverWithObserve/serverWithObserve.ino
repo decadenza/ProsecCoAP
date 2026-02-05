@@ -40,7 +40,10 @@
 // UDP and CoAP instances.
 EthernetUDP Udp;
 Coap::Node coapNode(Udp);
-Coap::ObserverRegistry<5> observerRegistry; // Define an observer registry with maximum capacity for 5 observers.
+
+// Define an observer registry with maximum capacity for 5 observers.
+// This registry is binded to a specific resource!
+Coap::ObserverRegistry<5> myObservers;
 
 // Using a sequential identifier. IP will be based on this.
 #define DEVICE_ID 1
@@ -48,8 +51,8 @@ Coap::ObserverRegistry<5> observerRegistry; // Define an observer registry with 
 byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC address, this must be unique.
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 
-// Declaration of our subscribe callback.
-void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port);
+// Declaration of our observe callback.
+void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port);
 
 void setup()
 {
@@ -67,7 +70,7 @@ void setup()
     }
     SERIAL_PRINTLN("OK");
 
-    coapNode.serve("subscribe", pathSubscribe); // Serve the "subscribe" path with the subscribe callback.
+    coapNode.serve("observe", observeCallback); // Serve the "observe" path using the observeCallback.
 
     // Start coap server.
     coapNode.start();
@@ -80,13 +83,21 @@ void setup()
     SERIAL_PRINTLN("Initialisation completed!");
 }
 
-void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
+void loop()
+{
+    coapNode.loop(); // Process coap requests.
+
+    sendNotification(); // Simulate a recurring notification.
+}
+
+// Handle observe registration and deregistration requests.
+void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
 {
 
     if (message.isObserveRegister())
     {
         // This is a subscription request. Add a new observer in the registry.
-        Coap::ErrorCode err = observerRegistry.add(ip, port, message.getToken(), message.getTokenLength());
+        Coap::ErrorCode err = myObservers.add(ip, port, message.getToken(), message.getTokenLength());
         Coap::Message response;
         if (err == Coap::ErrorCode::OK)
         {
@@ -105,7 +116,7 @@ void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
     }
     else if (message.isObserveDeregister())
     {
-        Coap::ErrorCode err = observerRegistry.remove(ip, port, message.getToken(), message.getTokenLength());
+        Coap::ErrorCode err = myObservers.remove(ip, port, message.getToken(), message.getTokenLength());
         Coap::Message response;
         if (err == Coap::ErrorCode::OK)
         {
@@ -126,13 +137,6 @@ void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
         // Not a valid observe request. Ignore.
         SERIAL_PRINTLN("Missing/invalid observe value.");
     }
-}
-
-void loop()
-{
-    coapNode.loop(); // Process coap requests.
-
-    sendNotification(); // Simulate a recurring notification.
 }
 
 // Demo notification with gibberish data.
