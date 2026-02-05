@@ -225,7 +225,7 @@ namespace Coap
 
     ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)
     {
-        OptionIterator it(this);
+        OptionIterator it(*this);
         Option opt;
         uint16_t lastOptionNumber = 0;
         size_t currentByte = it._currentByte; // Next byte to read.
@@ -441,17 +441,17 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    OptionIterator::OptionIterator(const Message *message)
+    OptionIterator::OptionIterator(const Message &message)
+        : _message(message)
     {
-        _message = message;
-        _currentByte = COAP_HEADER_SIZE + _message->getTokenLength();
+        _currentByte = COAP_HEADER_SIZE + _message.getTokenLength();
         _currentOptionNumber = 0;
     }
 
     OptionIterator Message::getOptionIterator() const
     {
         // Return an option iterator for this message.
-        return OptionIterator(this);
+        return OptionIterator(*this);
     }
 
     ErrorCode Message::addHost(IPAddress ip)
@@ -555,12 +555,12 @@ namespace Coap
         // There are no more options if, either:
         // - We reached the end of the message.
         // - We reached the payload marker (0xFF), see below.
-        if (this->_currentByte >= this->_message->getLength())
+        if (this->_currentByte >= this->_message.getLength())
         {
             // No more options.
             return ErrorCode::NOT_FOUND;
         }
-        const uint8_t *messageRaw = this->_message->asRaw();
+        const uint8_t *messageRaw = this->_message.asRaw();
 
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
         // Read the option header byte.
@@ -573,7 +573,7 @@ namespace Coap
         if (delta == 13)
         {
             // Extended delta (8 bits).
-            if (this->_message->getLength() < this->_currentByte + 1)
+            if (this->_message.getLength() < this->_currentByte + 1)
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
@@ -583,7 +583,7 @@ namespace Coap
         else if (delta == 14)
         {
             // Extended delta (16 bits).
-            if (this->_message->getLength() < this->_currentByte + 2)
+            if (this->_message.getLength() < this->_currentByte + 2)
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
@@ -610,7 +610,7 @@ namespace Coap
         if (option.length == 13)
         {
             // Extended length (8 bits).
-            if (this->_message->getLength() < this->_currentByte)
+            if (this->_message.getLength() < this->_currentByte)
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
@@ -620,7 +620,7 @@ namespace Coap
         else if (option.length == 14)
         {
             // Extended length (16 bits).
-            if (this->_message->getLength() < this->_currentByte + 2)
+            if (this->_message.getLength() < this->_currentByte + 2)
             {
                 return ErrorCode::MALFORMED_MESSAGE;
             }
@@ -635,7 +635,7 @@ namespace Coap
         }
         // !SECTION End of length processing.
 
-        if ((this->_message)->getLength() < this->_currentByte + option.length)
+        if (this->_message.getLength() < this->_currentByte + option.length)
         {
             // The size of the option value exceeds the message size!
             return ErrorCode::MALFORMED_MESSAGE;

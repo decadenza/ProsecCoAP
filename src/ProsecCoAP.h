@@ -84,7 +84,7 @@ namespace Coap
         /**
          * @brief The reference to the message being iterated.
          */
-        const Message *_message;
+        const Message &_message;
         /**
          * @brief Track the current byte position in the message.
          *
@@ -103,9 +103,9 @@ namespace Coap
          * The first byte to be read will be the one after the header
          * and token (if present).
          *
-         * @param message The pointer to the message to iterate.
+         * @param message The reference to the message to iterate.
          */
-        OptionIterator(const Message *message);
+        OptionIterator(const Message &message);
 
         /**
          * @brief Get the next option in the message.
