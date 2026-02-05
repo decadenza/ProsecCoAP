@@ -668,17 +668,15 @@ namespace Coap
     }
 
     /**
-     * @brief A remote CoAP observer.
+     * @brief A remote CoAP observer, activelly observing a resource.
      *
      * It tracks a remote observer registered for notifications.
+     *
+     * @todo Add support to clean up older observers.
      */
     class Observer
     {
     private:
-        /**
-         * @brief Whether this observer is active.
-         */
-        bool _active = false;
         /**
          * @brief The IP address of the observer.
          */
@@ -696,38 +694,17 @@ namespace Coap
         uint8_t _token[COAP_MAX_TOKEN_LENGTH] = {0};
         /**
          * @brief The length of the token.
+         *
+         * All notifications sent to the observer will use the same token and token length.
+         * Note that a value of zero may still be valid.
          */
         uint8_t _tokenLength = 0;
         /**
          * @brief The sequential number for notifications, as per specifications.
          */
         uint32_t _observationSequentialNumber = 0;
-        /**
-         * @brief The last time the remote observer was seen as active.
-         *
-         * This is updated at creation or whenever the remote observer gives signs of life.
-         * It may be used to remove stale observers.
-         * By default it is set to 0.
-         *
-         * @warning This value is in milliseconds and will eventually overflow.
-         */
-        unsigned long _lastSeenMs = 0;
-        /**
-         * @brief The observed resource path.
-         */
-        String _resourcePath;
 
     public:
-        /**
-         * @brief Check if the observer is active.
-         *
-         * @return true if active, false otherwise.
-         */
-        bool isActive() const
-        {
-            return this->_active;
-        }
-
         /**
          * @brief Get the IP address of the observer.
          * @return The IP address.
@@ -763,44 +740,6 @@ namespace Coap
         {
             return this->_tokenLength;
         }
-
-        /**
-         * @brief Activate the observer with the given parameters.
-         *
-         * @param ip Remote IP address.
-         * @param port Remote port.
-         * @param token Pointer to the token used by the observer. It will be copied internally.
-         * @param tokenLength Length of the token in bytes.
-         * @param resourcePath The observed resource path.
-         */
-        void activate(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength, const String &resourcePath);
-
-        /**
-         * @brief Deactivate the observer.
-         */
-        void deactivate()
-        {
-            this->_active = false;
-        }
-        /**
-         * @brief Get the last time the remote observer was seen as active.
-         *
-         * @return The last seen time in milliseconds.
-         */
-        unsigned long getLastSeen() const
-        {
-            return this->_lastSeenMs;
-        }
-
-        /**
-         * @brief Update the last seen time to given time.
-         */
-        void setAsSeen(unsigned long currentTimeMs);
-
-        /**
-         * @brief Update the last seen time to the current time.
-         */
-        void setAsSeen();
     };
 
     /**
