@@ -186,17 +186,35 @@ namespace Coap
         /**
          * @brief Add a new observer to the registry.
          *
+         * If the observer already exists, it will not be added again.
+         *
          * @param ip The IP address of the observer.
          * @param port The port of the observer.
          * @param token The token used by the observer.
          * @param tokenLength The length of the token in bytes.
          * @return An error code indicating success or failure. It will return @ref ErrorCode::OK
-         *         if the observer is successfully added.
+         *         if the observer is successfully added (or was already present).
          *         It will return @ref ErrorCode::NOT_SUPPORTED if the registry is full
          *         and the observer cannot be added.
          */
         ErrorCode add(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
         {
+            // We MUST check if the observer is already present before trying to add it, to avoid duplicates.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                    continue; // Skip inactive observers.
+                if (this->_observers[i].getIp() == ip &&
+                    this->_observers[i].getPort() == port &&
+                    this->_observers[i].getTokenLength() == tokenLength &&
+                    memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
+                {
+                    // Matching active observer found. No need to add again.
+                    return ErrorCode::OK;
+                }
+            }
+
+            // New observer.
             // Find the first inactive observer slot and add the new observer there.
             for (size_t i = 0; i < N; i++)
             {
