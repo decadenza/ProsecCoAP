@@ -11,7 +11,10 @@
 #include "Types.h"
 
 // Include internal implementation details.
-#include "utility/Detail.h"
+#include "detail/Detail.h"
+
+// Include Observe functionality.
+#include "observe/Observe.h"
 
 /**
  * @namespace Coap
@@ -677,93 +680,6 @@ namespace Coap
             void matchResponse(const Coap::Message &response);
         };
     }
-
-    /**
-     * @brief A remote CoAP observer, activelly observing a resource.
-     *
-     * It tracks a remote observer registered for notifications.
-     *
-     * @todo Add support to clean up older observers.
-     */
-    class Observer
-    {
-    private:
-        /**
-         * @brief The IP address of the observer.
-         */
-        IPAddress _ip;
-        /**
-         * @brief The port of the observer.
-         */
-        uint16_t _port = 0;
-        /**
-         * @brief The token used by the observer.
-         *
-         * The token is used by the remote node to match
-         * the notifications to the original request.
-         */
-        uint8_t _token[COAP_MAX_TOKEN_LENGTH] = {0};
-        /**
-         * @brief The length of the token.
-         *
-         * All notifications sent to the observer will use the same token and token length.
-         * Note that a value of zero may still be valid.
-         */
-        uint8_t _tokenLength = 0;
-        /**
-         * @brief The sequential number for notifications, as per specifications.
-         *
-         * The sequential number must be incremented by 1 for each notification
-         * sent to the observer.
-         * It will wrap around to zero after reaching the maximum value of 24 bits (0xFFFFFF).
-         *
-         * @note Only the least significant 24 bits are used.
-         *       https://datatracker.ietf.org/doc/html/rfc7641#section-4.4
-         */
-        uint32_t _observationSequentialNumber : 24;
-
-    public:
-        /**
-         * @brief Default constructor.
-         */
-        Observer() : _observationSequentialNumber(0) {}
-
-        /**
-         * @brief Get the IP address of the observer.
-         * @return The IP address.
-         */
-        IPAddress getIp() const
-        {
-            return this->_ip;
-        }
-
-        /**
-         * @brief Get the port of the observer.
-         * @return The port number.
-         */
-        uint16_t getPort() const
-        {
-            return this->_port;
-        }
-
-        /**
-         * @brief Get the token pointer used by the observer.
-         * @return Pointer to the token.
-         */
-        const uint8_t *getToken() const
-        {
-            return this->_token;
-        }
-
-        /**
-         * @brief Get the token length used by the observer.
-         * @return The token length in bytes.
-         */
-        uint8_t getTokenLength() const
-        {
-            return this->_tokenLength;
-        }
-    };
 
     /**
      * @brief The CoAP node that runs on this device.
