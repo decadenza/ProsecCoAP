@@ -710,10 +710,22 @@ namespace Coap
         uint8_t _tokenLength = 0;
         /**
          * @brief The sequential number for notifications, as per specifications.
+         *
+         * The sequential number must be incremented by 1 for each notification
+         * sent to the observer.
+         * It will wrap around to zero after reaching the maximum value of 24 bits (0xFFFFFF).
+         *
+         * @note Only the least significant 24 bits are used.
+         *       https://datatracker.ietf.org/doc/html/rfc7641#section-4.4
          */
-        uint32_t _observationSequentialNumber = 0;
+        uint32_t _observationSequentialNumber : 24;
 
     public:
+        /**
+         * @brief Default constructor.
+         */
+        Observer() : _observationSequentialNumber(0) {}
+
         /**
          * @brief Get the IP address of the observer.
          * @return The IP address.
@@ -788,6 +800,15 @@ namespace Coap
          * @param port The local UDP port to use for communication.
          */
         Node(UDP &udp, uint16_t port) : _udp(&udp), _port(port), _responseHandler(nullptr), _retransmissionQueue() {}
+
+        /**
+         * @brief Get the local port used by this CoAP node.
+         * @return The local UDP port number.
+         */
+        uint16_t getPort() const
+        {
+            return this->_port;
+        }
 
         /**
          * @brief Start the CoAP instance.

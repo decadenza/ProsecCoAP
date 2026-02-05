@@ -1,5 +1,7 @@
 /**
  * Examples of advanced message building.
+ *
+ * @note Message building does not require to initialise the CoAP node.
  */
 #include <SPI.h>
 #include <Dhcp.h>
@@ -14,7 +16,6 @@ IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server I
 
 // UDP and CoAP class
 EthernetUDP Udp;
-// Coap coap(Udp);
 
 void setup()
 {

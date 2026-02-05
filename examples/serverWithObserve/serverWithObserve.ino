@@ -37,9 +37,9 @@
 #define SERIAL_WRITE(x)
 #endif
 
-// UDP and CoAP class
+// UDP and CoAP instances.
 EthernetUDP Udp;
-// Coap coap(Udp);
+Coap::Node coapNode(Udp);
 
 // Using a sequential identifier. IP will be based on this.
 #define DEVICE_ID 1
@@ -47,12 +47,11 @@ EthernetUDP Udp;
 byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC address, this must be unique.
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 
-// Declarations.
+// Declaration of our subscribe callback.
 void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port);
 
 void setup()
 {
-
     // Initialize serial and wait for port to open.
     SERIAL_BEGIN(115200);
     SERIAL_WHILE_WAIT;
@@ -67,19 +66,22 @@ void setup()
     }
     SERIAL_PRINTLN("OK");
 
-    // coap.server(pathSubscribe, "subscribe");
+    coapNode.serve("subscribe", pathSubscribe); // Serve the "subscribe" path with the subscribe callback.
 
-    // // Start coap server.
-    // coap.start();
+    // Start coap server.
+    coapNode.start();
 
     SERIAL_PRINT("Server listening on ");
-    SERIAL_PRINTLN(Ethernet.localIP());
+    SERIAL_PRINT(Ethernet.localIP());
+    SERIAL_PRINT(":");
+    SERIAL_PRINTLN(coapNode.getPort());
 
-    SERIAL_PRINTLN("Initialisation completed");
+    SERIAL_PRINTLN("Initialisation completed!");
 }
 
 void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
 {
+
     // COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
 
     // switch (observeValue)
