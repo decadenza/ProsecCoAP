@@ -880,38 +880,7 @@ namespace Coap
             // fromUdp() returns ErrorCode::NONE while there are incoming messages.
             while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::NONE)
             {
-                // Empty URI path by default.
-                uriPath = "";
-                // Build the URI path from the Uri-Path option(s), if present.
-                OptionIterator it = incomingMessage.getOptionIterator();
-                Option opt;
-                while (it.next(opt) == ErrorCode::NONE)
-                {
-                    // Options must be in number order.
-                    if (opt.number < OptionNumber::URI_PATH)
-                    {
-                        continue;
-                    }
-                    else if (opt.number == OptionNumber::URI_PATH)
-                    {
-                        // Append '/' if uriPath is not empty.
-                        if (uriPath.length() > 0)
-                        {
-                            uriPath += '/';
-                        }
-                        // Append the option value as a string.
-                        for (size_t i = 0; i < opt.length; i++)
-                        {
-                            uriPath += static_cast<char>(opt.value[i]);
-                        }
-                    }
-                    else
-                    {
-                        // No more Uri-Path options.
-                        break;
-                    }
-                }
-
+                // Process the incoming message.
                 MessageCode code = incomingMessage.getCode();
 
                 if (code == MessageCode::GET ||
@@ -921,6 +890,42 @@ namespace Coap
                 {
                     // ANCHOR This is a request message.
                     // https://datatracker.ietf.org/doc/html/rfc7252#section-5.1
+
+                    // SECTION Extract the URI path from the message options.
+                    // Empty URI path by default.
+                    uriPath = "";
+                    // Build the URI path from the Uri-Path option(s), if present.
+                    OptionIterator it = incomingMessage.getOptionIterator();
+                    Option opt;
+                    while (it.next(opt) == ErrorCode::NONE)
+                    {
+                        // Options must be in number order.
+                        if (opt.number < OptionNumber::URI_PATH)
+                        {
+                            continue;
+                        }
+                        else if (opt.number == OptionNumber::URI_PATH)
+                        {
+                            // Append '/' if uriPath is not empty.
+                            if (uriPath.length() > 0)
+                            {
+                                uriPath += '/';
+                            }
+                            // Append the option value as a string.
+                            for (size_t i = 0; i < opt.length; i++)
+                            {
+                                uriPath += static_cast<char>(opt.value[i]);
+                            }
+                        }
+                        else
+                        {
+                            // No more Uri-Path options.
+                            break;
+                        }
+                    }
+                    Serial.print("Received request for path: ");
+                    Serial.println(uriPath);
+                    // !SECTION End of URI path extraction.
 
                     // Match the message URI to the registered handlers.
                     // uriPath.c_str() will give the C-style string pointer.
