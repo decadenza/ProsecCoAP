@@ -538,23 +538,30 @@ namespace Coap
          */
         struct RetransmissionEntry
         {
-            // The CoAP message to be retransmitted.
+            /** @brief The CoAP message to be retransmitted. */
             Coap::Message message;
-            // Count of retransmission attempts done.
-            // If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
+            /** @brief Count of retransmission attempts done.
+             *
+             * If attempts reach COAP_MAX_RETRANSMIT, the item is considered expired.
+             */
             unsigned short attempts = COAP_MAX_RETRANSMIT;
-            // The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
-            // This will be doubled on each retransmission attempt.
+            /** @brief The base timeout interval (randomly assigned between COAP_ACK_MIN_TIMEOUT_MS and COAP_ACK_MAX_TIMEOUT_MS).
+             *
+             * This will be doubled on each retransmission attempt.
+             */
             unsigned long timeoutBaseInterval = COAP_ACK_MAX_TIMEOUT_MS;
-            // Timestamp for the next attempt.
+            /** @brief Timestamp for the next attempt. */
             unsigned long nextAttemptDeadline = 0;
-            // Destination IP address.
+            /** @brief Destination IP address. */
             IPAddress ip;
-            // Destination port.
+            /** @brief Destination port. */
             uint16_t port = 0;
 
-            // Default constructor.
-            // It sets the entry as expired.
+            /**
+             * @brief Default constructor.
+             *
+             * By default the entry is expired.
+             */
             RetransmissionEntry() = default;
 
             /**
@@ -624,7 +631,9 @@ namespace Coap
         class RetransmissionQueue
         {
         private:
-            // Array of retransmission entries.
+            /**
+             * @brief Array of retransmission entries.
+             */
             RetransmissionEntry _entries[COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE];
 
         public:
@@ -751,15 +760,15 @@ namespace Coap
     class Node
     {
     private:
-        // The internal UDP instance used for communication.
+        /** @brief The internal UDP instance used for communication. */
         UDP *_udp;
-        // The local UDP port used for communication.
+        /** @brief The local UDP port used for communication. */
         uint16_t _port;
-        // The callback fuction for handling incoming response messages.
+        /** @brief The callback fuction for handling incoming response messages. */
         Callback _responseHandler;
-        // The registry of URI paths and their associated callbacks.
+        /** @brief The registry of URI paths and their associated callbacks. */
         Detail::UriRegistry _serverRegistry;
-        // Retransmission queue for confirmable messages.
+        /** @brief Retransmission queue for confirmable messages. */
         Detail::RetransmissionQueue _retransmissionQueue;
 
     public:
