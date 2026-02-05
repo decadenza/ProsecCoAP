@@ -923,8 +923,6 @@ namespace Coap
                             break;
                         }
                     }
-                    Serial.print("Received request for path: ");
-                    Serial.println(uriPath);
                     // !SECTION End of URI path extraction.
 
                     // Match the message URI to the registered handlers.
