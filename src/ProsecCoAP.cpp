@@ -322,6 +322,13 @@ namespace Coap
             newOptionHeader[0] |= newLength;
         }
 
+        if (this->getLength() + newOptionHeaderLength + newLength > COAP_MAX_MESSAGE_SIZE)
+        {
+            // Insertion would exceed maximum message size.
+            // Return without modification to the message.
+            return ErrorCode::MESSAGE_TOO_LARGE;
+        }
+
         // Write the header into the message buffer.
         ErrorCode err = this->_insert(currentByte, newOptionHeader, newOptionHeaderLength);
         if (err != ErrorCode::OK)
