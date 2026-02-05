@@ -291,6 +291,25 @@ namespace Coap
     };
 
     /**
+     * @brief Represents possible Observe option values.
+     *
+     * @note On an observe request, the client includes the Observe option
+     *       with either the REGISTER or DEREGISTER value.
+     *       On a notification, the server includes the Observe option with a
+     *       sequential number value. Such value is a 24 bit unsigned integer
+     *       and shall not be confused with the Observe option value in the request.
+     *
+     * @see https://datatracker.ietf.org/doc/html/rfc7641#section-2
+     */
+    enum class ObserveValue : uint8_t
+    {
+        /** The register value for the Observe option. */
+        REGISTER = 0,
+        /** The deregister value for the Observe option. */
+        DEREGISTER = 1
+    };
+
+    /**
      * @brief Error codes used in the library.
      *
      * Negative values indicate errors.

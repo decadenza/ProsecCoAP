@@ -13,8 +13,8 @@
 // Include internal implementation details.
 #include "detail/Detail.h"
 
-// Include Observe functionality.
-#include "observe/Observe.h"
+// Include Observers management functionality.
+#include "observers/Observers.h"
 
 /**
  * @namespace Coap
@@ -528,6 +528,50 @@ namespace Coap
          * @see addPayload(const uint8_t *payload, size_t length) for the variant without Content-Format option.
          */
         ErrorCode addPayload(const uint8_t *payload, size_t length, ContentFormat format);
+
+        /**
+         * @brief Extract the Observe option value, if present.
+         *
+         * On a request, the observe value is either the register or deregister value, @ref ObserveValue.
+         * On a notification, the observe value is a 24-bit sequential number that is incremented for each
+         * notification sent to an observer.
+         *
+         * @param[out] observeValue The output parameter to store the Observe option value.
+         *                          The Observe option value is a 24-bit unsigned integer, but
+         *                          it is stored in a 32-bit variable.
+         *                          The value is valid only if the function returns @ref ErrorCode::OK.
+         * @return An error code indicating success or failure.
+         *         It returns @ref ErrorCode::OK if the Observe option is present and the value is successfully extracted.
+         *         It returns @ref ErrorCode::NOT_FOUND if the Observe option is not present in the message.
+         *         Other error codes may be returned.
+         */
+        ErrorCode getObserveValue(uint32_t &observeValue);
+
+        /**
+         * @brief Check if the message is an Observe register GET request.
+         *
+         * As per https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
+         * an Observe register request is a GET request that includes the Observe option
+         * with the value @ref ObserveValue::REGISTER.
+         *
+         * The caller has the responsibility to register the observer to the specific resource.
+         *
+         * @return True if the message is an Observe register request, false in all other cases.
+         */
+        bool isObserveRegister();
+
+        /**
+         * @brief Check if the message is an Observe deregister GET request.
+         *
+         * A client may explicitly cancel an observation relationship by sending a
+         * GET request with the Observe option set to @ref ObserveValue::DEREGISTER.
+         *
+         * The caller has the responsibility to cancel the observer if all other conditions
+         * are met (e.g. Uri-Path, token, etc.).
+         *
+         * @return True if the message is an Observe deregister request, false in all other cases.
+         */
+        bool isObserveDeregister();
     };
 
     class Node; // Forward declaration.

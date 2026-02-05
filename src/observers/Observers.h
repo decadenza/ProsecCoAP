@@ -1,97 +1,17 @@
 /**
  * @file Observe.h
  *
- * @brief Header file for the Observe functionality for ProsecCoAP.
+ * @brief Header file that allows to manage observers for the Observe mechanism in ProsecCoAP.
  *
- * It extends the main ProsecCoAP library with support for the Observe mechanism as per RFC 7641.
+ * It extends the main ProsecCoAP library with helpers objects to support the Observe mechanism as per RFC 7641.
  */
-#ifndef OBSERVE_H_INCLUDED
-#define OBSERVE_H_INCLUDED
+#ifndef OBSERVERS_H_INCLUDED
+#define OBSERVERS_H_INCLUDED
 
 #include "../Types.h"
 
 namespace Coap
 {
-
-    /**
-     * @namespace ObserveValue
-     * @brief Represents Observe option values.
-     */
-    namespace ObserveValue
-    {
-        /**
-         * @brief The register value for the Observe option.
-         *
-         * @note On an observe request, the client includes the Observe option
-         *       with either the register or deregister value.
-         *       On a notification, the server includes the Observe option with a
-         *       sequential number value. Such value is a 24 bit unsigned integer
-         *       and shall not be confused with the Observe option value in the request.
-         *
-         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-2
-         */
-        constexpr uint8_t REGISTER = 0;
-        /**
-         * @brief The deregister value for the Observe option.
-         * @see @ref REGISTER.
-         */
-        constexpr uint8_t DEREGISTER = 1;
-    }
-
-    /**
-     * @defgroup Observe-related functions.
-     * @brief Functions related to the Observe mechanism.
-     * @{
-     */
-
-    /**
-     * @brief Extract the Observe option value from a CoAP message, if present.
-     *
-     * On a request, the observe value is either the register or deregister value, @ref ObserveValue.
-     * On a notification, the observe value is a 24-bit sequential number that is incremented for each
-     * notification sent to an observer.
-     *
-     * @param message The CoAP message to extract the Observe option value from.
-     * @param observeValue The output parameter to store the Observe option value.
-     *                     The Observe option value is a 24-bit unsigned integer, but
-     *                     it is stored in a 32-bit variable.
-     *                     The value is valid only if the function returns @ref ErrorCode::OK.
-     * @return An error code indicating success or failure.
-     *         It returns @ref ErrorCode::OK if the Observe option is present and the value is successfully extracted.
-     *         It returns @ref ErrorCode::NOT_FOUND if the Observe option is not present in the message.
-     *         Other error codes may be returned.
-     */
-    ErrorCode getObserveValue(const Message &message, uint32_t &observeValue);
-
-    /**
-     * @brief Check if the message is an Observe register GET request.
-     *
-     * As per https://datatracker.ietf.org/doc/html/rfc7641#section-3.1
-     * an Observe register request is a GET request that includes the Observe option
-     * with the value @ref ObserveValue::REGISTER.
-     *
-     * The caller has the responsibility to register the observer to the specific resource.
-     *
-     * @param message The CoAP message to check.
-     * @return True if the message is an Observe register request, false in all other cases.
-     */
-    bool isObserveRegister(const Message &message);
-
-    /**
-     * @brief Check if the message is an Observe deregister GET request.
-     *
-     * A client may explicitly cancel an observation relationship by sending a
-     * GET request with the Observe option set to @ref ObserveValue::DEREGISTER.
-     *
-     * The caller has the responsibility to cancel the observer if all other conditions
-     * are met (e.g. Uri-Path, token, etc.).
-     *
-     * @param message The CoAP message to check.
-     * @return True if the message is an Observe deregister request, false in all other cases.
-     */
-    bool isObserveDeregister(const Message &message);
-
-    /** @} */ // End of Functions group
 
     /**
      * @brief A remote CoAP observer, activelly observing a resource.
@@ -147,7 +67,25 @@ namespace Coap
         /**
          * @brief Default constructor.
          */
-        Observer() : _observationSequentialNumber(0) {}
+        Observer() : _active(false), _observationSequentialNumber(0) {}
+
+        /**
+         * @brief Check if the observer is currently active.
+         * @return True if the observer is active, false otherwise.
+         */
+        bool isActive() const
+        {
+            return this->_active;
+        }
+
+        /**
+         * @brief Set the observer as active or inactive.
+         * @param active True to set the observer as active, false to set it as inactive.
+         */
+        void setActive(bool active)
+        {
+            this->_active = active;
+        }
 
         /**
          * @brief Get the IP address of the observer.
@@ -187,9 +125,16 @@ namespace Coap
     };
 
     /**
-     * @brief A resource observer table.
+     * @brief A resource observer registry.
      *
-     * It tracks the observers registered for a specific resource.
+     * It tracks the observers registered to a specific resource.
+     *
+     * Example:
+     * @code{.cpp}
+     * Coap::ObserverRegistry<5> myRegistry; // Create a registry with a maximum of 5 observers.
+     * myRegistry.add(ip1, port1, token1, tokenLength1); // Add an observer to the registry.
+     * Observer &observer = myRegistry[0]; // Get the first observer in the registry.
+     * @endcode
      *
      * @todo Add support to clean up older observers.
      */
@@ -242,4 +187,4 @@ namespace Coap
         ErrorCode remove(const Observer &observer);
     };
 }
-#endif // OBSERVE_H_INCLUDED
+#endif // OBSERVERS_H_INCLUDED

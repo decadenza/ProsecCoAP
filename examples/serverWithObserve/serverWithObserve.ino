@@ -81,11 +81,11 @@ void setup()
 
 void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
 {
-    if (Coap::isObserveRegister(message))
+    if (message.isObserveRegister())
     {
         // This is a subscription request.
     }
-    else if (Coap::isObserveDeregister(message))
+    else if (message.isObserveDeregister())
     {
         // This is an unsubscription request.
     }
