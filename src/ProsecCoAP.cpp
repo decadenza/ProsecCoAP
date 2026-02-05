@@ -491,16 +491,41 @@ namespace Coap
         // Iterate through the whole path string, splitting on '/', '?' and '&'.
         while (true)
         {
-            size_t segmentStart = i;
+            if (path[i] == '\0')
+            {
+                // End of string reached. We are done.
+                return ErrorCode::NONE;
+            }
+            if (path[i] == '/')
+            {
+                // Skip slashes, even consecutive ones.
+                i++;
+                continue;
+            }
+            if (path[i] == '?')
+            {
+                // Start of query part. Skip the '?' and continue.
+                hasQuery = true;
+                i++;
+                continue;
+            }
+            if (path[i] == '&')
+            {
+                if (!hasQuery)
+                {
+                    // '&' is only valid within the query part.
+                    return ErrorCode::INVALID_ARGUMENT;
+                }
+                // Else we are in the query part, so skip the '&' and continue.
+                i++;
+                continue;
+            }
+            size_t segmentStart = i; // First character of the current segment.
+            i++;
             // Find the end of the current segment.
             while (path[i] != '/' && path[i] != '?' && path[i] != '\0' && path[i] != '&')
             {
                 i++;
-            }
-            if (!hasQuery && path[i] == '&')
-            {
-                // '&' is only valid within the query part.
-                return ErrorCode::INVALID_ARGUMENT;
             }
             size_t segmentLength = i - segmentStart;
             if (segmentLength > 0)
@@ -523,16 +548,6 @@ namespace Coap
                     return err;
                 }
             }
-            // Check if we reached a query part.
-            if (path[i] == '?')
-            {
-                hasQuery = true;
-            }
-            // If the last character was the string terminator, we are done.
-            if (path[i] == '\0')
-                return ErrorCode::NONE;
-            // Else, skip the '/', '?' or '&'.
-            i++;
         };
     }
 
