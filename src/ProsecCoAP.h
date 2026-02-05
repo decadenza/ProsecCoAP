@@ -459,10 +459,12 @@ namespace Coap
          * https://datatracker.ietf.org/doc/html/rfc7252#section-6.4
          * to encode the path into the necessary Uri-Path and Uri-Query options.
          *
-         * Any existing Uri-Path and Uri-Query options are removed before adding the new ones.
+         * @warning Existing Uri-Path and Uri-Query options are not removed before adding the new ones.
+         *          In general, this method should be called only once per message, as multiple
+         *          calls may result in a malformed message.
          *
          * @param path The URI path + query associated with the recipient, null terminated.
-         *             Initial slash is optional. Valid examples are:
+         *             Initial and trailing slashes are ignored. Valid examples are:
          *             ``
          *             sensors/temp
          *             /sensors/temp?unit=celsius
