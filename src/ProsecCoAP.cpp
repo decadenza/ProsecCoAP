@@ -932,7 +932,7 @@ namespace Coap
         {                            // Reducing scope of incomingMessage and uriPath.
             Message incomingMessage; // Will be populated by fromUdp().
             String uriPath;
-            uriPath.reserve(32); // Pre-allocate some space to reduce dynamic allocations. If you use long path, you obviously don't care.
+            uriPath.reserve(64); // Pre-allocate some space to reduce dynamic allocations. If you use long paths, you obviously don't care.
 
             // fromUdp() returns ErrorCode::OK while there are incoming messages.
             while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::OK)
