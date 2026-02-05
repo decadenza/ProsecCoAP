@@ -81,6 +81,18 @@ void setup()
 
 void pathSubscribe(Coap::Message &message, IPAddress ip, uint16_t port)
 {
+    if (Coap::isObserveRegister(message))
+    {
+        // This is a subscription request.
+    }
+    else if (Coap::isObserveDeregister(message))
+    {
+        // This is an unsubscription request.
+    }
+    else
+    {
+        SERIAL_PRINTLN("Missing/invalid observe value.");
+    }
 
     // COAP_OBSERVE_VALUE observeValue = packet.getObserveValue();
 

@@ -82,7 +82,7 @@ namespace Coap
         // Give access to private members to Message.
         friend class Message;
         /**
-         * @brief The message being iterated.
+         * @brief The reference to the message being iterated.
          */
         const Message *_message;
         /**
