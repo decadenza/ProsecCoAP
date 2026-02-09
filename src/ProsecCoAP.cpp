@@ -530,8 +530,12 @@ namespace Coap
     ErrorCode Message::addPort(uint16_t port)
     {
         // Uri-Port option value is the port number as an unsigned integer.
-        // We use the minimal representation (1 or 2 bytes).
-        size_t length = (port > 255) ? 2 : 1;
+        // We use the minimal representation (0, 1 or 2 bytes).
+        size_t length = 2;
+        if (port == 0)
+            length = 0; // Special case for port 0, which can be represented with zero bytes.
+        else if (port <= 0xFF)
+            length = 1;
         // Add it as Uri-Port option.
         return this->addOption(OptionNumber::URI_PORT, reinterpret_cast<const uint8_t *>(&port), length);
     }
