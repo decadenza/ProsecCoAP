@@ -608,7 +608,9 @@ a.anchor {
     border: 1px solid var(--separator-color);
     overflow: hidden;
     width: var(--searchbar-width);
-    /* position: relative; */
+    position: absolute;
+    top: var(--spacing-small);
+    right: var(--spacing-large);
     box-shadow: none;
     display: block;
     margin-top: 0;
@@ -799,6 +801,8 @@ html.dark-mode iframe#MSearchResults {
 
 @media screen and (max-width: 767px) {
     #MSearchBox {
+        position: absolute;
+        top: calc(2*var(--spacing-large) - 1px);
         margin-top: var(--spacing-medium);
         margin-bottom: var(--spacing-medium);
         width: calc(100vw - 30px);
@@ -1138,7 +1142,7 @@ div.contents div.dyncontent {
     }
 
     div.header .title {
-        padding: var(--spacing-medium) var(--spacing-large);
+        padding: var(--spacing-large);
     }
 }
 
