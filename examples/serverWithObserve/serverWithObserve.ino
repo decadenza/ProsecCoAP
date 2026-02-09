@@ -1,17 +1,23 @@
 /*
  * A CoAP server with Observe functionality.
  *
- * Author: Pasquale Lafiosca (2025)
+ * Author: Pasquale Lafiosca (2026)
  *
+ * # Testing with libcoap
  * To test this example with the coap-client tool from libcoap:
  * ```
- * coap-client-notls -T abcd -v 9 -m get -s 60 coap://192.168.0.1/observe
+ * coap-client-notls -p 5683 -T aaaa -v 9 -m get -s 60 coap://192.168.0.1/observe
  * ```
  * 
  * Note that the option `-s 60` will set the CoAP observe register option and keep the
  * command running to receive notifications for the given amount of seconds.
  * 
- * The option `-T abcd` sets a specific token, so that the observer is unique.
+ * In order to avoid duplicate observers:
+ * - `-p 5683` sets a fixed port.
+ * - `-T aaaa` sets a fixed starting token (libcoap will use the next one).
+ *
+ * Multiple subscriptions with equal IP, port, path and token should result in
+ * the same observer.
  */
 #include <SPI.h>
 #include <Ethernet.h>
@@ -31,6 +37,7 @@
 #define SERIAL_PRINT_HEX(x) Serial.print(x, HEX)
 #define SERIAL_PRINTLN(x) Serial.println(x)
 #define SERIAL_WRITE(x) Serial.write(x)
+#define SERIAL_WRITE_LEN(x,y) Serial.write(x,y)
 #else
 #define SERIAL_BEGIN(baud)
 #define SERIAL_WHILE_WAIT
@@ -38,6 +45,7 @@
 #define SERIAL_PRINT_HEX(x)
 #define SERIAL_PRINTLN(x)
 #define SERIAL_WRITE(x)
+#define SERIAL_WRITE_LEN(x,y)
 #endif
 
 // UDP and CoAP instances.
@@ -109,9 +117,8 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
             // Send ACK response.
             message.buildResponse(Coap::MessageCode::VALID, response);
             coapNode.sendMessage(response, ip, port);
-            const uint8_t *token = message.getToken();
             SERIAL_PRINT("Subscribed with token: ");
-            for(size_t i=0;i<message.getTokenLength();i++) SERIAL_PRINT(token[i]);
+            SERIAL_WRITE_LEN(message.getToken(),message.getTokenLength());
             SERIAL_PRINTLN();
         }
         else

@@ -8,6 +8,9 @@
  * ```
  * coap-server-notls -v 9
  * ```
+ * 
+ * Note that coap-server-notls exposes a "time" endpoint that returns the current
+ * timestamp as payload.
  */
 #include <SPI.h>
 #include <Dhcp.h>
@@ -35,7 +38,7 @@ void setup()
   } // Wait for serial.
 
   Ethernet.begin(mac, deviceIp);
-  
+
   // This is a single handler for all responses.
   coapNode.setResponseHandler(callbackResponse);
 
@@ -49,23 +52,22 @@ void loop()
 {
   // Build a GET request message to transmit.
   Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
-  msg.addPath("time");                                       // Set the URI path to "sensors/temp".
+  msg.addPath("time");                                               // Set the URI path to "time".
 
   coapNode.sendMessage(msg, destinationIp, COAP_DEFAULT_PORT);
   Serial.print("[Request] id=");
   Serial.println(msg.getId());
- 
+
   // Even when acting as client, we still need to run the loop housekeeping.
   coapNode.loop();
-  
+
   delay(1000);
 }
 
-
 // CoAP client response callback.
 // If a payload is present, print it as plain text.
-// NOTE: In theory, you should check the Content-Format option first before attempting to
-// parse the payload. This in only an example.
+// NOTE: According to protocol specifications, you should check the Content-Format option first before attempting to
+// parse the payload.
 void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
 {
   Serial.print("[Response] id=");
@@ -73,9 +75,10 @@ void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
   Serial.print(" length=");
   Serial.print(message.getLength());
   // Read the payload.
-  const uint8_t* payload;
+  const uint8_t *payload;
   size_t payloadLength;
   message.getPayload(payload, payloadLength);
   Serial.print(" payload=");
-  Serial.println((const char*)payload);
+  Serial.write(payload, payloadLength);
+  Serial.println();
 }

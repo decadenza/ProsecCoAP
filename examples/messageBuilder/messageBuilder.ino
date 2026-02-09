@@ -39,7 +39,7 @@ void loop()
   Serial.println(msg.getTokenLength());
 
   // You can add a payload.
-  Coap::ErrorCode err = msg.addPayload((const uint8_t *)(&"PAYLOAD_DATA"), 12, Coap::ContentFormat::TEXT_PLAIN);
+  Coap::ErrorCode err = msg.addPayload((const uint8_t *)(&"My text payload"), 15, Coap::ContentFormat::TEXT_PLAIN);
   if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding payload: ");
@@ -78,7 +78,8 @@ void loop()
     Serial.println((int8_t)err);
   }
   // ...or passing the values directly.
-  err = msg.addOption(Coap::OptionNumber::LOCATION_PATH, (const uint8_t *)value, strlen(value));
+  char value2[] = "this is much much much much more";
+  err = msg.addOption(Coap::OptionNumber::LOCATION_PATH, (const uint8_t *)value2, strlen(value2));
   if (err != Coap::ErrorCode::OK)
   {
     Serial.print("Error while adding option: ");
@@ -97,15 +98,25 @@ void loop()
    * 4. Lastly, add a payload.
    */
 
+  // Reading the message content.
+
   // Read the current options from the message using an iterator.
   Coap::OptionIterator optIterator = msg.getOptionIterator();
   Coap::Option opt;
   while ((err = optIterator.next(opt)) == Coap::ErrorCode::OK)
   {
     Serial.print("Found option: ");
-    Serial.print((int8_t)opt.number);
+    Serial.print((unsigned)opt.number);
     Serial.print(", length: ");
-    Serial.println((int8_t)opt.length);
+    Serial.print(opt.length);
+    Serial.print(", value: 0x"); // Value is printed both in HEX and as characters.
+    for (size_t i = 0; i < opt.length; i++) {
+      Serial.print(opt.value[i] >> 4,  HEX);
+      Serial.print(opt.value[i] & 0x0F,HEX);
+    }
+    Serial.print(" (");
+    Serial.write(opt.value, opt.length);
+    Serial.println(")");
   }
   if (err != Coap::ErrorCode::NOT_FOUND)
   {
@@ -124,9 +135,10 @@ void loop()
   }
   else
   {
-    const char *payloadStr = reinterpret_cast<const char *>(payload);
     Serial.print("Payload found: ");
-    Serial.println(payloadStr);
+    Serial.write(payload, payloadLength); // Write as raw bytes. You may need to interpret it in other ways.
+    Serial.println();
   }
-  delay(1000);
+  
+  delay(2000);
 }
