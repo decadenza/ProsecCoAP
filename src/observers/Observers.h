@@ -221,6 +221,8 @@ namespace Coap
             {
                 if (!this->_observers[i].isActive())
                     continue; // Skip inactive observers.
+
+                // An observer is considered the same if it matches the combination of IP address, port, token and token length.
                 if (this->_observers[i].getIp() == ip &&
                     this->_observers[i].getPort() == port &&
                     this->_observers[i].getTokenLength() == tokenLength &&

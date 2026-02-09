@@ -83,19 +83,15 @@ namespace Coap
         // Set message type to NON by default.
         notification.setType(MessageType::NON);
 
-        // Remove any existing token and add the observer token.
-        size_t existingTokenLength = this->_message[0] & 0x0F;       // Get existing token length.
-        notification._remove(COAP_HEADER_SIZE, existingTokenLength); // No-op if existingTokenLength is 0.
+        // Overwrite any existing token and add the observer token.
         const uint8_t *observerToken = observer.getToken();
         size_t observerTokenLength = observer.getTokenLength();
-        ErrorCode err = notification._insert(COAP_HEADER_SIZE, observerToken, observerTokenLength);
+        ErrorCode err = notification._setToken(observerToken, observerTokenLength); // It overwrites any existing token in the message.
         if (err != ErrorCode::OK)
         {
             // Could not add observer token to the message.
             return err;
         }
-        // Update token length in the first byte of the message.
-        notification._message[0] |= static_cast<uint8_t>(observerTokenLength) & 0x0F;
 
         // Add Observe option with the appropriate incremental value.
         uint32_t observeValue = observer.getNextSequentialNumber();
@@ -220,9 +216,8 @@ namespace Coap
         return this->_message[0] & 0x0F;
     }
 
-    ErrorCode Message::addToken(size_t length)
+    ErrorCode Message::_setToken(const uint8_t *token, size_t length)
     {
-
         if (length > COAP_MAX_TOKEN_LENGTH)
         {
             return ErrorCode::INVALID_ARGUMENT;
@@ -231,6 +226,22 @@ namespace Coap
         // SECTION Remove any existing token.
         size_t existingTokenLength = this->_message[0] & 0x0F; // Get existing token length.
         this->_remove(COAP_HEADER_SIZE, existingTokenLength);  // No-op if existingTokenLength is 0.
+
+        // Write the generated token into the message buffer and update overall message length.
+        ErrorCode err = this->_insert(COAP_HEADER_SIZE, token, length);
+        if (err != ErrorCode::OK)
+        {
+            // Error. The message was not modified.
+            return err;
+        }
+        // SECTION Update message header to reflect new token length.
+        // The token length is stored in the 4 lower bits of the first byte.
+        this->_message[0] |= static_cast<uint8_t>(length) & 0x0F;
+        return ErrorCode::OK;
+    }
+
+    ErrorCode Message::addToken(size_t length)
+    {
 
         // SECTION Generate a random token.
         uint8_t tokenBuffer[COAP_MAX_TOKEN_LENGTH];
@@ -248,17 +259,7 @@ namespace Coap
         }
         // !SECTION
 
-        // Write the generated token into the message buffer and update overall message length.
-        ErrorCode err = this->_insert(COAP_HEADER_SIZE, tokenBuffer, length);
-        if (err != ErrorCode::OK)
-        {
-            // Error. The message was not modified.
-            return err;
-        }
-        // SECTION Update message header to reflect new token length.
-        // The token length is stored in the 4 lower bits of the first byte.
-        this->_message[0] |= static_cast<uint8_t>(length) & 0x0F;
-        return ErrorCode::OK;
+        return this->_setToken(tokenBuffer, length);
     }
 
     const uint8_t *Message::getToken() const

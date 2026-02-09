@@ -204,6 +204,18 @@ namespace Coap
          */
         void _setId(uint16_t id);
 
+        /**
+         * @brief Sets the token of the message with the given value and length.
+         *
+         * Any existing token is removed before setting the new one.
+         *
+         * @param token Pointer to the token data.
+         * @param length Length of the token in bytes.
+         * @return An error code indicating success or failure. Particularly,
+         *         it returns @ref ErrorCode::INVALID_ARGUMENT if the token length exceeds @ref COAP_MAX_TOKEN_LENGTH.
+         */
+        ErrorCode _setToken(const uint8_t *token, size_t length);
+
     public:
         /**
          * @brief Builds a default CoAP message.

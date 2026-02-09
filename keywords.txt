@@ -22,6 +22,7 @@ OptionNumber	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 
+add	KEYWORD2
 addHost	KEYWORD2
 addOption	KEYWORD2
 addPayload	KEYWORD2

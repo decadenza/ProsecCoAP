@@ -5,8 +5,13 @@
  *
  * To test this example with the coap-client tool from libcoap:
  * ```
- * coap-client-notls -m get -s 60 coap://192.168.0.1/observe
+ * coap-client-notls -T abcd -v 9 -m get -s 60 coap://192.168.0.1/observe
  * ```
+ * 
+ * Note that the option `-s 60` will set the CoAP observe register option and keep the
+ * command running to receive notifications for the given amount of seconds.
+ * 
+ * The option `-T abcd` sets a specific token, so that the observer is unique.
  */
 #include <SPI.h>
 #include <Ethernet.h>
@@ -104,7 +109,10 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
             // Send ACK response.
             message.buildResponse(Coap::MessageCode::VALID, response);
             coapNode.sendMessage(response, ip, port);
-            SERIAL_PRINTLN("Subscribed!");
+            const uint8_t *token = message.getToken();
+            SERIAL_PRINT("Subscribed with token: ");
+            for(size_t i=0;i<message.getTokenLength();i++) SERIAL_PRINT(token[i]);
+            SERIAL_PRINTLN();
         }
         else
         {
