@@ -146,13 +146,8 @@ void sendNotification()
     size_t payloadLength = strlen(payload);
 
     Coap::Message msg(Coap::MessageType::NON, Coap::MessageCode::CONTENT);
-    //msg.addPath("observe"); // Path must match the one the observer subscribed to!
-    //msg.addPayload((const uint8_t *)payload, payloadLength, Coap::ContentFormat::TEXT_PLAIN);
-
-    const uint8_t obsValue = 1;
-    if(msg.addOption(Coap::OptionNumber::OBSERVE, &obsValue, 1)!= Coap::ErrorCode::OK) {
-      SERIAL_PRINTLN("Add option failed for observe value");
-      }
+    msg.addPath("observe"); // Path must match the one the observer subscribed to!
+    msg.addPayload((const uint8_t *)payload, payloadLength, Coap::ContentFormat::TEXT_PLAIN);
     
     for (size_t i = 0; i < myObservers.length(); i++)
     {

@@ -94,6 +94,8 @@ namespace Coap
             // Could not add observer token to the message.
             return err;
         }
+        // Update token length in the first byte of the message.
+        notification._message[0] |= static_cast<uint8_t>(observerTokenLength) & 0x0F;
 
         // Add Observe option with the appropriate incremental value.
         uint32_t observeValue = observer.getNextSequentialNumber();
@@ -131,6 +133,10 @@ namespace Coap
 
     ErrorCode Message::_insert(size_t startPosition, const uint8_t *data, size_t length)
     {
+        if (length == 0)
+        {
+            return ErrorCode::OK; // Nothing to insert.
+        }
         if (this->_messageLength + length > COAP_MAX_MESSAGE_SIZE)
         {
             // Insertion would exceed maximum message size.
@@ -264,7 +270,7 @@ namespace Coap
 
     ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)
     {
-        OptionIterator it(*this);
+        OptionIterator it = this->getOptionIterator();
         Option opt;
         uint16_t lastOptionNumber = 0;
         size_t currentByte = it._currentByte; // Next byte to read.
@@ -289,17 +295,6 @@ namespace Coap
         if (err != ErrorCode::OK && err != ErrorCode::NOT_FOUND)
         {
             // An error occurred while iterating through options. The message may be malformed.
-            Serial.println("Error while iterating through options: " + String(static_cast<int8_t>(err))); // TEMP
-            Serial.println("Last byte position: " + String(currentByte));                                 // TEMP
-            Serial.println("Message length: " + String(this->getLength()));                               // TEMP
-            byte b;
-            for (size_t i = 0; i < this->getLength(); i++)
-            {
-                b = this->asRaw()[i];
-                Serial.print(b >> 4, HEX);
-                Serial.print(b & 0x0F, HEX);
-            }
-            Serial.println();
             return err;
         }
 
@@ -629,7 +624,7 @@ namespace Coap
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
         // Read the option header byte.
         uint8_t optionHeader = messageRaw[this->_currentByte];
-        this->_currentByte++; // Update next byte to read for the following run.
+        this->_currentByte++; // Update next byte to read.
         uint16_t delta = (optionHeader >> 4) & 0x0F;
         option.length = optionHeader & 0x0F;
 
