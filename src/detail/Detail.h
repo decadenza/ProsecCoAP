@@ -31,6 +31,17 @@ namespace Coap
         unsigned long getRandomTimeout();
 
         /**
+         * @brief Return the minimum number of bytes needed to represent the given value.
+         *
+         * Note that 0 is represented with 0 bytes, as per CoAP option encoding rules.
+         * @see https://datatracker.ietf.org/doc/html/rfc7252#section-3.2
+         *
+         * @param value The value to evaluate.
+         * @return The minimum number of bytes required to represent the value.
+         */
+        size_t getMinOptionBytes(uint32_t value);
+
+        /**
          * @brief Wrapper around low level function to send raw UDP data.
          *
          * @param udp The UDP instance to use for sending data.

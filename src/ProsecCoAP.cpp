@@ -3,13 +3,18 @@
 
 namespace Coap
 {
+    void Message::_setId(uint16_t id)
+    {
+        this->_message[2] = (id >> 8) & 0xFF; // Message ID high byte.
+        this->_message[3] = id & 0xFF;        // Message ID low byte.
+    }
+
     Message::Message(MessageType type, MessageCode code, uint16_t id)
     {
         // Initialize message with default CoAP header values.
         this->_message[0] = (COAP_VERSION << 6) | (static_cast<uint8_t>(type) << 4); // Version 1, given code, Token Length 0
         this->_message[1] = static_cast<uint8_t>(code);                              // Code data.
-        this->_message[2] = (id >> 8) & 0xFF;                                        // Message ID high byte.
-        this->_message[3] = id & 0xFF;                                               // Message ID low byte.
+        this->_setId(id);                                                            // Set message ID.
         this->_messageLength = COAP_HEADER_SIZE;                                     // Keep track of the current message size.
     }
 
@@ -71,6 +76,50 @@ namespace Coap
 
     ErrorCode Message::buildNotification(Observer &observer, Message &notification) const
     {
+        notification = *this; // Start with a copy of the original message.
+        // Set a new message ID (it cannot be the same of the original message).
+        uint16_t newId = Message::_getNextId();
+        notification._setId(newId);
+        // Set message type to NON by default.
+        notification.setType(MessageType::NON);
+
+        // Remove any existing token and add the observer token.
+        size_t existingTokenLength = this->_message[0] & 0x0F;       // Get existing token length.
+        notification._remove(COAP_HEADER_SIZE, existingTokenLength); // No-op if existingTokenLength is 0.
+        const uint8_t *observerToken = observer.getToken();
+        size_t observerTokenLength = observer.getTokenLength();
+        ErrorCode err = notification._insert(COAP_HEADER_SIZE, observerToken, observerTokenLength);
+        if (err != ErrorCode::OK)
+        {
+            // Could not add observer token to the message.
+            return err;
+        }
+
+        // Add Observe option with the appropriate incremental value.
+        uint32_t observeValue = observer.getNextSequentialNumber();
+        // The Observe option value is a 24-bit unsigned integer, so it can be up to 3 bytes long.
+        // We use the minimum number of bytes needed to represent the value, as suggested by specifications.
+        size_t observeValueBytes = 3;
+        if (observeValue == 0)
+        {
+            observeValueBytes = 0; // Special case for zero, which can be represented with zero bytes.
+        }
+        else if (observeValue <= 0xFF)
+        {
+            observeValueBytes = 1;
+        }
+        else if (observeValue <= 0xFFFF)
+        {
+            observeValueBytes = 2;
+        }
+
+        err = notification.addOption(OptionNumber::OBSERVE, reinterpret_cast<const uint8_t *>(&observeValue), observeValueBytes);
+        if (err != ErrorCode::OK)
+        {
+            // Could not add Observe option to the message.
+            return err;
+        }
+
         return ErrorCode::OK;
     }
 
@@ -219,7 +268,8 @@ namespace Coap
         Option opt;
         uint16_t lastOptionNumber = 0;
         size_t currentByte = it._currentByte; // Next byte to read.
-        while (it.next(opt) == ErrorCode::OK) // Exit the loop if there are no more options.
+        ErrorCode err;
+        while ((err = it.next(opt)) == ErrorCode::OK) // Exit the loop if there are no more options.
         {
             if (opt.number <= newNumber)
             {
@@ -231,9 +281,26 @@ namespace Coap
             else
             {
                 // We found an option with a number greater than the new one.
-                // The insertion point is before this option, at currentByte.
+                // The insertion point is at currentByte.
                 break;
             }
+        }
+
+        if (err != ErrorCode::OK && err != ErrorCode::NOT_FOUND)
+        {
+            // An error occurred while iterating through options. The message may be malformed.
+            Serial.println("Error while iterating through options: " + String(static_cast<int8_t>(err))); // TEMP
+            Serial.println("Last byte position: " + String(currentByte));                                 // TEMP
+            Serial.println("Message length: " + String(this->getLength()));                               // TEMP
+            byte b;
+            for (size_t i = 0; i < this->getLength(); i++)
+            {
+                b = this->asRaw()[i];
+                Serial.print(b >> 4, HEX);
+                Serial.print(b & 0x0F, HEX);
+            }
+            Serial.println();
+            return err;
         }
 
         // currentByte is now the insertion point for the new option.
@@ -320,7 +387,7 @@ namespace Coap
         }
 
         // Write the header into the message buffer.
-        ErrorCode err = this->_insert(currentByte, newOptionHeader, newOptionHeaderLength);
+        err = this->_insert(currentByte, newOptionHeader, newOptionHeaderLength);
         if (err != ErrorCode::OK)
         {
             return err; // Insertion failed, message unmodified.
@@ -562,7 +629,7 @@ namespace Coap
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
         // Read the option header byte.
         uint8_t optionHeader = messageRaw[this->_currentByte];
-        this->_currentByte++; // Points to next byte to read.
+        this->_currentByte++; // Update next byte to read for the following run.
         uint16_t delta = (optionHeader >> 4) & 0x0F;
         option.length = optionHeader & 0x0F;
 
@@ -750,9 +817,18 @@ namespace Coap
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-12.3
         // Therefore, it is a valid content format and needs to be added as an option.
         ErrorCode err;
+        size_t byteFormat = 2; // Use minimal representation if possible.
+        if (static_cast<uint16_t>(format) == 0)
+        {
+            byteFormat = 0; // Use minimal representation if possible.
+        }
+        else if (static_cast<uint16_t>(format) <= 0xFF)
+        {
+            byteFormat = 1;
+        }
         err = this->addOption(OptionNumber::CONTENT_FORMAT,
                               reinterpret_cast<const uint8_t *>(&format),
-                              (static_cast<uint16_t>(format) > 255) ? 2 : 1); // Use minimal representation.
+                              byteFormat);
         if (err != ErrorCode::OK)
         {
             return err;

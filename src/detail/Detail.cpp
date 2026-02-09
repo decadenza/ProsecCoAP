@@ -27,6 +27,20 @@ namespace Coap::Detail
         return (unsigned long)random(COAP_ACK_MIN_TIMEOUT_MS, COAP_ACK_MAX_TIMEOUT_MS);
     }
 
+    size_t getMinOptionBytes(uint32_t value)
+    {
+        if (value == 0)
+            return 0;
+        else if (value <= 0xFF)
+            return 1;
+        else if (value <= 0xFFFF)
+            return 2;
+        else if (value <= 0xFFFFFF)
+            return 3;
+        else
+            return 4;
+    }
+
     ErrorCode UriRegistry::add(const char *path, Callback callback)
     {
         if (path == nullptr)

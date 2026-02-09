@@ -8,6 +8,7 @@
 #ifndef OBSERVERS_H_INCLUDED
 #define OBSERVERS_H_INCLUDED
 
+#include <Arduino.h>
 #include "../Types.h"
 
 namespace Coap
@@ -27,18 +28,6 @@ namespace Coap
          * @brief Indicates whether the observer is currently active.
          */
         bool _active : 8;
-
-        /**
-         * @brief The sequential number for notifications, as per specifications.
-         *
-         * The sequential number must be incremented by 1 for each notification
-         * sent to the observer.
-         * It will wrap around to zero after reaching the maximum value of 24 bits (0xFFFFFF).
-         *
-         * @note Only the least significant 24 bits are used.
-         *       https://datatracker.ietf.org/doc/html/rfc7641#section-4.4
-         */
-        uint32_t _observationSequentialNumber : 24;
 
         /**
          * @brief The IP address of the observer.
@@ -67,7 +56,7 @@ namespace Coap
         /**
          * @brief Default constructor that creates an inactive observer.
          */
-        Observer() : _active(false), _observationSequentialNumber(0) {}
+        Observer() : _active(false) {}
 
         /**
          * @brief Constructor that creates an active observer with the given parameters.
@@ -78,7 +67,7 @@ namespace Coap
          * @param tokenLength The length of the token in bytes.
          */
         Observer(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
-            : _active(true), _observationSequentialNumber(0), _ip(ip), _port(port), _tokenLength(tokenLength)
+            : _active(true), _ip(ip), _port(port), _tokenLength(tokenLength)
         {
             // Copy the token value, ensuring that we do not exceed the maximum token length.
             memcpy(this->_token, token, tokenLength > COAP_MAX_TOKEN_LENGTH ? COAP_MAX_TOKEN_LENGTH : tokenLength);
@@ -137,6 +126,24 @@ namespace Coap
         {
             return this->_tokenLength;
         }
+
+        /**
+         * @brief The sequential number for notifications, as per specifications.
+         *
+         * As per https://datatracker.ietf.org/doc/html/rfc7641#section-4.4,
+         * the sequence number MAY start at any value and MUST NOT increase so fast
+         * that it increases by more than 2^23 within less than 256 seconds.
+         *
+         * As per implementation notes, using the local clock (e.g. millis()) is a
+         * simple way to meet this requirement.
+         *
+         * @note Only the least significant 24 bits are used.
+         */
+        uint32_t getNextSequentialNumber()
+        {
+            unsigned long currentTime = millis();
+            return currentTime & 0xFFFFFF; // Return only the least significant 24 bits.
+        }
     };
 
     /**
@@ -184,9 +191,19 @@ namespace Coap
         }
 
         /**
+         * @brief Get the maximum number of observers that can be stored in the registry.
+         *
+         * @return The maximum number of entries.
+         */
+        size_t length() const
+        {
+            return N;
+        }
+
+        /**
          * @brief Add a new observer to the registry.
          *
-         * If the observer already exists, it will not be added again.
+         * If the observer already exists and is active, it will not be added again.
          *
          * @param ip The IP address of the observer.
          * @param port The port of the observer.
@@ -220,7 +237,7 @@ namespace Coap
             {
                 if (!this->_observers[i].isActive())
                 {
-                    // Inactive slot found. Add the new observer here (active by default).
+                    // Inactive slot found. Add the new observer here (active by default, see constructor).
                     this->_observers[i] = Observer(ip, port, token, tokenLength);
                     return ErrorCode::OK;
                 }

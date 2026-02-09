@@ -28,9 +28,11 @@ addPayload	KEYWORD2
 addPort	KEYWORD2
 addPath	KEYWORD2
 addToken	KEYWORD2
+buildNotification	KEYWORD2
 buildResponse	KEYWORD2
 getCode	KEYWORD2
 getId	KEYWORD2
+getIp	KEYWORD2
 getLength	KEYWORD2
 getOptionIterator	KEYWORD2
 getPayload	KEYWORD2
@@ -38,6 +40,7 @@ getPort	KEYWORD2
 getToken	KEYWORD2
 getTokenLength	KEYWORD2
 getType	KEYWORD2
+length	KEYWORD2
 loop	KEYWORD2
 removeOption	KEYWORD2
 sendMessage	KEYWORD2

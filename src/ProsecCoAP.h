@@ -88,7 +88,7 @@ namespace Coap
         /**
          * @brief Track the current byte position in the message.
          *
-         * `_message->_message[_currentByte]` points to the next byte to read.
+         * `_message->_message[_currentByte]` points to the first byte to read.
          */
         size_t _currentByte;
         /**
@@ -195,6 +195,15 @@ namespace Coap
          */
         static uint16_t _getNextId();
 
+        /**
+         * @brief Set the message ID.
+         *
+         * Writes on byte 2 and 3 of the message to set the message ID.
+         *
+         * @param id The message ID to set.
+         */
+        void _setId(uint16_t id);
+
     public:
         /**
          * @brief Builds a default CoAP message.
@@ -280,6 +289,7 @@ namespace Coap
          * @brief Get the CoAP version of this message.
          *
          * The version is always present in a CoAP message.
+         * Messages built with the library should always have version @ref COAP_VERSION.
          *
          * @return The 2-bit CoAP version as uint8_t.
          */
@@ -580,15 +590,16 @@ namespace Coap
          *
          * The original message is not affected. It will be *copied*
          * and used as base for the new notification.
-         * The notification type is set to @ref MessageType::NON.
+         * The notification will be a copy of the original message with the following modifications:
+         * - A new message ID.
+         * - Message type set to @ref MessageType::NON by default (you can change it manually if needed).
+         * - Token and its length set as the token from the observer.
+         * - Observe option with the appropriate incremental value taken from the observer.
          *
-         * The token from the observer and the Observe option with the appropriate incremental value
-         * will be included in the notification message as per specifications.
+         * @note This does not set any other field. Options like Uri-Host or Uri-Port
+         *       should be set manually if necessary.
          *
-         * @note This does not set Uri-Host or Uri-Port options in the notification.
-         *       It is the caller's responsibility to set them on the notification if necessary.
-         *
-         * @note After building the notification, it can be sent as any other message using the @ref Node::sendMessage method.
+         * After building the notification, it can be sent as any other message using the @ref Node::sendMessage method.
          *
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
          *

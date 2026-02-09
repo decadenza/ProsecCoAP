@@ -5,10 +5,8 @@
  *
  * To test this example with the coap-client tool from libcoap:
  * ```
- * coap-client-notls -m get -s 5 coap://192.168.0.1/subscribe
+ * coap-client-notls -m get -s 60 coap://192.168.0.1/observe
  * ```
- * Note that at exit the unsubscribe call will be sent
- * automatically by coap-client-notls.
  */
 #include <SPI.h>
 #include <Ethernet.h>
@@ -88,6 +86,8 @@ void loop()
     coapNode.loop(); // Process coap requests.
 
     sendNotification(); // Simulate a recurring notification.
+
+    delay(1000);
 }
 
 // Handle observe registration and deregistration requests.
@@ -139,14 +139,49 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
     }
 }
 
-// Demo notification with gibberish data.
+// Demo notification for the "observe" path.
 void sendNotification()
 {
-    char payload[] = "The answer is 42\n";
+    char payload[] = "The answer is 42";
     size_t payloadLength = strlen(payload);
 
-    // if (coap.notifyObservers("subscribe", payload, payloadLength, COAP_TEXT_PLAIN) > 0)
-    // {
-    //     SERIAL_PRINTLN("Notified!");
-    // }
+    Coap::Message msg(Coap::MessageType::NON, Coap::MessageCode::CONTENT);
+    //msg.addPath("observe"); // Path must match the one the observer subscribed to!
+    //msg.addPayload((const uint8_t *)payload, payloadLength, Coap::ContentFormat::TEXT_PLAIN);
+
+    const uint8_t obsValue = 1;
+    if(msg.addOption(Coap::OptionNumber::OBSERVE, &obsValue, 1)!= Coap::ErrorCode::OK) {
+      SERIAL_PRINTLN("Add option failed for observe value");
+      }
+    
+    for (size_t i = 0; i < myObservers.length(); i++)
+    {
+        if (myObservers[i].isActive())
+        {
+            // Build a notification message for this observer, using the original message as template.
+            Coap::Message notification;
+            Coap::ErrorCode err = msg.buildNotification(myObservers[i], notification);
+            if (err == Coap::ErrorCode::OK)
+            {
+                err = coapNode.sendMessage(notification, myObservers[i].getIp(), myObservers[i].getPort());
+                if (err == Coap::ErrorCode::OK)
+                {
+                    SERIAL_PRINT("Notification sent to observer #");
+                    SERIAL_PRINTLN(i);
+                }
+                else
+                {
+                    SERIAL_PRINT("Failed send to observer #");
+                    SERIAL_PRINTLN(i);
+                }
+            }
+            else
+            {
+                SERIAL_PRINT("Failed to build notification for observer #");
+                SERIAL_PRINT(i);
+                SERIAL_PRINT(" error ");
+                SERIAL_PRINTLN((int8_t)err);
+            }
+        }
+    }
 }
