@@ -28,11 +28,46 @@ In addition, these libraries are needed:
 2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
 
 ## Getting started
-Navigate to *File > Examples > ProsecCoAP* to get started with some basic examples.
+A simple server can be started as:
+```c++
+// Initialise a node.
+EthernetUDP Udp;
+Coap::Node coapNode(Udp);
+
+// Your custom callback declaration.
+void myCallback(Coap::Message &message, IPAddress ip, uint16_t port);
+
+void setup()
+{
+  // ...
+  coapNode.serve("my-endpoint", myCallback);
+  coapNode.start();
+  // ...
+}
+
+void loop() {
+  // ...
+  coapNode.loop();
+}
+
+
+// Send a CONTENT response to a GET request.
+void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
+{
+  if (message.getCode() == Coap::MessageCode::GET)
+  {
+    Coap::Message response;
+    message.buildResponse(Coap::MessageCode::CONTENT, response);
+    response.addPayload((const uint8_t *)("42"), 2, Coap::ContentFormat::TEXT_PLAIN);
+    coapNode.sendMessage(response, ip, port);
+  }
+}
+```
+In Arduino IDE, navigate to *File > Examples > ProsecCoAP* or check the [example folder](./examples/) for some basic examples.
 
 ### How to test
 #### Verify compile errors and warnings
-To quickly verify a successfull build process for multiple boards: 
+To quickly verify a successful build process for multiple boards: 
 1. Install [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation/).
 2. Ensure the core for the supported boards are installed:
 ```
@@ -43,7 +78,7 @@ arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp826
 3. Run `make`.
 
 #### Functional tests
-The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need CoAP server libcoap or microcoap server to work. You can, alternatively:
+The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need another CoAP node to be tested. You can, alternatively:
 - Use two devices and check serial monitor of each.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
   For example, [libcoap](https://github.com/obgm/libcoap) by compiling it yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
@@ -56,15 +91,7 @@ To manually build documentation from the main folder, run:
 ```
 doxygen
 ```
-The documentation will be accesible from `./html/index.html`.
-
-## Contributing
-Contributions are welcome. You may contribute by:
-- Opening issues to report bugs or ask for missing features.
-- Make pull requests.
-
-Code must be documented using [Doxygen](https://www.doxygen.nl/manual/docblocks.html).
-Please write code following the [Arduino Style Guide](https://docs.arduino.cc/learn/contributions/arduino-library-style-guide/) as much as possible.
+The documentation will be accessible from `./html/index.html`.
 
 ## Release process memo
 A new version is released following these steps:
