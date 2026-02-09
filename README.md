@@ -103,6 +103,6 @@ pio pkg publish .
 ```
 
 ## Credits
-This library was inspired from [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library) by Hirotaka Niisato. Credits for the original code go to the original contributors.
+This library was inspired by [CoAP-simple-library](https://github.com/hirotakaster/CoAP-simple-library). Credits for the original code go to the original contributors.
 
 We are grateful to the original author for providing a solid, lightweight foundation for CoAP communication on embedded systems. This project maintains the original MIT License and continues the spirit of open-source IoT development.
