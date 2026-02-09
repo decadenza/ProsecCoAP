@@ -46,26 +46,31 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::buildResponse(const Message &request, MessageCode code, Message &response)
+    ErrorCode Message::buildResponse(MessageCode code, Message &response) const
     {
-        if (request.getLength() < COAP_HEADER_SIZE)
+        if (this->getLength() < COAP_HEADER_SIZE)
         {
             return ErrorCode::MALFORMED_MESSAGE;
         }
         // Initialize response message (version, type, code)
         // and use the message id from the request.
-        response = Message(MessageType::ACK, code, request.getId());
+        response = Message(MessageType::ACK, code, this->getId());
 
         // The response length is currently just the header size.
         // If the request has a token, copy it and update the token length in the response.
-        size_t tokenLength = request.getTokenLength();
+        size_t tokenLength = this->getTokenLength();
         memcpy(response._message + COAP_HEADER_SIZE, // Destination.
-               request._message + COAP_HEADER_SIZE,  // Source.
+               this->_message + COAP_HEADER_SIZE,    // Source.
                tokenLength);                         // Length.
         // Set token length, stored in the 4 lower bits of the first byte.
         response._message[0] |= static_cast<uint8_t>(tokenLength) & 0x0F;
         // Update the total message length.
         response._messageLength = COAP_HEADER_SIZE + tokenLength;
+        return ErrorCode::OK;
+    }
+
+    ErrorCode Message::buildNotification(Observer &observer, Message &notification) const
+    {
         return ErrorCode::OK;
     }
 

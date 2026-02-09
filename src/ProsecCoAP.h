@@ -274,7 +274,7 @@ namespace Coap
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        static ErrorCode buildResponse(const Message &request, MessageCode code, Message &response);
+        ErrorCode buildResponse(MessageCode code, Message &response) const;
 
         /**
          * @brief Get the CoAP version of this message.
@@ -574,6 +574,30 @@ namespace Coap
          * @return True if the message is an Observe deregister request, false in all other cases.
          */
         bool isObserveDeregister();
+
+        /**
+         * @brief Build a notification message for the given observer.
+         *
+         * The original message is not affected. It will be *copied*
+         * and used as base for the new notification.
+         * The notification type is set to @ref MessageType::NON.
+         *
+         * The token from the observer and the Observe option with the appropriate incremental value
+         * will be included in the notification message as per specifications.
+         *
+         * @note This does not set Uri-Host or Uri-Port options in the notification.
+         *       It is the caller's responsibility to set them on the notification if necessary.
+         *
+         * @note After building the notification, it can be sent as any other message using the @ref Node::sendMessage method.
+         *
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
+         *
+         * @param observer The observer to notify. The observer incremental value will be updated accordingly.
+         * @param[out] notification The base notification message to send to the observer.
+         * @return An error code indicating success or failure.
+         *         It returns @ref ErrorCode::OK on success.
+         */
+        ErrorCode buildNotification(Observer &observer, Message &notification) const;
     };
 
     class Node; // Forward declaration.
@@ -848,25 +872,6 @@ namespace Coap
          * @return An error code indicating success or failure.
          */
         ErrorCode sendMessage(const Message &message, IPAddress ip, uint16_t port);
-
-        /**
-         * @brief Notify an observer with a notification message.
-         *
-         * The base message must be passed as parameters.
-         * Normally the notification is @ref MessageType::NON.
-         *
-         * The original notification message is copied and modified to include
-         * the token from the observer and the Observe option with the appropriate incremental value.
-         *
-         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
-         *
-         * @param observer The observer to notify.
-         * @param notification The base notification message to send to the observer.
-         * @return An error code indicating success or failure.
-         *         It returns @ref ErrorCode::OK on success.
-         *         It returns @ref ErrorCode::OK if the observer is set as non active.
-         */
-        ErrorCode notify(Observer &observer, const Message &notification);
     };
 
 } // End of namespace Coap

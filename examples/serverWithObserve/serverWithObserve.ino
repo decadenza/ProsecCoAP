@@ -102,14 +102,14 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
         if (err == Coap::ErrorCode::OK)
         {
             // Send ACK response.
-            Coap::Message::buildResponse(message, Coap::MessageCode::VALID, response);
+            message.buildResponse(Coap::MessageCode::VALID, response);
             coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Subscribed!");
         }
         else
         {
             // Tell the client that the subscription failed.
-            Coap::Message::buildResponse(message, Coap::MessageCode::SERVICE_UNAVAILABLE, response);
+            message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
             coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Observer could not be added!");
         }
@@ -120,14 +120,14 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
         Coap::Message response;
         if (err == Coap::ErrorCode::OK)
         {
-            Coap::Message::buildResponse(message, Coap::MessageCode::VALID, response);
+            message.buildResponse(Coap::MessageCode::VALID, response);
             coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Unsubscribed!");
         }
         else
         {
             // Tell the client that the subscription failed.
-            Coap::Message::buildResponse(message, Coap::MessageCode::SERVICE_UNAVAILABLE, response);
+            message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
             coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Observer could not be removed!");
         }

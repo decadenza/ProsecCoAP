@@ -81,14 +81,14 @@ void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
     digitalWrite(LEDP, LED_STATUS);
     // Send a response to a PUT requests.
     Coap::Message response;
-    Coap::Message::buildResponse(message, Coap::MessageCode::CHANGED, response);
+    message.buildResponse(Coap::MessageCode::CHANGED, response);
     coapNode.sendMessage(response, ip, port);
   }
   else if (message.getCode() == Coap::MessageCode::GET)
   {
     // Send a piggybacked response to a GET requests.
     Coap::Message response;
-    Coap::Message::buildResponse(message, Coap::MessageCode::CONTENT, response);
+    message.buildResponse(Coap::MessageCode::CONTENT, response);
     response.addPayload((const uint8_t *)(LED_STATUS ? "1" : "0"), 1, Coap::ContentFormat::TEXT_PLAIN);
     coapNode.sendMessage(response, ip, port);
   }
