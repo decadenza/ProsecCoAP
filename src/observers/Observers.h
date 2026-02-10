@@ -15,7 +15,7 @@ namespace Coap
 {
 
     /**
-     * @brief A remote CoAP observer, activelly observing a resource.
+     * @brief A remote CoAP observer, actively observing a resource.
      *
      * It tracks a remote observer registered for notifications.
      */
