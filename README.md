@@ -29,7 +29,7 @@ In addition, these libraries are needed:
 
 ## Getting started
 A simple server can be started as:
-```c++
+```cpp
 // Initialise a node.
 EthernetUDP Udp;
 Coap::Node coapNode(Udp);
@@ -66,7 +66,7 @@ void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
 In Arduino IDE, navigate to *File > Examples > ProsecCoAP* or check the [example folder](./examples/) for some basic examples.
 
 ### How to test
-#### Verify compile errors and warnings
+#### Verify compile errors and warnings for multiple boards
 To quickly verify a successful build process for multiple boards: 
 1. Install [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation/).
 2. Ensure the core for the supported boards are installed:
@@ -77,7 +77,7 @@ arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp826
 ```
 3. Run `make`.
 
-#### Functional tests
+#### Functional tests through the examples
 The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need another CoAP node to be tested. You can, alternatively:
 - Use two devices and check serial monitor of each.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.

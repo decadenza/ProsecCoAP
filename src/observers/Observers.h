@@ -18,8 +18,6 @@ namespace Coap
      * @brief A remote CoAP observer, activelly observing a resource.
      *
      * It tracks a remote observer registered for notifications.
-     *
-     * @todo Add support to clean up older observers.
      */
     class Observer
     {

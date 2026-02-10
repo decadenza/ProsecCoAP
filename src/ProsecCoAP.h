@@ -41,9 +41,9 @@ namespace Coap
      *
      * @see Message::addRandomToken(size_t length) for a method that generates a random token and directly adds it to a message.
      *
-     * @note As per protocol specifications, *"a client sending a request without using Transport Layer Security
+     * @note As per protocol specifications, *a client sending a request without using Transport Layer Security
      *       SHOULD use a nontrivial, randomized token to guard
-     *       against spoofing of responses"*.
+     *       against spoofing of responses*.
      */
     ErrorCode getRandomToken(size_t length, uint8_t *buffer);
 
