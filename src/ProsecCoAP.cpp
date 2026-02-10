@@ -922,6 +922,44 @@ namespace Coap
         return false;
     }
 
+    ErrorCode Message::getPath(String *path) const
+    {
+        if (path == nullptr)
+        {
+            return ErrorCode::INVALID_ARGUMENT;
+        }
+        OptionIterator it = this->getOptionIterator();
+        Option opt;
+        String result = "";
+        bool hasQuery = false;
+        while (it.next(opt) == ErrorCode::OK)
+        {
+            if (opt.number == OptionNumber::URI_PATH) // Uri path always comes before query.
+            {
+                // Append '/' before each path segment.
+                result += '/';
+                // Append the path segment one character at a time.
+                for (size_t i = 0; i < opt.length; i++)
+                {
+                    result += static_cast<char>(opt.value[i]);
+                }
+            }
+            else if (opt.number == OptionNumber::URI_QUERY)
+            {
+                // Append '?' before the first query segment, '&' before the following ones.
+                result += hasQuery ? '&' : '?';
+                hasQuery = true;
+                // Append the query segment value one character at a time.
+                for (size_t i = 0; i < opt.length; i++)
+                {
+                    result += static_cast<char>(opt.value[i]);
+                }
+            }
+        }
+        *path = result;
+        return ErrorCode::OK;
+    }
+
     void Detail::RetransmissionEntry::set(Coap::Message message, IPAddress ip, uint16_t port)
     {
         this->message = message;

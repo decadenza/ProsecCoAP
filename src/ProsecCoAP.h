@@ -505,7 +505,7 @@ namespace Coap
         ErrorCode addPort(uint16_t port);
 
         /**
-         * @brief Add the URI path (and query) to the message.
+         * @brief Add the URI path and query to the message.
          *
          * It follows section "Decomposing URIs into Options"
          * https://datatracker.ietf.org/doc/html/rfc7252#section-6.4
@@ -526,6 +526,23 @@ namespace Coap
          * @return An error code indicating success or failure.
          */
         ErrorCode addPath(const char *path);
+
+        /**
+         * @brief Retrieve all the URI path and URI query options from the message and concatenate them into a single string.
+         * @param[out] path Pointer to a String object where the path (and query) will be stored.
+         * @return An error code indicating success or failure.
+         *
+         * Example usage:
+         * @code{.cpp}
+         * String path;
+         * path.reserve(100); // OPTIONAL: Reserve some space to avoid dynamic resizing during concatenation.
+         * if (msg.getPath(&path) == Coap::ErrorCode::OK)
+         * {
+         *   Serial.println(path);
+         * }
+         * @endcode
+         */
+        ErrorCode getPath(String *path) const;
 
         /**
          * @brief Get the payload from the message.
