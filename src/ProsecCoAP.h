@@ -32,6 +32,21 @@ namespace Coap
      * @{
      */
 
+    /**
+     * @brief Generate a random token of the given length.
+     *
+     * @param[in] length The length of the token to generate in bytes. The maximum length is @ref COAP_MAX_TOKEN_LENGTH.
+     * @param[out] buffer The buffer to store the generated token. It must be at least `length` bytes long.
+     * @return An error code indicating success or failure. Particularly, it returns @ref ErrorCode::INVALID_ARGUMENT if the token length exceeds @ref COAP_MAX_TOKEN_LENGTH.
+     *
+     * @see Message::addRandomToken(size_t length) for a method that generates a random token and directly adds it to a message.
+     *
+     * @note As per protocol specifications, *"a client sending a request without using Transport Layer Security
+     *       SHOULD use a nontrivial, randomized token to guard
+     *       against spoofing of responses"*.
+     */
+    ErrorCode getRandomToken(size_t length, uint8_t *buffer);
+
     /** @} */ // End of Functions group
     // !SECTION End of Functions.
 
@@ -79,7 +94,7 @@ namespace Coap
     class OptionIterator
     {
 
-        // Give access to private members to Message.
+        // Give access to private members to Message methods.
         friend class Message;
         /**
          * @brief The reference to the message being iterated.
@@ -203,18 +218,6 @@ namespace Coap
          * @param id The message ID to set.
          */
         void _setId(uint16_t id);
-
-        /**
-         * @brief Sets the token of the message with the given value and length.
-         *
-         * Any existing token is removed before setting the new one.
-         *
-         * @param token Pointer to the token data.
-         * @param length Length of the token in bytes.
-         * @return An error code indicating success or failure. Particularly,
-         *         it returns @ref ErrorCode::INVALID_ARGUMENT if the token length exceeds @ref COAP_MAX_TOKEN_LENGTH.
-         */
-        ErrorCode _setToken(const uint8_t *token, size_t length);
 
     public:
         /**
@@ -362,6 +365,18 @@ namespace Coap
         size_t getTokenLength() const;
 
         /**
+         * @brief Sets the token of the message with the given value and length.
+         *
+         * Any existing token is removed before setting the new one.
+         *
+         * @param token Pointer to the token data.
+         * @param length Length of the token in bytes.
+         * @return An error code indicating success or failure. Particularly,
+         *         it returns @ref ErrorCode::INVALID_ARGUMENT if the token length exceeds @ref COAP_MAX_TOKEN_LENGTH.
+         */
+        ErrorCode setToken(const uint8_t *token, size_t length);
+
+        /**
          * @brief Add a token of the given length to the message.
          *
          * A random token is generated and added to the message as per specifications.
@@ -378,10 +393,10 @@ namespace Coap
          * Example:
          * @code{.cpp}
          * CoapMessage msg;
-         * const uint8_t* token = msg.addToken(4);
+         * const uint8_t* token = msg.addRandomToken(4);
          * @endcode
          */
-        ErrorCode addToken(size_t length);
+        ErrorCode addRandomToken(size_t length);
 
         /**
          * @brief Get the pointer to the current token.
@@ -402,6 +417,16 @@ namespace Coap
          * @endcode
          */
         const uint8_t *getToken() const;
+
+        /**
+         * @brief Check if the message token matches the given token and length.
+         * @param token Pointer to the token to match.
+         * @param length Length of the token to match in bytes.
+         * @return True if the message token matches the given token and length, false otherwise.
+         *
+         * @note Zero-length tokens are valid. Two messages with zero-length tokens are considered to match each other.
+         */
+        bool matchesToken(const uint8_t *token, size_t length) const;
 
         /**
          * @brief Return an iterator over the message options.
@@ -761,12 +786,17 @@ namespace Coap
             ErrorCode process(UDP *udp);
 
             /**
-             * @brief Match a received response to an outstanding request.
+             * @brief Match a response with the original request and removes it from the retransmission queue.
              *
              * If the response is not of type @ref MessageType::ACK or @ref MessageType::RST,
              * this function exits immediately.
-             * See https://datatracker.ietf.org/doc/html/rfc7252#section-2.1
+             * Responses are matched with the original request based on the message ID.
              * If a matching entry is found, it is marked as completed and removed from the queue.
+             *
+             * @see https://datatracker.ietf.org/doc/html/rfc7252#section-4.2
+             *
+             * @note The retransmission matching is based on the message ID, and prevents duplication.
+             * It is different from *logic* request/response matching, which is based on the token.
              *
              * @param response The received CoAP response message.
              */

@@ -48,11 +48,15 @@ void setup()
   Serial.println(Ethernet.localIP());
 }
 
+
+// Build a GET request message to transmit.
+Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
+msg.addPath("time");                                               // Set the URI path to "time".
+msg.addRandomToken(4);                                             // OPTIONAL: Add a random token of 4 bytes.
+  
 void loop()
 {
-  // Build a GET request message to transmit.
-  Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
-  msg.addPath("time");                                               // Set the URI path to "time".
+  
 
   coapNode.sendMessage(msg, destinationIp, COAP_DEFAULT_PORT);
   Serial.print("[Request] id=");

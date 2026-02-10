@@ -34,7 +34,7 @@ void loop()
   Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
 
   // Optionally, add a token of 4 bytes. Use getToken() to retrieve it later.
-  msg.addToken(4);
+  msg.addRandomToken(4);
   Serial.print("Added token of length: ");
   Serial.println(msg.getTokenLength());
 
@@ -110,9 +110,10 @@ void loop()
     Serial.print(", length: ");
     Serial.print(opt.length);
     Serial.print(", value: 0x"); // Value is printed both in HEX and as characters.
-    for (size_t i = 0; i < opt.length; i++) {
-      Serial.print(opt.value[i] >> 4,  HEX);
-      Serial.print(opt.value[i] & 0x0F,HEX);
+    for (size_t i = 0; i < opt.length; i++)
+    {
+      Serial.print(opt.value[i] >> 4, HEX);
+      Serial.print(opt.value[i] & 0x0F, HEX);
     }
     Serial.print(" (");
     Serial.write(opt.value, opt.length);
@@ -139,6 +140,6 @@ void loop()
     Serial.write(payload, payloadLength); // Write as raw bytes. You may need to interpret it in other ways.
     Serial.println();
   }
-  
+
   delay(2000);
 }

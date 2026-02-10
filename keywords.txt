@@ -28,7 +28,7 @@ addOption	KEYWORD2
 addPayload	KEYWORD2
 addPort	KEYWORD2
 addPath	KEYWORD2
-addToken	KEYWORD2
+addRandomToken	KEYWORD2
 buildNotification	KEYWORD2
 buildResponse	KEYWORD2
 getCode	KEYWORD2

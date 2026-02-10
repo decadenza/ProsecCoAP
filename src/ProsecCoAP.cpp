@@ -3,6 +3,29 @@
 
 namespace Coap
 {
+
+    ErrorCode getRandomToken(size_t length, uint8_t *buffer)
+    {
+        if (length > COAP_MAX_TOKEN_LENGTH)
+        {
+            return ErrorCode::INVALID_ARGUMENT;
+        }
+
+        // Fill token buffer with random bytes, minimizing calls to random().
+        // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
+        // Each random() call only provides 31 random bits, so we can extract up to 3 fully random bytes per call.
+        constexpr size_t chunkSize = sizeof(long) - 1; // Generally will be 4 - 1 = 3 bytes.
+        constexpr long max = (1UL << (chunkSize * 8)); // Generally 16 777 216.
+        for (size_t c = 0; c < length; c += chunkSize)
+        {
+            long r = random(0, max);
+            size_t bytesToCopy = (length - c < chunkSize) ? (length - c) : chunkSize;
+            memcpy(buffer + c, &r, bytesToCopy);
+        }
+
+        return ErrorCode::OK;
+    }
+
     void Message::_setId(uint16_t id)
     {
         this->_message[2] = (id >> 8) & 0xFF; // Message ID high byte.
@@ -86,7 +109,7 @@ namespace Coap
         // Overwrite any existing token and add the observer token.
         const uint8_t *observerToken = observer.getToken();
         size_t observerTokenLength = observer.getTokenLength();
-        ErrorCode err = notification._setToken(observerToken, observerTokenLength); // It overwrites any existing token in the message.
+        ErrorCode err = notification.setToken(observerToken, observerTokenLength); // It overwrites any existing token in the message.
         if (err != ErrorCode::OK)
         {
             // Could not add observer token to the message.
@@ -216,7 +239,7 @@ namespace Coap
         return this->_message[0] & 0x0F;
     }
 
-    ErrorCode Message::_setToken(const uint8_t *token, size_t length)
+    ErrorCode Message::setToken(const uint8_t *token, size_t length)
     {
         if (length > COAP_MAX_TOKEN_LENGTH)
         {
@@ -240,26 +263,20 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::addToken(size_t length)
+    ErrorCode Message::addRandomToken(size_t length)
     {
 
         // SECTION Generate a random token.
         uint8_t tokenBuffer[COAP_MAX_TOKEN_LENGTH];
 
-        // Fill token buffer with random bytes, minimizing calls to random().
-        // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
-        // Each random() call only provides 31 random bits, so we can extract up to 3 fully random bytes per call.
-        constexpr size_t chunkSize = sizeof(long) - 1; // Generally will be 4 - 1 = 3 bytes.
-        constexpr long max = (1UL << (chunkSize * 8)); // Generally 16 777 216.
-        for (size_t c = 0; c < length; c += chunkSize)
+        ErrorCode err = getRandomToken(length, tokenBuffer);
+        if (err != ErrorCode::OK)
         {
-            long r = random(0, max);
-            size_t bytesToCopy = (length - c < chunkSize) ? (length - c) : chunkSize;
-            memcpy(tokenBuffer + c, &r, bytesToCopy);
+            return err; // Failed to generate random token.
         }
         // !SECTION
 
-        return this->_setToken(tokenBuffer, length);
+        return this->setToken(tokenBuffer, length);
     }
 
     const uint8_t *Message::getToken() const
@@ -267,6 +284,17 @@ namespace Coap
         // Give access by reference to the token within the message.
         // Caller can use getTokenLength() to get the token length in bytes (which may also be zero).
         return this->_message + COAP_HEADER_SIZE;
+    }
+
+    bool Message::matchesToken(const uint8_t *token, size_t length) const
+    {
+        size_t tokenLength = this->getTokenLength();
+        if (tokenLength != length)
+        {
+            return false; // Lengths differ, cannot match.
+        }
+        const uint8_t *messageToken = this->getToken();
+        return (memcmp(messageToken, token, length) == 0);
     }
 
     ErrorCode Message::addOption(OptionNumber newNumber, const uint8_t *newValue, size_t newLength)
