@@ -9,7 +9,7 @@
 #define OBSERVERS_H_INCLUDED
 
 #include <Arduino.h>
-#include "../Types.h"
+#include "../Definitions.h"
 
 namespace Coap
 {

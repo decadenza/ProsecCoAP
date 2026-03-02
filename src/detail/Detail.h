@@ -10,7 +10,7 @@
 #define DETAIL_H_INCLUDED
 
 // Include common types.
-#include "../Types.h"
+#include "../Definitions.h"
 
 namespace Coap
 {

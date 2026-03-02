@@ -7,8 +7,8 @@
 #ifndef __PROSECCOAP_H__
 #define __PROSECCOAP_H__
 
-// Include common types.
-#include "Types.h"
+// Include common types and definitions.
+#include "Definitions.h"
 
 // Include internal implementation details.
 #include "detail/Detail.h"
