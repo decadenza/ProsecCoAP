@@ -59,9 +59,6 @@ void setup()
   // Serve the light endpoint linked to callbackLight function.
   coapNode.serve("light", callbackLight);
 
-  // This is a single handler for all responses.
-  coapNode.setResponseHandler(callbackResponse);
-
   // Start coap node.
   coapNode.start();
   Serial.print("Coap node started on ");
@@ -112,17 +109,4 @@ void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 
   Serial.print("[Light] ");
   Serial.println(LED_STATUS);
-}
-
-// CoAP client response callback. This will receive the ACK responses.
-void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
-{
-  if (message.getType() == Coap::MessageType::ACK)
-  {
-    Serial.println("[Coap Response ACK] Message ID ");
-    Serial.print(message.getId());
-    Serial.print(" from ");
-    Serial.print(ip + ":" + port);
-    Serial.println();
-  }
 }
