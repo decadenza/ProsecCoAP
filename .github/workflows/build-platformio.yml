@@ -12,7 +12,7 @@ jobs:
             board: uno
             platform: atmelavr
             sketch-root: examples
-            exclude-prefixes: "examples/serverEsp32 examples/serverEsp8266"
+            exclude-prefixes: "examples/serverEsp32 examples/serverEsp8266 examples/serverRpiPico"
             extra-lib-deps: Ethernet
           - name: ESP8266
             board: nodemcuv2
