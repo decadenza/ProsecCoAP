@@ -1,6 +1,9 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
+// Explicitly include Arduino header for IPAddress definition.
+#include <Arduino.h>
+
 // Include Arduino UDP library.
 #include "Udp.h"
 
