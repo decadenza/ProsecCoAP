@@ -8,10 +8,10 @@
  * ```
  * coap-client-notls -p 5683 -T aaaa -v 9 -m get -s 60 coap://192.168.0.1/observe
  * ```
- * 
+ *
  * Note that the option `-s 60` will set the CoAP observe register option and keep the
  * command running to receive notifications for the given amount of seconds.
- * 
+ *
  * In order to avoid duplicate observers:
  * - `-p 5683` sets a fixed port.
  * - `-T aaaa` sets a fixed starting token (libcoap will use the next one).
@@ -19,7 +19,6 @@
  * Multiple subscriptions with equal IP, port, path and token should result in
  * the same observer.
  */
-#include <SPI.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <ProsecCoAP.h>
@@ -37,7 +36,7 @@
 #define SERIAL_PRINT_HEX(x) Serial.print(x, HEX)
 #define SERIAL_PRINTLN(x) Serial.println(x)
 #define SERIAL_WRITE(x) Serial.write(x)
-#define SERIAL_WRITE_LEN(x,y) Serial.write(x,y)
+#define SERIAL_WRITE_LEN(x, y) Serial.write(x, y)
 #else
 #define SERIAL_BEGIN(baud)
 #define SERIAL_WHILE_WAIT
@@ -45,7 +44,7 @@
 #define SERIAL_PRINT_HEX(x)
 #define SERIAL_PRINTLN(x)
 #define SERIAL_WRITE(x)
-#define SERIAL_WRITE_LEN(x,y)
+#define SERIAL_WRITE_LEN(x, y)
 #endif
 
 // UDP and CoAP instances.
@@ -118,7 +117,7 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
             message.buildResponse(Coap::MessageCode::VALID, response);
             coapNode.sendMessage(response, ip, port);
             SERIAL_PRINT("Subscribed with token: ");
-            SERIAL_WRITE_LEN(message.getToken(),message.getTokenLength());
+            SERIAL_WRITE_LEN(message.getToken(), message.getTokenLength());
             SERIAL_PRINTLN();
         }
         else
@@ -163,7 +162,7 @@ void sendNotification()
     Coap::Message msg(Coap::MessageType::NON, Coap::MessageCode::CONTENT);
     msg.addPath("observe"); // Path must match the one the observer subscribed to!
     msg.addPayload((const uint8_t *)payload, payloadLength, Coap::ContentFormat::TEXT_PLAIN);
-    
+
     for (size_t i = 0; i < myObservers.length(); i++)
     {
         if (myObservers[i].isActive())

@@ -32,28 +32,33 @@ In addition, these libraries are needed:
 ## Getting started
 A simple server can be started as:
 ```cpp
+#include <Ethernet.h>
+#include <EthernetUdp.h>
+#include <ProsecCoAP.h>
+
 // Initialise a node.
 EthernetUDP Udp;
 Coap::Node coapNode(Udp);
+
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD};
+IPAddress deviceIp(192, 168, 0, 99);
 
 // Your custom callback declaration.
 void myCallback(Coap::Message &message, IPAddress ip, uint16_t port);
 
 void setup()
 {
-  // ...
+  Ethernet.begin(mac, deviceIp);
   coapNode.serve("my-endpoint", myCallback);
   coapNode.start();
-  // ...
 }
 
 void loop() {
-  // ...
   coapNode.loop();
 }
 
 
-// Send a CONTENT response to a GET request.
+// Send "42" as a response to a GET request.
 void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
 {
   if (message.getCode() == Coap::MessageCode::GET)
@@ -65,7 +70,7 @@ void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
   }
 }
 ```
-In Arduino IDE, navigate to *File > Examples > ProsecCoAP* or check the [example folder](./examples/) for some basic examples.
+Navigate to *File > Examples > ProsecCoAP* in Arduino IDE or check the [example folder](./examples/) for more examples.
 
 ### How to test
 #### Verify compile errors and warnings for multiple boards

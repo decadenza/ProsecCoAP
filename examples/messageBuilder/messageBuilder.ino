@@ -3,9 +3,6 @@
  *
  * @note Message building does not require to initialise the CoAP node.
  */
-#include <SPI.h>
-#include <Dhcp.h>
-#include <Dns.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <ProsecCoAP.h>

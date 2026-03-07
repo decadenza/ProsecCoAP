@@ -18,9 +18,6 @@
  * coap-server-notls -v 9
  * ```
  */
-#include <SPI.h>
-#include <Dhcp.h>
-#include <Dns.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <ProsecCoAP.h>

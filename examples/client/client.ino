@@ -12,9 +12,6 @@
  * Note that coap-server-notls exposes a "time" endpoint that returns the current
  * timestamp as payload.
  */
-#include <SPI.h>
-#include <Dhcp.h>
-#include <Dns.h>
 #include <Ethernet.h>
 #include <EthernetUdp.h>
 #include <ProsecCoAP.h>
@@ -58,7 +55,7 @@ void loop()
   coapNode.sendMessage(msg, destinationIp, COAP_DEFAULT_PORT);
   Serial.print("[Request] id=");
   Serial.println(msg.getId());
-  
+
   // Even when acting as client, we still need to run the loop housekeeping.
   coapNode.loop();
 
