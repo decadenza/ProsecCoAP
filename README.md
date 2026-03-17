@@ -8,18 +8,11 @@ Documentation is available at [https://decadenza.github.io/ProsecCoAP/](https://
 
 ## Details
 This library is an implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)).
-It aims at implementing all the compulsory functionalities of the protocol, maintaining the execution lightweight and clearly documenting its API. 
+The aim is to provide all the compulsory functionalities, maintaining the execution lightweight and clearly documenting its API. 
 
 Please open an issue to request missing functionalities or report bugs.
 
 ## How to install
-### Pre-requirements and dependencies
-For the examples to compile and work correctly, please ensure to have all the necessary boards installed.
-
-In addition, these libraries are needed:
-- `Ethernet` by Arduino
-- `WiFi` by Arduino
-
 ### Install from Arduino IDE Library Manager
 1. Open the *Sketch* menu in the IDE.
 2. Navigate to *Include Library > Manage Libraries*.
@@ -72,6 +65,13 @@ void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
 ```
 Navigate to *File > Examples > ProsecCoAP* in Arduino IDE or check the [example folder](./examples/) for more examples.
 
+### Run the examples
+For the examples to compile and work correctly, please ensure to have all the necessary boards installed.
+The examples need standard libraries, like:
+- `Ethernet` by Arduino
+- `WiFi` by Arduino
+Refer to the comments in each example for details.
+
 ### How to test
 #### Verify compile errors and warnings for multiple boards
 To quickly verify a successful build process for multiple boards: 
@@ -85,16 +85,17 @@ arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp826
 3. Run `make`.
 
 #### Functional tests through the examples
-The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need another CoAP node to be tested. You can, alternatively:
+The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need another CoAP node to be executed. You can, alternatively:
 - Use two devices and check serial monitor of each.
 - Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
   For example, [libcoap](https://github.com/obgm/libcoap) by compiling it yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
 
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
+It points to the `main` branch.
 
 ### Building the documentation
-To manually build documentation from the main folder, run:
+To manually build documentation in your current working directory, run:
 ```
 doxygen
 ```
