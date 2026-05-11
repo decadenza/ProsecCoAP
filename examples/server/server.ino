@@ -12,11 +12,6 @@
  * ```
  * Note that on some boards, ON/OFF logic may be inverted.
  *
- * In addition, this example also acts as client, sending a GET request every second.
- * To receive such requests, start a CoAP server on the remote machine. To test, you may use:
- * ```
- * coap-server-notls -v 9
- * ```
  */
 #include <Ethernet.h>
 #include <EthernetUdp.h>
