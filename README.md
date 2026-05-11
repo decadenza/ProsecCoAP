@@ -18,6 +18,11 @@ Please open an issue to request missing functionalities or report bugs.
 2. Navigate to *Include Library > Manage Libraries*.
 3. Search for "ProsecCoAP" and install.
 
+### Install from PlatformIO CLI
+```
+pio pkg install --library "ProsecCoAP"
+```
+
 ### Manual install
 1. Download this source code branch as a zip file.
 2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
