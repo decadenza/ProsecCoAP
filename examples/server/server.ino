@@ -11,7 +11,6 @@
  * coap-client-notls -m put coap://192.168.0.99/light -e "0"
  * ```
  * Note that on some boards, ON/OFF logic may be inverted.
- *
  */
 #include <Ethernet.h>
 #include <EthernetUdp.h>
@@ -21,6 +20,9 @@
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress deviceIp(192, 168, 0, 99); // Set your own.
+IPAddress dns(192, 168, 0, 99);      // Set your own.
+IPAddress gateway(192, 168, 0, 99);  // Set your own.
+IPAddress subnet(255, 255, 255, 0);  // Set your own.
 
 // CoAP server path callback.
 void callbackLight(Coap::Message &packet, IPAddress ip, uint16_t port);
@@ -41,7 +43,9 @@ void setup()
   {
   } // Wait for serial.
 
-  Ethernet.begin(mac, deviceIp);
+  Ethernet.begin(mac, deviceIp, dns, gateway, subnet);
+  // If using DHCP, use:
+  // Ethernet.begin(mac);
 
   // LED state.
   pinMode(LEDP, OUTPUT);

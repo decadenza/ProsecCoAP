@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "ProsecCoAP.h"
+#include "Utils.h"
 
 namespace Coap
 {
@@ -13,14 +14,21 @@ namespace Coap
 
         // Fill token buffer with random bytes, minimizing calls to random().
         // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
-        // Each random() call only provides 31 random bits, so we can extract up to 3 fully random bytes per call.
-        constexpr size_t chunkSize = sizeof(long) - 1; // Generally will be 4 - 1 = 3 bytes.
-        constexpr long max = (1UL << (chunkSize * 8)); // Generally 16 777 216.
-        for (size_t c = 0; c < length; c += chunkSize)
+        // Each random() call only provides 31 random bits, so we can only extract up to 3 fully random bytes per call
+        // starting from the LSB.
+        constexpr size_t chunkSize = 3;
+        constexpr long max = (1UL << (chunkSize * 8)); // 16 777 216.
+
+        size_t processedBytes = 0;
+        while (processedBytes < length)
         {
-            long r = random(0, max);
-            size_t bytesToCopy = (length - c < chunkSize) ? (length - c) : chunkSize;
-            memcpy(buffer + c, &r, bytesToCopy);
+            uint32_t r = static_cast<uint32_t>(random(0, max));
+            size_t bytesToCopy = (length - processedBytes < chunkSize) ? (length - processedBytes) : chunkSize;
+            for (size_t i = 0; i < bytesToCopy; i++)
+            {
+                buffer[processedBytes + i] = static_cast<uint8_t>((r >> (8 * i)) & 0xFF);
+            }
+            processedBytes += bytesToCopy;
         }
 
         return ErrorCode::OK;
@@ -28,6 +36,7 @@ namespace Coap
 
     void Message::_setId(uint16_t id)
     {
+        // Message ID in network byte order (big-endian).
         this->_message[2] = (id >> 8) & 0xFF; // Message ID high byte.
         this->_message[3] = id & 0xFF;        // Message ID low byte.
     }
@@ -133,8 +142,11 @@ namespace Coap
         {
             observeValueBytes = 2;
         }
+        uint8_t observeValueBigEndian[4];                               // 4 bytes to hold the big-endian representation of the 24-bit value, with leading zeros.
+        Utils::toNetworkByteOrder(observeValue, observeValueBigEndian); // Convert observe value to big-endian byte order, as required by CoAP specifications.
 
-        err = notification.addOption(OptionNumber::OBSERVE, reinterpret_cast<const uint8_t *>(&observeValue), observeValueBytes);
+        // Ignoring the leading zeros in the MSB.
+        err = notification.addOption(OptionNumber::OBSERVE, observeValueBigEndian + 1 + (3 - observeValueBytes), observeValueBytes);
         if (err != ErrorCode::OK)
         {
             // Could not add Observe option to the message.
@@ -564,8 +576,13 @@ namespace Coap
             length = 0; // Special case for port 0, which can be represented with zero bytes.
         else if (port <= 0xFF)
             length = 1;
-        // Add it as Uri-Port option.
-        return this->addOption(OptionNumber::URI_PORT, reinterpret_cast<const uint8_t *>(&port), length);
+
+        uint8_t portBigEndian[2];
+        Utils::toNetworkByteOrder(port, portBigEndian); // Convert port to big-endian byte order, as required by CoAP specifications.
+        // If length is 0, write an option with zero bytes.
+        // If length is 1, only the second byte is used.
+        // If length is 2, both bytes are used.
+        return this->addOption(OptionNumber::URI_PORT, portBigEndian + (2 - length), length);
     }
 
     ErrorCode Message::addPath(const char *path)
@@ -845,18 +862,26 @@ namespace Coap
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-12.3
         // Therefore, it is a valid content format and needs to be added as an option.
         ErrorCode err;
-        size_t byteFormat = 2; // Use minimal representation if possible.
+        size_t formatBytes = 2; // Use minimal representation if possible.
         if (static_cast<uint16_t>(format) == 0)
         {
-            byteFormat = 0; // Use minimal representation if possible.
+            formatBytes = 0; // Use minimal representation if possible.
         }
         else if (static_cast<uint16_t>(format) <= 0xFF)
         {
-            byteFormat = 1;
+            formatBytes = 1;
         }
+
+        uint8_t formatBigEndian[2];
+
+        Utils::toNetworkByteOrder(static_cast<uint16_t>(format), formatBigEndian); // Convert content format to big-endian byte order, as required by CoAP specifications.
+
+        // If formatBytes is 0, write an option with zero bytes.
+        // If formatBytes is 1, only the LSB is used.
+        // If formatBytes is 2, both bytes are used.
         err = this->addOption(OptionNumber::CONTENT_FORMAT,
-                              reinterpret_cast<const uint8_t *>(&format),
-                              byteFormat);
+                              formatBigEndian + (2 - formatBytes),
+                              formatBytes);
         if (err != ErrorCode::OK)
         {
             return err;
@@ -875,13 +900,15 @@ namespace Coap
                 continue;
             if (option.number == OptionNumber::OBSERVE)
             {
-                // The Observe option value may be 0-3 bytes long.
-                // The protocol uses Network Byte Order (big-endian), so we need to shift the bytes accordingly.
+                // The Observe option value is 0 to 3 bytes long.
+                // The protocol uses Network Byte Order (big-endian).
+                // Shift the bytes accordingly.
                 observeValue = 0;
-                for (size_t i = 0; i < option.length && i < 3; i++)
+                for (size_t i = 0; i < option.length && i < 3; i++) // Length is capped to 3.
                 {
                     observeValue |= static_cast<uint32_t>(option.value[i]) << (8 * (2 - i));
                 }
+                observeValue >>= (8 * (3 - option.length)); // Shift back to the right if length is less than 3.
                 return ErrorCode::OK;
             }
             else
