@@ -135,8 +135,11 @@ namespace Coap
         {
             observeValueBytes = 2;
         }
+        uint8_t observeValueBigEndian[4];                               // 4 bytes to hold the big-endian representation of the 24-bit value, with leading zeros.
+        Utils::toNetworkByteOrder(observeValue, observeValueBigEndian); // Convert observe value to big-endian byte order, as required by CoAP specifications.
 
-        err = notification.addOption(OptionNumber::OBSERVE, reinterpret_cast<const uint8_t *>(&observeValue), observeValueBytes);
+        // Ignoring the leading zeros in the MSB.
+        err = notification.addOption(OptionNumber::OBSERVE, observeValueBigEndian + 1 + (3 - observeValueBytes), observeValueBytes);
         if (err != ErrorCode::OK)
         {
             // Could not add Observe option to the message.
@@ -890,13 +893,15 @@ namespace Coap
                 continue;
             if (option.number == OptionNumber::OBSERVE)
             {
-                // The Observe option value may be 0-3 bytes long.
-                // The protocol uses Network Byte Order (big-endian), so we need to shift the bytes accordingly.
+                // The Observe option value is 0 to 3 bytes long.
+                // The protocol uses Network Byte Order (big-endian).
+                // Shift the bytes accordingly.
                 observeValue = 0;
-                for (size_t i = 0; i < option.length && i < 3; i++)
+                for (size_t i = 0; i < option.length && i < 3; i++) // Length is capped to 3.
                 {
                     observeValue |= static_cast<uint32_t>(option.value[i]) << (8 * (2 - i));
                 }
+                observeValue >>= (8 * (3 - option.length)); // Shift back to the right if length is less than 3.
                 return ErrorCode::OK;
             }
             else
