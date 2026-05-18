@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "ProsecCoAP.h"
+#include "Utils.h"
 
 namespace Coap
 {
@@ -28,6 +29,7 @@ namespace Coap
 
     void Message::_setId(uint16_t id)
     {
+        // Message ID in network byte order (big-endian).
         this->_message[2] = (id >> 8) & 0xFF; // Message ID high byte.
         this->_message[3] = id & 0xFF;        // Message ID low byte.
     }
@@ -564,8 +566,13 @@ namespace Coap
             length = 0; // Special case for port 0, which can be represented with zero bytes.
         else if (port <= 0xFF)
             length = 1;
-        // Add it as Uri-Port option.
-        return this->addOption(OptionNumber::URI_PORT, reinterpret_cast<const uint8_t *>(&port), length);
+
+        uint8_t portBigEndian[2];
+        Utils::toNetworkByteOrder(port, portBigEndian); // Convert port to big-endian byte order, as required by CoAP specifications.
+        // If length is 0, write an option with zero bytes.
+        // If length is 1, only the second byte is used.
+        // If length is 2, both bytes are used.
+        return this->addOption(OptionNumber::URI_PORT, portBigEndian + (2 - length), length);
     }
 
     ErrorCode Message::addPath(const char *path)
@@ -845,18 +852,26 @@ namespace Coap
         // See https://datatracker.ietf.org/doc/html/rfc7252#section-12.3
         // Therefore, it is a valid content format and needs to be added as an option.
         ErrorCode err;
-        size_t byteFormat = 2; // Use minimal representation if possible.
+        size_t formatBytes = 2; // Use minimal representation if possible.
         if (static_cast<uint16_t>(format) == 0)
         {
-            byteFormat = 0; // Use minimal representation if possible.
+            formatBytes = 0; // Use minimal representation if possible.
         }
         else if (static_cast<uint16_t>(format) <= 0xFF)
         {
-            byteFormat = 1;
+            formatBytes = 1;
         }
+
+        uint8_t formatBigEndian[2];
+
+        Utils::toNetworkByteOrder(static_cast<uint16_t>(format), formatBigEndian); // Convert content format to big-endian byte order, as required by CoAP specifications.
+
+        // If formatBytes is 0, write an option with zero bytes.
+        // If formatBytes is 1, only the LSB is used.
+        // If formatBytes is 2, both bytes are used.
         err = this->addOption(OptionNumber::CONTENT_FORMAT,
-                              reinterpret_cast<const uint8_t *>(&format),
-                              byteFormat);
+                              formatBigEndian + (2 - formatBytes),
+                              formatBytes);
         if (err != ErrorCode::OK)
         {
             return err;

@@ -369,7 +369,7 @@ namespace Coap
          *
          * Any existing token is removed before setting the new one.
          *
-         * @param token Pointer to the token data.
+         * @param token Pointer to the token data. The token is expected to be in network byte order (i.e. big-endian).
          * @param length Length of the token in bytes.
          * @return An error code indicating success or failure. Particularly,
          *         it returns @ref ErrorCode::INVALID_ARGUMENT if the token length exceeds @ref COAP_MAX_TOKEN_LENGTH.
@@ -404,6 +404,7 @@ namespace Coap
          * @see getTokenLength() to get the token length in bytes (which may also be zero).
          *
          * @param[out] buffer Pointer to the token within the message.
+         *             The toke is expected to be in network byte order (i.e. big-endian).
          *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The token length.
          * @return An error code. ErrorCode::OK for success.
@@ -457,7 +458,8 @@ namespace Coap
          * See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
          *
          * @param number The option number, as defined in the CoAP specification.
-         * @param value The pointer to the option value.
+         * @param value The pointer to the option value. The data is expected to be in
+         * network byte order (i.e. big-endian).
          * @param length The length of the option value.
          * @return An error code indicating success or failure. @ref ErrorCode::NOT_SUPPORTED is returned
          *        if adding the option would exceed the maximum number of allowed options for that
@@ -570,7 +572,8 @@ namespace Coap
          *
          * If a payload is already present, this function will return an error.
          *
-         * @param payload Pointer to the payload data.
+         * @param payload Pointer to the payload data. The data is expected to be in
+         * network byte order (i.e. big-endian).
          * @param length Length of the payload data.
          * @param format The content format of the payload.
          * @return An error code indicating success or failure.
