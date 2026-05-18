@@ -404,7 +404,6 @@ namespace Coap
          * @see getTokenLength() to get the token length in bytes (which may also be zero).
          *
          * @param[out] buffer Pointer to the token within the message.
-         *             The toke is expected to be in network byte order (i.e. big-endian).
          *             @warning The pointer is valid **as long as the message exists**.
          * @param[out] length The token length.
          * @return An error code. ErrorCode::OK for success.
@@ -458,8 +457,7 @@ namespace Coap
          * See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
          *
          * @param number The option number, as defined in the CoAP specification.
-         * @param value The pointer to the option value. The data is expected to be in
-         * network byte order (i.e. big-endian).
+         * @param value The pointer to the option value.
          * @param length The length of the option value.
          * @return An error code indicating success or failure. @ref ErrorCode::NOT_SUPPORTED is returned
          *        if adding the option would exceed the maximum number of allowed options for that
