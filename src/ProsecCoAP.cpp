@@ -14,14 +14,21 @@ namespace Coap
 
         // Fill token buffer with random bytes, minimizing calls to random().
         // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
-        // Each random() call only provides 31 random bits, so we can extract up to 3 fully random bytes per call.
-        constexpr size_t chunkSize = sizeof(long) - 1; // Generally will be 4 - 1 = 3 bytes.
-        constexpr long max = (1UL << (chunkSize * 8)); // Generally 16 777 216.
-        for (size_t c = 0; c < length; c += chunkSize)
+        // Each random() call only provides 31 random bits, so we can only extract up to 3 fully random bytes per call
+        // starting from the LSB.
+        constexpr size_t chunkSize = 3;
+        constexpr long max = (1UL << (chunkSize * 8)); // 16 777 216.
+
+        size_t processedBytes = 0;
+        while (processedBytes < length)
         {
-            long r = random(0, max);
-            size_t bytesToCopy = (length - c < chunkSize) ? (length - c) : chunkSize;
-            memcpy(buffer + c, &r, bytesToCopy);
+            uint32_t r = static_cast<uint32_t>(random(0, max));
+            size_t bytesToCopy = (length - processedBytes < chunkSize) ? (length - processedBytes) : chunkSize;
+            for (size_t i = 0; i < bytesToCopy; i++)
+            {
+                buffer[processedBytes + i] = static_cast<uint8_t>((r >> (8 * i)) & 0xFF);
+            }
+            processedBytes += bytesToCopy;
         }
 
         return ErrorCode::OK;
