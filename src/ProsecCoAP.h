@@ -10,6 +10,9 @@
 // Include common types and definitions.
 #include "Definitions.h"
 
+// Include public utility helpers.
+#include "Utils.h"
+
 // Include internal implementation details.
 #include "detail/Detail.h"
 

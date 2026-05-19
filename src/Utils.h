@@ -2,9 +2,18 @@
  * @file Utils.h
  * @brief Utility functions for the ProsecCoAP library.
  * */
+#ifndef __PROSECCOAP_UTILS_H__
+#define __PROSECCOAP_UTILS_H__
+
 #include <Arduino.h>
 #include <stdint.h>
 
+/**
+ * @namespace Utils
+ * @brief Utilities.
+ *
+ * This namespace contains public utility functions and classes.
+ */
 namespace Coap::Utils
 {
     /**
@@ -54,3 +63,5 @@ namespace Coap::Utils
 #endif
     }
 }
+
+#endif
