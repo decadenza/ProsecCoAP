@@ -140,7 +140,7 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
         }
         else
         {
-            // Tell the client that the subscription failed.
+            // Tell the client that the un-subscription failed.
             message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
             coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Observer could not be removed!");
