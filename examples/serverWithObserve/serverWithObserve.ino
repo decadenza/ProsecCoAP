@@ -5,16 +5,25 @@
  *
  * # Testing with libcoap
  * To test this example with the coap-client tool from libcoap:
+ * 1. Start a local server with verbose option:
  * ```
- * coap-client-notls -p 5683 -T aaaa -v 9 -m get -s 60 coap://192.168.0.1/observe
+ * coap-server-notls -v 9
  * ```
+ *
+ * 2. In a separate terminal, subscribe to the endpoint:
+ * ```
+ * coap-client-notls -p 5683 -T AAAA -v 9 -s 60 coap://192.168.0.1/observe
+ * ```
+ *
+ * You will see data incoming in the first terminal.
+ * Adjust IP address and port as needed.
  *
  * Note that the option `-s 60` will set the CoAP observe register option and keep the
- * command running to receive notifications for the given amount of seconds.
+ * command running to receive registration ACK for the given amount of seconds.
  *
- * In order to avoid duplicate observers:
+ * Notes:
  * - `-p 5683` sets a fixed port.
- * - `-T aaaa` sets a fixed starting token (libcoap will use the next one).
+ * - `-T AAAA` sets a fixed starting token (ASCII, libcoap will use the next one).
  *
  * Multiple subscriptions with equal IP, port, path and token should result in
  * the same observer.
