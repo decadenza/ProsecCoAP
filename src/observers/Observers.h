@@ -161,11 +161,22 @@ namespace Coap
     template <size_t N>
     class ObserverRegistry
     {
+        // Ensure N is at least 1.
+        static_assert(N >= 1, "ObserverRegistry Error: N must be 1 or greater!");
+
     private:
         /**
          * @brief Array of observers.
          */
         Observer _observers[N];
+
+        /**
+         * @brief The current index for adding new observers.
+         *
+         * It is used to implement a simple round-robin mechanism to add new observers when the registry is full.
+         * @see add_force()
+         */
+        size_t _currentIndex = 0;
 
     public:
         /**
@@ -226,7 +237,7 @@ namespace Coap
                     this->_observers[i].getTokenLength() == tokenLength &&
                     memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
                 {
-                    // Matching active observer found. No need to add again.
+                    // Matching active observer found. No need to add it again.
                     return ErrorCode::OK;
                 }
             }
@@ -239,11 +250,53 @@ namespace Coap
                 {
                     // Inactive slot found. Add the new observer here (active by default, see constructor).
                     this->_observers[i] = Observer(ip, port, token, tokenLength);
+                    this->_currentIndex = (i + 1) % N; // Update the next designated slot.
                     return ErrorCode::OK;
                 }
             }
 
             return ErrorCode::NOT_SUPPORTED;
+        }
+
+        /**
+         * @brief Force add a new observer to the registry.
+         *
+         * If the observer already exists and is active, it will not be added again.
+         * If the registry is full, the new observer will be added by replacing the oldest one,
+         * as per a round-robin mechanism.
+         *
+         * @param ip The IP address of the observer.
+         * @param port The port of the observer.
+         * @param token The token used by the observer.
+         * @param tokenLength The length of the token in bytes.
+         *
+         * @return void, as this function cannot fail.
+         */
+        void add_force(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+        {
+            // We MUST check if the observer is already present before trying to add it, to avoid duplicates.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                    continue; // Skip inactive observers.
+
+                // An observer is considered the same if it matches the combination of IP address, port, token and token length.
+                if (this->_observers[i].getIp() == ip &&
+                    this->_observers[i].getPort() == port &&
+                    this->_observers[i].getTokenLength() == tokenLength &&
+                    memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
+                {
+                    // Matching active observer found. No need to add it again.
+                    return;
+                }
+            }
+
+            // New observer.
+            // Force add using the current index.
+            // NOTE: As the index is updated in a round-robin manner, this will effectively
+            // replace the oldest observer when the registry is full.
+            this->_observers[this->_currentIndex] = Observer(ip, port, token, tokenLength);
+            this->_currentIndex = (this->_currentIndex + 1) % N; // Update the next designated slot.
         }
 
         /**
