@@ -275,23 +275,11 @@ namespace Coap
         void add_force(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
         {
             // We MUST check if the observer is already present before trying to add it, to avoid duplicates.
-            for (size_t i = 0; i < N; i++)
-            {
-                if (!this->_observers[i].isActive())
-                    continue; // Skip inactive observers.
+            ErrorCode err = this->add(ip, port, token, tokenLength);
+            if (err == ErrorCode::OK)
+                return;
 
-                // An observer is considered the same if it matches the combination of IP address, port, token and token length.
-                if (this->_observers[i].getIp() == ip &&
-                    this->_observers[i].getPort() == port &&
-                    this->_observers[i].getTokenLength() == tokenLength &&
-                    memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
-                {
-                    // Matching active observer found. No need to add it again.
-                    return;
-                }
-            }
-
-            // New observer.
+            // New observer could not be added.
             // Force add using the current index.
             // NOTE: As the index is updated in a round-robin manner, this will effectively
             // replace the oldest observer when the registry is full.
