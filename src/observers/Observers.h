@@ -282,6 +282,37 @@ namespace Coap
         /**
          * @brief Remove an observer from the registry.
          *
+         * The observer is identified by the provided combination of IP address and port.
+         *
+         * @param ip The IP address of the observer that needs to be removed.
+         * @param port The port of the observer.
+         * @return An error code indicating success or failure.
+         *         It will return @ref ErrorCode::OK if the observer is successfully removed.
+         *         It will return @ref ErrorCode::NOT_FOUND if no matching observer is found
+         *
+         * @see remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength) for the token-specific version.
+         */
+        ErrorCode remove(IPAddress ip, uint16_t port)
+        {
+            // Find the observer matching the given parameters and remove it.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                    continue; // Skip inactive observers.
+                if (this->_observers[i].getIp() == ip &&
+                    this->_observers[i].getPort() == port)
+                {
+                    // Matching observer found. Remove it by marking it as inactive.
+                    this->_observers[i].setActive(false);
+                    return ErrorCode::OK;
+                }
+            }
+            return ErrorCode::NOT_FOUND;
+        }
+
+        /**
+         * @brief Remove an observer from the registry.
+         *
          * @param observer The observer to be removed.
          * @return An error code indicating success or failure.
          *
