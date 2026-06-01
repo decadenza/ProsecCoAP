@@ -74,6 +74,8 @@ namespace Coap
         /**
          * @brief Check if the observer is currently active.
          * @return True if the observer is active, false otherwise.
+         *
+         * Inactive observers are ignored by the registry and their slot can be reused to store new observers.
          */
         bool isActive() const
         {
@@ -83,6 +85,8 @@ namespace Coap
         /**
          * @brief Set the observer as active or inactive.
          * @param active True to set the observer as active, false to set it as inactive.
+         *
+         * Inactive observers are ignored by the registry and their slot can be reused to store new observers.
          */
         void setActive(bool active)
         {
@@ -161,6 +165,9 @@ namespace Coap
     template <size_t N>
     class ObserverRegistry
     {
+        // Ensure N is at least 1.
+        static_assert(N >= 1, "ObserverRegistry Error: N must be 1 or greater!");
+
     private:
         /**
          * @brief Array of observers.
@@ -199,6 +206,22 @@ namespace Coap
         }
 
         /**
+         * @brief Get the number of active observers currently stored in the registry.
+         *
+         * @return The number of active observers.
+         */
+        size_t countActive() const
+        {
+            size_t count = 0;
+            for (size_t i = 0; i < N; i++)
+            {
+                if (this->_observers[i].isActive())
+                    count++;
+            }
+            return count;
+        }
+
+        /**
          * @brief Add a new observer to the registry.
          *
          * If the observer already exists and is active, it will not be added again.
@@ -226,7 +249,7 @@ namespace Coap
                     this->_observers[i].getTokenLength() == tokenLength &&
                     memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
                 {
-                    // Matching active observer found. No need to add again.
+                    // Matching active observer found. No need to add it again.
                     return ErrorCode::OK;
                 }
             }
@@ -270,6 +293,37 @@ namespace Coap
                     this->_observers[i].getPort() == port &&
                     this->_observers[i].getTokenLength() == tokenLength &&
                     memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
+                {
+                    // Matching observer found. Remove it by marking it as inactive.
+                    this->_observers[i].setActive(false);
+                    return ErrorCode::OK;
+                }
+            }
+            return ErrorCode::NOT_FOUND;
+        }
+
+        /**
+         * @brief Remove an observer from the registry.
+         *
+         * The observer is identified by the provided combination of IP address and port.
+         *
+         * @param ip The IP address of the observer that needs to be removed.
+         * @param port The port of the observer.
+         * @return An error code indicating success or failure.
+         *         It will return @ref ErrorCode::OK if the observer is successfully removed.
+         *         It will return @ref ErrorCode::NOT_FOUND if no matching observer is found
+         *
+         * @see remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength) for the token-specific version.
+         */
+        ErrorCode remove(IPAddress ip, uint16_t port)
+        {
+            // Find the observer matching the given parameters and remove it.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                    continue; // Skip inactive observers.
+                if (this->_observers[i].getIp() == ip &&
+                    this->_observers[i].getPort() == port)
                 {
                     // Matching observer found. Remove it by marking it as inactive.
                     this->_observers[i].setActive(false);

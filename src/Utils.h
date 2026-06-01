@@ -2,9 +2,18 @@
  * @file Utils.h
  * @brief Utility functions for the ProsecCoAP library.
  * */
+#ifndef __PROSECCOAP_UTILS_H__
+#define __PROSECCOAP_UTILS_H__
+
 #include <Arduino.h>
 #include <stdint.h>
 
+/**
+ * @namespace Utils
+ * @brief Utilities.
+ *
+ * This namespace contains public utility functions and classes.
+ */
 namespace Coap::Utils
 {
     /**
@@ -53,4 +62,27 @@ namespace Coap::Utils
                 ((net_long & 0x000000FFul) << 24));
 #endif
     }
+
+    /**
+     * @brief Custom implementation of ntohll (Network to Host Long Long) for 64-bit integers.
+     */
+    inline constexpr uint64_t ntohll(uint64_t net_longlong)
+    {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        // If the native platform is already Big-Endian, do nothing
+        return net_longlong;
+#else
+        // On Little-Endian, swap the 8 bytes
+        return (((net_longlong & 0xFF00000000000000ull) >> 56) |
+                ((net_longlong & 0x00FF000000000000ull) >> 40) |
+                ((net_longlong & 0x0000FF0000000000ull) >> 24) |
+                ((net_longlong & 0x000000FF00000000ull) >> 8) |
+                ((net_longlong & 0x00000000FF000000ull) << 8) |
+                ((net_longlong & 0x0000000000FF0000ull) << 24) |
+                ((net_longlong & 0x000000000000FF00ull) << 40) |
+                ((net_longlong & 0x00000000000000FFull) << 56));
+#endif
+    }
 }
+
+#endif

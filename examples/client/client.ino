@@ -76,6 +76,8 @@ void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port)
   const uint8_t *payload;
   size_t payloadLength;
   message.getPayload(payload, payloadLength);
+  // NOTE: The payload will be in Big-Endian and will need to be interpreted.
+  // In this example we assume it is a raw sequence of bytes.
   Serial.print(" payload=");
   Serial.write(payload, payloadLength);
   Serial.println();
