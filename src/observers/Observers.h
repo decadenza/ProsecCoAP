@@ -303,20 +303,19 @@ namespace Coap
         }
 
         /**
-         * @brief Remove an observer from the registry.
+         * @brief Remove any observers with the given combination of IP and port.
          *
-         * The observer is identified by the provided combination of IP address and port.
-         *
-         * @param ip The IP address of the observer that needs to be removed.
-         * @param port The port of the observer.
+         * @param ip The IP address of the observer(s) to remove.
+         * @param port The port of the observer(s).
          * @return An error code indicating success or failure.
-         *         It will return @ref ErrorCode::OK if the observer is successfully removed.
+         *         It will return @ref ErrorCode::OK if one or more observers have been removed.
          *         It will return @ref ErrorCode::NOT_FOUND if no matching observer is found
          *
          * @see remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength) for the token-specific version.
          */
         ErrorCode remove(IPAddress ip, uint16_t port)
         {
+            ErrorCode result = ErrorCode::NOT_FOUND;
             // Find the observer matching the given parameters and remove it.
             for (size_t i = 0; i < N; i++)
             {
@@ -327,10 +326,38 @@ namespace Coap
                 {
                     // Matching observer found. Remove it by marking it as inactive.
                     this->_observers[i].setActive(false);
-                    return ErrorCode::OK;
+                    result = ErrorCode::OK;
                 }
             }
-            return ErrorCode::NOT_FOUND;
+            return result;
+        }
+
+        /**
+         * @brief Remove any observers with the given IP.
+         *
+         * @param ip The IP address of the observer(s) to remove.
+         * @return An error code indicating success or failure.
+         *         It will return @ref ErrorCode::OK if one or more observers have been removed.
+         *         It will return @ref ErrorCode::NOT_FOUND if no matching observer is found
+         *
+         * @see remove(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength) for the token-specific version.
+         */
+        ErrorCode remove(IPAddress ip)
+        {
+            ErrorCode result = ErrorCode::NOT_FOUND;
+            // Find the observer matching the given parameters and remove it.
+            for (size_t i = 0; i < N; i++)
+            {
+                if (!this->_observers[i].isActive())
+                    continue; // Skip inactive observers.
+                if (this->_observers[i].getIp() == ip)
+                {
+                    // Matching observer found. Remove it by marking it as inactive.
+                    this->_observers[i].setActive(false);
+                    result = ErrorCode::OK;
+                }
+            }
+            return result;
         }
 
         /**
