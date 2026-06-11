@@ -643,18 +643,15 @@ namespace Coap
         bool isObserveDeregister();
 
         /**
-         * @brief Build a notification message for the given observer.
+         * @brief Set a notification message for the given observer.
          *
-         * The original message is not affected. It will be *copied*
-         * and used as base for the new notification.
-         * The notification will be a copy of the original message with the following modifications:
+         * The output notification message will be built with the following fields set:
          * - A new message ID.
-         * - Message type set to @ref MessageType::NON by default (you can change it manually if needed).
+         * - The given message type.
          * - Token and its length set as the token from the observer.
          * - Observe option with the appropriate incremental value taken from the observer.
          *
-         * @note This does not set any other field. Options like Uri-Host or Uri-Port
-         *       should be set manually if necessary.
+         * @note This does not set any other field. Other options to be set manually as necessary.
          *
          * After building the notification, it can be sent as any other message using the @ref Node::sendMessage method.
          *
@@ -666,16 +663,16 @@ namespace Coap
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        ErrorCode asNotification(Observer &observer, Message &notification, MessageType type) const;
+        static ErrorCode buildNotification(Observer &observer, MessageType type, Message &notification);
 
         /**
-         * @brief Build a notification message for the given observer, using @ref MessageType::NON as default.
+         * @brief Build a notification message for the given observer with type set to @ref MessageType::NON.
          *
-         * @see asNotification(Observer &observer, Message &notification, MessageType type).
+         * @see buildNotification(Observer &observer, MessageType type, Message &notification).
          */
-        ErrorCode asNotification(Observer &observer, Message &notification) const
+        static ErrorCode buildNotification(Observer &observer, Message &notification)
         {
-            return this->asNotification(observer, notification, MessageType::NON);
+            return buildNotification(observer, MessageType::NON, notification);
         }
     };
 

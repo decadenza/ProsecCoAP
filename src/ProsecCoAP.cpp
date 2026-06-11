@@ -106,9 +106,8 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::asNotification(Observer &observer, Message &notification, MessageType type) const
+    ErrorCode Message::buildNotification(Observer &observer, MessageType type, Message &notification)
     {
-        notification = *this; // Start with a copy of the destination notification message.
         // Set a new message ID (it cannot be the same of the original message).
         uint16_t newId = Message::_getNextId();
         notification.setId(newId);
