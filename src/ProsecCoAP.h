@@ -661,11 +661,22 @@ namespace Coap
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
          *
          * @param observer The observer to notify. The observer incremental value will be updated accordingly.
+         * @param type The message type to use for the notification.
          * @param[out] notification The base notification message to send to the observer.
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        ErrorCode buildNotification(Observer &observer, Message &notification) const;
+        ErrorCode asNotification(Observer &observer, Message &notification, MessageType type) const;
+
+        /**
+         * @brief Build a notification message for the given observer, using @ref MessageType::NON as default.
+         *
+         * @see asNotification(Observer &observer, Message &notification, MessageType type).
+         */
+        ErrorCode asNotification(Observer &observer, Message &notification) const
+        {
+            return this->asNotification(observer, notification, MessageType::NON);
+        }
     };
 
     class Node; // Forward declaration.

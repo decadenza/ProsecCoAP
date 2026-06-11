@@ -106,14 +106,13 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::buildNotification(Observer &observer, Message &notification) const
+    ErrorCode Message::asNotification(Observer &observer, Message &notification, MessageType type) const
     {
-        notification = *this; // Start with a copy of the original message.
+        notification = *this; // Start with a copy of the destination notification message.
         // Set a new message ID (it cannot be the same of the original message).
         uint16_t newId = Message::_getNextId();
         notification.setId(newId);
-        // Set message type to NON by default.
-        notification.setType(MessageType::NON);
+        notification.setType(type);
 
         // Overwrite any existing token and add the observer token.
         const uint8_t *observerToken = observer.getToken();

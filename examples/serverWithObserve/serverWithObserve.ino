@@ -146,8 +146,7 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
             // Send ACK response.
             // As per https://datatracker.ietf.org/doc/html/rfc7641#section-4.1
             // the response must also be a notification i.e. including the observe option.
-            message.buildNotification(new_observer, response); // Build a NON notification.
-            response.setType(Coap::MessageType::ACK);          // ACK response to the registration request.
+            message.asNotification(new_observer, response, Coap::MessageType::ACK); // Build an ACK notification.
             SERIAL_PRINT("Subscribed with token: ");
             SERIAL_WRITE_LEN(message.getToken(), message.getTokenLength());
             SERIAL_PRINTLN();
@@ -200,7 +199,7 @@ void sendNotification()
         {
             // Build a notification message for this observer, using the original message as template.
             Coap::Message notification;
-            Coap::ErrorCode err = msg.buildNotification(myObservers[i], notification);
+            Coap::ErrorCode err = msg.asNotification(myObservers[i], notification);
             if (err == Coap::ErrorCode::OK)
             {
                 Serial.print("Sending notification to ");
