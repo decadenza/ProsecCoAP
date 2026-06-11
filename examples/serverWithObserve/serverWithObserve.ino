@@ -65,6 +65,7 @@ IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
 IPAddress dns(192, 168, 0, 1);                          // Set your own.
 IPAddress gateway(192, 168, 0, 1);                      // Set your own.
 IPAddress subnet(255, 255, 255, 0);                     // Set your own.
+
 /**
  * @brief Declaration of our callback to liked to the "time" resource.
  *
@@ -110,7 +111,7 @@ void loop()
     delay(1000);
 }
 
-/// Build the current time message.
+/// Helper to build the time message.
 Coap::Message getCurrentTimeMessage()
 {
     const size_t payloadLength = 4; // We will encode the time as a 4-byte unsigned integer (uint32_t).
@@ -188,7 +189,6 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
     }
 }
 
-// Demo notification for the "observe" path.
 void sendNotification()
 {
     Coap::Message msg = getCurrentTimeMessage();
