@@ -1111,8 +1111,7 @@ namespace Coap
                     // ANCHOR: Handle empty confirmable messages (CoAP pings).
                     // Reply with a reset message as per https://datatracker.ietf.org/doc/html/rfc7252#section-4.2.
                     // The Reset message MUST echo the Message ID of the Confirmable message and MUST be Empty.
-                    Coap::Message msg(Coap::MessageType::RST, Coap::MessageCode::EMPTY);
-                    msg.setId(incomingMessage.getId());
+                    Coap::Message msg(Coap::MessageType::RST, Coap::MessageCode::EMPTY, incomingMessage.getId());
                     this->sendMessage(msg, (this->_udp)->remoteIP(), (this->_udp)->remotePort());
                     continue; // Move to the next incoming message.
                 }
