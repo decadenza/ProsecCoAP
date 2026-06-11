@@ -20,7 +20,7 @@ Please open an issue to request missing functionalities or report bugs.
 
 ### Install from PlatformIO CLI
 ```
-pio pkg install --library "ProsecCoAP"
+pio pkg install --library ProsecCoAP
 ```
 
 ### Manual install
