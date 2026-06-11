@@ -230,13 +230,34 @@ namespace Coap
          * @param port The port of the observer.
          * @param token The token used by the observer.
          * @param tokenLength The length of the token in bytes.
+         *
+         * @see add(Observer observer) for the version that accepts an Observer object.
+         */
+        ErrorCode add(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+        {
+            Observer new_observer(ip, port, token, tokenLength);
+            return this->add(new_observer);
+        }
+
+        /**
+         * @brief Add a new observer to the registry.
+         *
+         * If the observer already exists and is active, it will not be added again.
+         *
+         * @param observer The observer to be added.
          * @return An error code indicating success or failure. It will return @ref ErrorCode::OK
          *         if the observer is successfully added (or was already present).
          *         It will return @ref ErrorCode::NOT_SUPPORTED if the registry is full
          *         and the observer cannot be added.
          */
-        ErrorCode add(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
+        ErrorCode add(Observer observer)
         {
+            if (!observer.isActive())
+            {
+                // Inactive observer cannot be added to the registry.
+                return ErrorCode::INVALID_ARGUMENT;
+            }
+
             // We MUST check if the observer is already present before trying to add it, to avoid duplicates.
             for (size_t i = 0; i < N; i++)
             {
@@ -244,10 +265,10 @@ namespace Coap
                     continue; // Skip inactive observers.
 
                 // An observer is considered the same if it matches the combination of IP address, port, token and token length.
-                if (this->_observers[i].getIp() == ip &&
-                    this->_observers[i].getPort() == port &&
-                    this->_observers[i].getTokenLength() == tokenLength &&
-                    memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
+                if (this->_observers[i].getIp() == observer.getIp() &&
+                    this->_observers[i].getPort() == observer.getPort() &&
+                    this->_observers[i].getTokenLength() == observer.getTokenLength() &&
+                    memcmp(this->_observers[i].getToken(), observer.getToken(), observer.getTokenLength()) == 0)
                 {
                     // Matching active observer found. No need to add it again.
                     return ErrorCode::OK;
@@ -261,7 +282,7 @@ namespace Coap
                 if (!this->_observers[i].isActive())
                 {
                     // Inactive slot found. Add the new observer here (active by default, see constructor).
-                    this->_observers[i] = Observer(ip, port, token, tokenLength);
+                    this->_observers[i] = observer;
                     return ErrorCode::OK;
                 }
             }

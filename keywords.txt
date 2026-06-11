@@ -13,6 +13,8 @@ Message	KEYWORD1
 MessageCode	KEYWORD1
 MessageType	KEYWORD1
 Node	KEYWORD1
+Observer	KEYWORD1
+ObserverRegistry	KEYWORD1
 ObserveValue	KEYWORD1
 Option	KEYWORD1
 OptionIterator	KEYWORD1
@@ -41,6 +43,8 @@ getPort	KEYWORD2
 getToken	KEYWORD2
 getTokenLength	KEYWORD2
 getType	KEYWORD2
+isObserveRegister	KEYWORD2
+isObserveDeregister	KEYWORD2
 length	KEYWORD2
 loop	KEYWORD2
 removeOption	KEYWORD2

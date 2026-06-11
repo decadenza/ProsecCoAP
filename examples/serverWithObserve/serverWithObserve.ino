@@ -5,27 +5,20 @@
  *
  * # Testing with libcoap
  * To test this example with the coap-client tool from libcoap:
- * 1. Start a local server with verbose option:
  * ```
- * coap-server-notls -v 9
- * ```
- *
- * 2. In a separate terminal, subscribe to the endpoint:
- * ```
- * coap-client-notls -p 5683 -T AAAA -v 9 -s 60 coap://192.168.0.1/observe
+ * coap-client-notls -p 5683 -v 9 -s 60 coap://192.168.0.1/time
  * ```
  *
- * You will see data incoming in the first terminal.
- * Adjust IP address and port as needed.
+ * You will see binary data incoming. Adjust IP address and port as needed.
  *
  * Note that the option `-s 60` will set the CoAP observe register option and keep the
- * command running to receive registration ACK for the given amount of seconds.
+ * command running to receive notifications for the given amount of seconds.
  *
  * Notes:
  * - `-p 5683` sets a fixed port.
- * - `-T AAAA` sets a fixed starting token (ASCII, libcoap will use the next one).
+ * - `-T AAAA` optionally sets a fixed starting token (ASCII, libcoap will use the next one).
  *
- * Multiple subscriptions with equal IP, port, path and token should result in
+ * Multiple subscriptions with equal IP, port, path and token will result in
  * the same observer.
  */
 #include <Ethernet.h>
@@ -69,9 +62,15 @@ Coap::ObserverRegistry<5> myObservers;
 
 byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC address, this must be unique.
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
-
-// Declaration of our observe callback.
-void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port);
+IPAddress dns(192, 168, 0, 1);                          // Set your own.
+IPAddress gateway(192, 168, 0, 1);                      // Set your own.
+IPAddress subnet(255, 255, 255, 0);                     // Set your own.
+/**
+ * @brief Declaration of our callback to liked to the "time" resource.
+ *
+ * For the purpose of this example, our resource is simply `millis()`.
+ */
+void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port);
 
 void setup()
 {
@@ -80,7 +79,7 @@ void setup()
     SERIAL_WHILE_WAIT;
     SERIAL_PRINTLN("Booting...");
     SERIAL_PRINT("Configuring Ethernet...");
-    Ethernet.begin(mac, ip);
+    Ethernet.begin(mac, ip, dns, gateway, subnet);
     // Check for hardware issues
     if (Ethernet.hardwareStatus() == EthernetNoHardware)
     {
@@ -89,7 +88,7 @@ void setup()
     }
     SERIAL_PRINTLN("OK");
 
-    coapNode.serve("observe", observeCallback); // Serve the "observe" path using the observeCallback.
+    coapNode.serve("time", timeCallback); // Serve the "observe" path using the timeCallback.
 
     // Start coap server.
     coapNode.start();
@@ -111,20 +110,44 @@ void loop()
     delay(1000);
 }
 
-// Handle observe registration and deregistration requests.
-void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
+/// Build the current time message.
+Coap::Message getCurrentTimeMessage()
 {
+    const size_t payloadLength = 4; // We will encode the time as a 4-byte unsigned integer (uint32_t).
+    uint8_t payload[payloadLength];
+    Coap::Utils::toNetworkByteOrder(millis(), payload); // Convert to big-endian byte order, as required by CoAP specifications.
+    Coap::Message msg(Coap::MessageType::NON, Coap::MessageCode::CONTENT);
+    msg.addPayload((const uint8_t *)payload, payloadLength, Coap::ContentFormat::APPLICATION_OCTET_STREAM);
+    return msg;
+}
+
+// Handle observe registration and deregistration requests.
+void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
+{
+
+    if (message.getCode() != Coap::MessageCode::GET)
+    {
+        // Only GET method is allowed for this resource.
+        return;
+    }
+
+    // Build the response with resource payload.
+    Coap::Message response = getCurrentTimeMessage();
+    response.addPath("time");
 
     if (message.isObserveRegister())
     {
         // This is a subscription request. Add a new observer in the registry.
-        Coap::ErrorCode err = myObservers.add(ip, port, message.getToken(), message.getTokenLength());
-        Coap::Message response;
+        Coap::Observer new_observer(ip, port, message.getToken(), message.getTokenLength());
+        Coap::ErrorCode err = myObservers.add(new_observer);
+
         if (err == Coap::ErrorCode::OK)
         {
             // Send ACK response.
-            message.buildResponse(Coap::MessageCode::VALID, response);
-            coapNode.sendMessage(response, ip, port);
+            // As per https://datatracker.ietf.org/doc/html/rfc7641#section-4.1
+            // the response must also be a notification i.e. including the observe option.
+            message.buildNotification(new_observer, response); // Build a NON notification.
+            response.setType(Coap::MessageType::ACK);          // ACK response to the registration request.
             SERIAL_PRINT("Subscribed with token: ");
             SERIAL_WRITE_LEN(message.getToken(), message.getTokenLength());
             SERIAL_PRINTLN();
@@ -133,44 +156,43 @@ void observeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
         {
             // Tell the client that the subscription failed.
             message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
-            coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Observer could not be added!");
         }
     }
     else if (message.isObserveDeregister())
     {
         Coap::ErrorCode err = myObservers.remove(ip, port, message.getToken(), message.getTokenLength());
-        Coap::Message response;
         if (err == Coap::ErrorCode::OK)
         {
             message.buildResponse(Coap::MessageCode::VALID, response);
-            coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Unsubscribed!");
         }
         else
         {
             // Tell the client that the un-subscription failed.
             message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
-            coapNode.sendMessage(response, ip, port);
             SERIAL_PRINTLN("Observer could not be removed!");
         }
     }
     else
     {
-        // Not a valid observe request. Ignore.
-        SERIAL_PRINTLN("Missing/invalid observe value.");
+        // This is a normal GET request without observe option. Just reply with the current time.
+        message.buildResponse(Coap::MessageCode::CONTENT, response);
+        response.addPayload((const uint8_t *)"Current time: ", 14, Coap::ContentFormat::TEXT_PLAIN);
+        SERIAL_PRINTLN("Received non-observe GET request!");
+    }
+
+    // Send the response.
+    if (coapNode.sendMessage(response, ip, port) < Coap::ErrorCode::OK)
+    {
+        SERIAL_PRINTLN("Failed to send response!");
     }
 }
 
 // Demo notification for the "observe" path.
 void sendNotification()
 {
-    char payload[] = "The answer is 42";
-    size_t payloadLength = strlen(payload);
-
-    Coap::Message msg(Coap::MessageType::NON, Coap::MessageCode::CONTENT);
-    msg.addPath("observe"); // Path must match the one the observer subscribed to!
-    msg.addPayload((const uint8_t *)payload, payloadLength, Coap::ContentFormat::TEXT_PLAIN);
+    Coap::Message msg = getCurrentTimeMessage();
 
     for (size_t i = 0; i < myObservers.length(); i++)
     {
@@ -181,6 +203,10 @@ void sendNotification()
             Coap::ErrorCode err = msg.buildNotification(myObservers[i], notification);
             if (err == Coap::ErrorCode::OK)
             {
+                Serial.print("Sending notification to ");
+                Serial.print(myObservers[i].getIp());
+                Serial.print(":");
+                Serial.println(myObservers[i].getPort());
                 err = coapNode.sendMessage(notification, myObservers[i].getIp(), myObservers[i].getPort());
                 if (err == Coap::ErrorCode::OK)
                 {
