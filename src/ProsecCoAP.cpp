@@ -34,7 +34,7 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    void Message::_setId(uint16_t id)
+    void Message::setId(uint16_t id)
     {
         // Message ID in network byte order (big-endian).
         this->_message[2] = (id >> 8) & 0xFF; // Message ID high byte.
@@ -46,7 +46,7 @@ namespace Coap
         // Initialize message with default CoAP header values.
         this->_message[0] = (COAP_VERSION << 6) | (static_cast<uint8_t>(type) << 4); // Version 1, given code, Token Length 0
         this->_message[1] = static_cast<uint8_t>(code);                              // Code data.
-        this->_setId(id);                                                            // Set message ID.
+        this->setId(id);                                                             // Set message ID.
         this->_messageLength = COAP_HEADER_SIZE;                                     // Keep track of the current message size.
     }
 
@@ -111,7 +111,7 @@ namespace Coap
         notification = *this; // Start with a copy of the original message.
         // Set a new message ID (it cannot be the same of the original message).
         uint16_t newId = Message::_getNextId();
-        notification._setId(newId);
+        notification.setId(newId);
         // Set message type to NON by default.
         notification.setType(MessageType::NON);
 
@@ -1105,6 +1105,17 @@ namespace Coap
             {
                 // Process the incoming message.
                 MessageCode code = incomingMessage.getCode();
+
+                if (code == MessageCode::EMPTY && incomingMessage.getType() == MessageType::CON)
+                {
+                    // ANCHOR: Handle empty confirmable messages (CoAP pings).
+                    // Reply with a reset message as per https://datatracker.ietf.org/doc/html/rfc7252#section-4.2.
+                    // The Reset message MUST echo the Message ID of the Confirmable message and MUST be Empty.
+                    Coap::Message msg(Coap::MessageType::RST, Coap::MessageCode::EMPTY);
+                    msg.setId(incomingMessage.getId());
+                    this->sendMessage(msg, (this->_udp)->remoteIP(), (this->_udp)->remotePort());
+                    continue; // Move to the next incoming message.
+                }
 
                 if (code == MessageCode::GET ||
                     code == MessageCode::POST ||

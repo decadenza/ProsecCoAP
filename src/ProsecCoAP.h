@@ -213,6 +213,7 @@ namespace Coap
          */
         static uint16_t _getNextId();
 
+    public:
         /**
          * @brief Set the message ID.
          *
@@ -220,9 +221,8 @@ namespace Coap
          *
          * @param id The message ID to set.
          */
-        void _setId(uint16_t id);
+        void setId(uint16_t id);
 
-    public:
         /**
          * @brief Builds a default CoAP message.
          *
