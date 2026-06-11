@@ -55,7 +55,7 @@ namespace Coap
         message._messageLength = 0; // Initialize to zero in case of failure.
 
         int len = udp->parsePacket();
-        if (len <= COAP_HEADER_SIZE)
+        if (len < COAP_HEADER_SIZE)
         {
             // The size is too small to be a valid CoAP message.
             // Nothing to read.
@@ -69,7 +69,7 @@ namespace Coap
         // Read the packet into the message buffer.
         // The returned value is the actual number of bytes read.
         len = udp->read(message._message, len);
-        if (len <= COAP_HEADER_SIZE)
+        if (len < COAP_HEADER_SIZE)
         {
             // The minimum size must be the header size.
             // Error while reading from UDP.
@@ -1111,6 +1111,10 @@ namespace Coap
                     // ANCHOR: Handle empty confirmable messages (CoAP pings).
                     // Reply with a reset message as per https://datatracker.ietf.org/doc/html/rfc7252#section-4.2.
                     // The Reset message MUST echo the Message ID of the Confirmable message and MUST be Empty.
+                    //
+                    // NOTE: The easiest way to test this is to:
+                    // 1. Keep a terminal with coap-server-notls -v 9 open.
+                    // 2. Execute printf "\x40\x00\x00\x00" | nc -u -w 2 <IP> <PORT>
                     Coap::Message msg(Coap::MessageType::RST, Coap::MessageCode::EMPTY, incomingMessage.getId());
                     this->sendMessage(msg, (this->_udp)->remoteIP(), (this->_udp)->remotePort());
                     continue; // Move to the next incoming message.
