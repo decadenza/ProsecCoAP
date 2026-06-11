@@ -643,36 +643,31 @@ namespace Coap
         bool isObserveDeregister();
 
         /**
-         * @brief Set a notification message for the given observer.
+         * @brief Set the message as a notification message to the given observer.
          *
-         * The output notification message will be built with the following fields set:
-         * - A new message ID.
-         * - The given message type.
-         * - Token and its length set as the token from the observer.
+         * The message will be converted to notification, modifying:
+         * - Token and its length, set as the token from the observer (any existing token will be overwritten).
          * - Observe option with the appropriate incremental value taken from the observer.
          *
          * @note This does not set any other field. Other options to be set manually as necessary.
-         *
-         * After building the notification, it can be sent as any other message using the @ref Node::sendMessage method.
          *
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
          *
          * @param observer The observer to notify. The observer incremental value will be updated accordingly.
          * @param type The message type to use for the notification.
-         * @param[out] notification The base notification message to send to the observer.
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        static ErrorCode buildNotification(Observer &observer, MessageType type, Message &notification);
+        ErrorCode asNotification(Observer &observer, MessageType type);
 
         /**
          * @brief Build a notification message for the given observer with type set to @ref MessageType::NON.
          *
-         * @see buildNotification(Observer &observer, MessageType type, Message &notification).
+         * @see asNotification(Observer &observer, MessageType type).
          */
-        static ErrorCode buildNotification(Observer &observer, Message &notification)
+        ErrorCode asNotification(Observer &observer)
         {
-            return buildNotification(observer, MessageType::NON, notification);
+            return asNotification(observer, MessageType::NON);
         }
     };
 

@@ -106,17 +106,14 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::buildNotification(Observer &observer, MessageType type, Message &notification)
+    ErrorCode Message::asNotification(Observer &observer, MessageType type)
     {
-        // Set a new message ID (it cannot be the same of the original message).
-        uint16_t newId = Message::_getNextId();
-        notification.setId(newId);
-        notification.setType(type);
+        this->setType(type);
 
         // Overwrite any existing token and add the observer token.
         const uint8_t *observerToken = observer.getToken();
         size_t observerTokenLength = observer.getTokenLength();
-        ErrorCode err = notification.setToken(observerToken, observerTokenLength); // It overwrites any existing token in the message.
+        ErrorCode err = this->setToken(observerToken, observerTokenLength); // It overwrites any existing token in the message.
         if (err != ErrorCode::OK)
         {
             // Could not add observer token to the message.
@@ -144,7 +141,7 @@ namespace Coap
         Utils::toNetworkByteOrder(observeValue, observeValueBigEndian); // Convert observe value to big-endian byte order, as required by CoAP specifications.
 
         // Ignoring the leading zeros in the MSB.
-        err = notification.addOption(OptionNumber::OBSERVE, observeValueBigEndian + 1 + (3 - observeValueBytes), observeValueBytes);
+        err = this->addOption(OptionNumber::OBSERVE, observeValueBigEndian + 1 + (3 - observeValueBytes), observeValueBytes);
         if (err != ErrorCode::OK)
         {
             // Could not add Observe option to the message.
