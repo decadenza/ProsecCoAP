@@ -35,3 +35,20 @@ esp8266:
 	@echo "--- Compiling for board: esp8266:esp8266:nodemcuv2 ---"; \
 	echo "Compiling esp8266..."; \
 	$(CLI) compile --fqbn esp8266:esp8266:nodemcuv2 --library . examples/serverEsp8266/serverEsp8266.ino || exit 1;
+
+	# Build all firmware documentation.
+.PHONY: doc
+doc:
+	doxygen
+	@echo "Documentation generated at $(shell pwd)/html/index.html"
+
+# Open existing documentation (cross-platform).
+.PHONY: doc-open
+doc-open: doc
+	@if [ "$(OS)" = "Windows_NT" ]; then \
+		start "$(shell pwd)/html/index.html"; \
+	elif [ "$$(uname -s)" = "Darwin" ]; then \
+		open "$(shell pwd)/html/index.html"; \
+	else \
+		xdg-open "$(shell pwd)/html/index.html"; \
+	fi
