@@ -1,5 +1,6 @@
 /**
- * A simple CoAP server example for ESP32 using WiFi.
+ * @file serverEsp32.ino
+ * @brief A CoAP server example for ESP32 using WiFi.
  */
 #include <WiFi.h>
 #include <WiFiUdp.h>

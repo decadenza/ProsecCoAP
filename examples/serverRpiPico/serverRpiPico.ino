@@ -1,7 +1,9 @@
 /**
- * A CoAP server example specific for W5100S-EVB-Pico board.
- * It has been tested on WIZnet W5100S-EVB-Pico.
- * 
+ * @file serverRpiPico.ino
+ * @brief A CoAP server example specific for W5100S-EVB-Pico board.
+ *
+ * Tested on WIZnet W5100S-EVB-Pico.
+ *
  * Requirements:
  * - Install "https://github.com/earlephilhower/arduino-pico" (also through the Board Manager).
  * - Select "WIZnet W5100S-EVB-Pico" board.
@@ -31,7 +33,7 @@
 #define LEDP LED_BUILTIN
 
 // Ethernet instance for W5100S-EVB-Pico board.
-Wiznet5100lwIP eth(17, SPI, 21);  // Note chip select is **17**.
+Wiznet5100lwIP eth(17, SPI, 21); // Note chip select is **17**.
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress deviceIp(192, 168, 0, 99); // Set your own.
@@ -60,10 +62,11 @@ void setup()
   SPI.setCS(17);
   SPI.setSCK(18);
   SPI.setTX(19);
-  
+
   eth.config(deviceIp);
-  
-  while(!eth.begin()) {
+
+  while (!eth.begin())
+  {
     Serial.println("No wired Ethernet hardware detected. Check pinouts, wiring.");
     delay(1000);
   }

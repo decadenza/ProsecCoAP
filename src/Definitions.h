@@ -1,3 +1,7 @@
+/**
+ * @file Definitions.h
+ * @brief Shared definitions for the library.
+ */
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 

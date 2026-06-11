@@ -1,5 +1,6 @@
 /**
- * Example CoAP Client.
+ * @file client.ino
+ * @brief Example CoAP Client.
  *
  * This example sends a confirmable GET request to a CoAP server and handles any response.
  *

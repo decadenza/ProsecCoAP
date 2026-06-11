@@ -1,5 +1,6 @@
 /**
- * A simple CoAP server example for ESP8266 using WiFi.
+ * @file serverEsp8266.ino
+ * @brief A CoAP server example for ESP8266 using WiFi.
  */
 
 #include <ESP8266WiFi.h>

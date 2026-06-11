@@ -1,5 +1,6 @@
 /**
- * A CoAP server.
+ * @file server.ino
+ * @brief A CoAP server example.
  *
  * The current light status can be read using:
  * ```

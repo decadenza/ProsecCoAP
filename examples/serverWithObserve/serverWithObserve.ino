@@ -1,5 +1,6 @@
-/*
- * A CoAP server with Observe functionality.
+/**
+ * @file serverWithObserve.ino
+ * @brief A CoAP server with Observe functionality.
  *
  * Author: Pasquale Lafiosca (2026)
  *

@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 /**
- * @namespace Utils
+ * @namespace Coap::Utils
  * @brief Utilities.
  *
  * This namespace contains public utility functions and classes.

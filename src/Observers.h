@@ -1,7 +1,7 @@
 /**
- * @file Observe.h
+ * @file Observers.h
  *
- * @brief Header file that allows to manage observers for the Observe mechanism in ProsecCoAP.
+ * @brief Manage observers for the observe mechanism of CoAP.
  *
  * It extends the main ProsecCoAP library with helpers objects to support the Observe mechanism as per RFC 7641.
  */
@@ -13,7 +13,6 @@
 
 namespace Coap
 {
-
     /**
      * @brief A remote CoAP observer, actively observing a resource.
      *

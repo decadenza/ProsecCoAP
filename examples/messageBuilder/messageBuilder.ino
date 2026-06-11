@@ -1,5 +1,6 @@
 /**
- * Examples of advanced message building.
+ * @file messageBuilder.ino
+ * @brief Examples of advanced message building.
  *
  * @note Message building does not require to initialise the CoAP node.
  */
