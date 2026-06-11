@@ -32,19 +32,18 @@ jobs:
         uses: mattnotmitt/doxygen-action@v1
         with:
           doxyfile-path: ./Doxyfile
-          working-directory: .
 
       # 2. Setup Pages
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       # 3. Upload Artifacts
       - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./html
 
       # 4. Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
