@@ -17,7 +17,7 @@
 #include "detail/Detail.h"
 
 // Include Observers management functionality.
-#include "observers/Observers.h"
+#include "Observers.h"
 
 /**
  * @namespace Coap
