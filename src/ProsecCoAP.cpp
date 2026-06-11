@@ -12,7 +12,7 @@ namespace Coap
             return ErrorCode::INVALID_ARGUMENT;
         }
 
-        // Fill token buffer with random bytes, minimizing calls to random().
+        // Fill token buffer with random bytes, minimising calls to random().
         // sizeof(long) is generally 4 bytes on Arduino platforms, however this is not guaranteed by the standard.
         // Each random() call only provides 31 random bits, so we can only extract up to 3 fully random bytes per call
         // starting from the LSB.

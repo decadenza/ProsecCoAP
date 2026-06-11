@@ -63,7 +63,7 @@ namespace Coap
         /**
          * @brief The option number.
          *
-         * This is initialized to 0 to indicate an empty (invalid) option.
+         * This is initialised to 0 to indicate an empty (invalid) option.
          */
         OptionNumber number;
         /**
@@ -293,7 +293,7 @@ namespace Coap
          * The type is set to @ref MessageType::ACK.
          * The response code is set to the given input code.
          * If the request has a token, the same token is copied to the response.
-         * The rest of the message is initialized as per default constructor @ref Message().
+         * The rest of the message is initialised as per default constructor @ref Message().
          *
          * @param request The request message to base the response on.
          * @param code The response message code.
@@ -643,7 +643,7 @@ namespace Coap
         bool isObserveDeregister();
 
         /**
-         * @brief Set the message as a notification message to the given observer.
+         * @brief Convert the message to a notification message for the given observer.
          *
          * The message will be converted to notification, modifying:
          * - Token and its length, set as the token from the observer (any existing token will be overwritten).
@@ -661,7 +661,7 @@ namespace Coap
         ErrorCode asNotification(Observer &observer, MessageType type);
 
         /**
-         * @brief Build a notification message for the given observer with type set to @ref MessageType::NON.
+         * @brief Convert the message to a notification for the given observer with type set to @ref MessageType::NON.
          *
          * @see asNotification(Observer &observer, MessageType type).
          */
