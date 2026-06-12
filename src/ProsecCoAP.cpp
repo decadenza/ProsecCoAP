@@ -83,26 +83,20 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::buildResponse(MessageCode code, Message &response) const
+    ErrorCode Message::intoResponse(const Message &request, MessageCode code, MessageType type)
     {
-        if (this->getLength() < COAP_HEADER_SIZE)
+        this->setCode(code);
+        this->setType(type);
+        // Use the message id from the request.
+        this->setId(request.getId());
+        // Use the token from the request, if present.
+        size_t tokenLength = request.getTokenLength();
+        const uint8_t *token = request.getToken();
+        ErrorCode err = this->setToken(token, tokenLength);
+        if (err != ErrorCode::OK)
         {
-            return ErrorCode::MALFORMED_MESSAGE;
+            return err; // Failed to set token in the response.
         }
-        // Initialize response message (version, type, code)
-        // and use the message id from the request.
-        response = Message(MessageType::ACK, code, this->getId());
-
-        // The response length is currently just the header size.
-        // If the request has a token, copy it and update the token length in the response.
-        size_t tokenLength = this->getTokenLength();
-        memcpy(response._message + COAP_HEADER_SIZE, // Destination.
-               this->_message + COAP_HEADER_SIZE,    // Source.
-               tokenLength);                         // Length.
-        // Set token length, stored in the 4 lower bits of the first byte.
-        response._message[0] |= static_cast<uint8_t>(tokenLength) & 0x0F;
-        // Update the total message length.
-        response._messageLength = COAP_HEADER_SIZE + tokenLength;
         return ErrorCode::OK;
     }
 

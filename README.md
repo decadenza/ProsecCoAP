@@ -62,7 +62,7 @@ void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
   if (message.getCode() == Coap::MessageCode::GET)
   {
     Coap::Message response;
-    message.buildResponse(Coap::MessageCode::CONTENT, response);
+    response.intoResponse(message, Coap::MessageCode::CONTENT);
     response.addPayload((const uint8_t *)("42"), 2, Coap::ContentFormat::TEXT_PLAIN);
     coapNode.sendMessage(response, ip, port);
   }

@@ -156,7 +156,7 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
         else
         {
             // Tell the client that the subscription failed.
-            message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
+            response.intoResponse(message, Coap::MessageCode::SERVICE_UNAVAILABLE);
             SERIAL_PRINTLN("Observer could not be added!");
         }
     }
@@ -165,20 +165,20 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
         Coap::ErrorCode err = myObservers.remove(ip, port, message.getToken(), message.getTokenLength());
         if (err == Coap::ErrorCode::OK)
         {
-            message.buildResponse(Coap::MessageCode::VALID, response);
+            response.intoResponse(message, Coap::MessageCode::VALID);
             SERIAL_PRINTLN("Unsubscribed!");
         }
         else
         {
             // Tell the client that the un-subscription failed.
-            message.buildResponse(Coap::MessageCode::SERVICE_UNAVAILABLE, response);
+            response.intoResponse(message, Coap::MessageCode::SERVICE_UNAVAILABLE);
             SERIAL_PRINTLN("Observer could not be removed!");
         }
     }
     else
     {
         // This is a normal GET request without observe option. Just reply with the current time.
-        message.buildResponse(Coap::MessageCode::CONTENT, response);
+        response.intoResponse(message, Coap::MessageCode::CONTENT);
         response.addPayload((const uint8_t *)"Current time: ", 14, Coap::ContentFormat::TEXT_PLAIN);
         SERIAL_PRINTLN("Received non-observe GET request!");
     }

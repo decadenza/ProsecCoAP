@@ -287,21 +287,33 @@ namespace Coap
         static ErrorCode fromUdp(UDP *udp, Message &message);
 
         /**
-         * @brief Build a response message based on a request message.
+         * @brief Convert the message into a response to the given request.
          *
          * The message ID is copied from the request.
          * The type is set to @ref MessageType::ACK.
          * The response code is set to the given input code.
          * If the request has a token, the same token is copied to the response.
-         * The rest of the message is initialised as per default constructor @ref Message().
          *
-         * @param request The request message to base the response on.
+         * @param request The request message.
          * @param code The response message code.
-         * @param[out] response The response message to populate.
+         * @param type The response message type.
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        ErrorCode buildResponse(MessageCode code, Message &response) const;
+        ErrorCode intoResponse(const Message &request, MessageCode code, MessageType type);
+
+        /**
+         * @brief Convert the message into an ACK response to the given request.
+         * @param request The request message.
+         * @param code The response message code.
+         * @return An error code indicating success or failure.
+         *         It returns @ref ErrorCode::OK on success.
+         * @see intoResponse(const Message &request, MessageCode code, MessageType type) for a more general method that allows specifying the response type.
+         */
+        ErrorCode intoResponse(const Message &request, MessageCode code)
+        {
+            return intoResponse(request, code, MessageType::ACK);
+        }
 
         /**
          * @brief Get the CoAP version of this message.
@@ -476,7 +488,7 @@ namespace Coap
         ErrorCode addOption(Option option)
         {
             return this->addOption(option.number, option.value, option.length);
-        };
+        }
 
         /**
          * @brief Add the Uri-Host option to the message.

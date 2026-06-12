@@ -32,7 +32,7 @@ addPayload	KEYWORD2
 addPort	KEYWORD2
 addRandomToken	KEYWORD2
 intoNotification	KEYWORD2
-buildResponse	KEYWORD2
+intoResponse	KEYWORD2
 getCode	KEYWORD2
 getId	KEYWORD2
 getIp	KEYWORD2
