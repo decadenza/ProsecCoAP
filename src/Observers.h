@@ -158,8 +158,6 @@ namespace Coap
      * myRegistry.add(ip1, port1, token1, tokenLength1); // Add an observer to the registry.
      * Observer &observer = myRegistry[0]; // Get the first observer in the registry.
      * @endcode
-     *
-     * @todo Add support to clean up older observers.
      */
     template <size_t N>
     class ObserverRegistry

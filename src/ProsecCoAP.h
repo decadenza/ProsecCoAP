@@ -448,6 +448,26 @@ namespace Coap
          * @return An option iterator, @ref OptionIterator.
          */
         OptionIterator getOptionIterator() const;
+
+        /**
+         * @brief Return the first occurrence of the specified option.
+         *
+         * @param number The option number to search for.
+         * @param[out] option The output parameter to store the option if found.
+         * @return Returns @ref ErrorCode::OK if the option is found and stored in the output parameter,
+         *         @ref ErrorCode::NOT_FOUND if the option is not found, or other error codes in case of failure.
+         *
+         * @see getOptionIterator() for a more efficient way to iterate through all the options.
+         *
+         * @note Most options can appear at most once in a CoAP message. For such options, this method
+         * is sufficient to check for their presence and retrieve their value.
+         * For options that can appear multiple times, this method only retrieves the first occurrence.
+         * In such cases, it is recommended to use getOptionIterator() to iterate through all occurrences of the option.
+         *
+         * @see getPath() for a convenience method that retrieves all URI path and query options and concatenates them into a single string.
+         */
+        ErrorCode getOption(OptionNumber number, Option &option) const;
+
         /**
          * @brief Add an option to the message.
          *

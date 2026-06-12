@@ -543,6 +543,26 @@ namespace Coap
         return OptionIterator(*this);
     }
 
+    ErrorCode Message::getOption(OptionNumber number, Option &option) const
+    {
+        OptionIterator it = this->getOptionIterator();
+        Option opt;
+        while (it.next(opt) == ErrorCode::OK)
+        {
+            if (opt.number == number)
+            {
+                option = opt; // Found the option, return it by reference.
+                return ErrorCode::OK;
+            }
+            else if (opt.number > number)
+            {
+                // Since options are ordered by number, we can stop searching.
+                break;
+            }
+        }
+        return ErrorCode::NOT_FOUND; // Option not found.
+    }
+
     ErrorCode Message::addHost(IPAddress ip)
     {
         // Convert IPv4 address to string.
