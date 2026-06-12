@@ -643,7 +643,7 @@ namespace Coap
         bool isObserveDeregister();
 
         /**
-         * @brief Convert the message to a notification message for the given observer.
+         * @brief Convert the message into a notification message for the given observer.
          *
          * The message will be converted to notification, modifying:
          * - Token and its length, set as the token from the observer (any existing token will be overwritten).
@@ -658,16 +658,16 @@ namespace Coap
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        ErrorCode asNotification(Observer &observer, MessageType type);
+        ErrorCode intoNotification(Observer &observer, MessageType type);
 
         /**
-         * @brief Convert the message to a notification for the given observer with type set to @ref MessageType::NON.
+         * @brief Convert the message into a notification for the given observer with type set to @ref MessageType::NON.
          *
-         * @see asNotification(Observer &observer, MessageType type).
+         * @see intoNotification(Observer &observer, MessageType type).
          */
-        ErrorCode asNotification(Observer &observer)
+        ErrorCode intoNotification(Observer &observer)
         {
-            return asNotification(observer, MessageType::NON);
+            return intoNotification(observer, MessageType::NON);
         }
     };
 

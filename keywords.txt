@@ -31,7 +31,7 @@ addPath	KEYWORD2
 addPayload	KEYWORD2
 addPort	KEYWORD2
 addRandomToken	KEYWORD2
-asNotification	KEYWORD2
+intoNotification	KEYWORD2
 buildResponse	KEYWORD2
 getCode	KEYWORD2
 getId	KEYWORD2

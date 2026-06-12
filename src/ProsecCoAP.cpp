@@ -106,7 +106,7 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::asNotification(Observer &observer, MessageType type)
+    ErrorCode Message::intoNotification(Observer &observer, MessageType type)
     {
         this->setType(type);
 
