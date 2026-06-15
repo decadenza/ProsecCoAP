@@ -63,9 +63,9 @@ Coap::ObserverRegistry<5> myObservers;
 
 byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC address, this must be unique.
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
-IPAddress dns(192, 168, 0, 1);                          // Set your own.
-IPAddress gateway(192, 168, 0, 1);                      // Set your own.
-IPAddress subnet(255, 255, 255, 0);                     // Set your own.
+IPAddress dns(192, 168, 0, 1);                          // Optional. Set your own.
+IPAddress gateway(192, 168, 0, 1);                      // Optional. Set your own.
+IPAddress subnet(255, 255, 255, 0);                     // Optional. Set your own.
 
 /**
  * @brief Declaration of our callback to liked to the "time" resource.
@@ -81,6 +81,9 @@ void setup()
     SERIAL_WHILE_WAIT;
     SERIAL_PRINTLN("Booting...");
     SERIAL_PRINT("Configuring Ethernet...");
+    // NOTE: You may use DHCP instead of static IP. In that case, call `Ethernet.begin(mac)` instead.
+    // Also Ethernet.begin(mac, ip) will work, but it will use the default DNS, gateway and subnet.
+    // Please refer to Arduino documentation.
     Ethernet.begin(mac, ip, dns, gateway, subnet);
     // Check for hardware issues
     if (Ethernet.hardwareStatus() == EthernetNoHardware)

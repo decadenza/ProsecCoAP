@@ -20,6 +20,9 @@
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress deviceIp(192, 168, 0, 99);                   // Set your own.
 IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
+IPAddress dns(192, 168, 0, 1);                         // Optional. Set your own.
+IPAddress gateway(192, 168, 0, 1);                     // Optional. Set your own.
+IPAddress subnet(255, 255, 255, 0);                    // Optional. Set your own.
 
 // CoAP client response callback
 void callbackResponse(Coap::Message &message, IPAddress ip, uint16_t port);
@@ -35,7 +38,10 @@ void setup()
   {
   } // Wait for serial.
 
-  Ethernet.begin(mac, deviceIp);
+  // NOTE: You may use DHCP instead of static IP. In that case, call `Ethernet.begin(mac)` instead.
+  // Also Ethernet.begin(mac, ip) will work, but it will use the default DNS, gateway and subnet.
+  // Please refer to Arduino documentation.
+  Ethernet.begin(mac, deviceIp, dns, gateway, subnet);
 
   // This is a single handler for all responses.
   coapNode.setResponseHandler(callbackResponse);

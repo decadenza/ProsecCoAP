@@ -44,9 +44,10 @@ void setup()
   {
   } // Wait for serial.
 
+  // NOTE: You may use DHCP instead of static IP. In that case, call `Ethernet.begin(mac)` instead.
+  // Also Ethernet.begin(mac, ip) will work, but it will use the default DNS, gateway and subnet.
+  // Please refer to Arduino documentation.
   Ethernet.begin(mac, deviceIp, dns, gateway, subnet);
-  // If using DHCP, use:
-  // Ethernet.begin(mac);
 
   // LED state.
   pinMode(LEDP, OUTPUT);
