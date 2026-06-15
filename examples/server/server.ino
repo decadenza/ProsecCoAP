@@ -40,9 +40,6 @@ bool LED_STATUS;
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial)
-  {
-  } // Wait for serial.
 
   // NOTE: You may use DHCP instead of static IP. In that case, call `Ethernet.begin(mac)` instead.
   // Also Ethernet.begin(mac, ip) will work, but it will use the default DNS, gateway and subnet.

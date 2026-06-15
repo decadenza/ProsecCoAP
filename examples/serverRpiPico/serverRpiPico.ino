@@ -53,9 +53,6 @@ bool LED_STATUS;
 void setup()
 {
   Serial.begin(115200);
-  while (!Serial)
-  {
-  } // Wait for serial.
 
   // Set SPI to the onboard Wiznet chip.
   SPI.setRX(16);

@@ -78,7 +78,6 @@ void setup()
 {
     // Initialize serial and wait for port to open.
     SERIAL_BEGIN(115200);
-    SERIAL_WHILE_WAIT;
     SERIAL_PRINTLN("Booting...");
     SERIAL_PRINT("Configuring Ethernet...");
     // NOTE: You may use DHCP instead of static IP. In that case, call `Ethernet.begin(mac)` instead.
@@ -195,14 +194,19 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
 
 void sendNotification()
 {
-    Coap::Message msg = getCurrentTimeMessage();
+    if (myObservers.countActive() == 0)
+    {
+        // No active observers, no need to send notifications.
+        return;
+    }
+
+    Coap::Message notification = getCurrentTimeMessage();
 
     for (size_t i = 0; i < myObservers.length(); i++)
     {
         if (myObservers[i].isActive())
         {
             // Build a notification message for this observer, using the original message as template.
-            Coap::Message notification;
             Coap::ErrorCode err = notification.intoNotification(myObservers[i]);
             if (err == Coap::ErrorCode::OK)
             {
