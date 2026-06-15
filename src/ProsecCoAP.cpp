@@ -100,11 +100,8 @@ namespace Coap
         return ErrorCode::OK;
     }
 
-    ErrorCode Message::intoNotification(Observer &observer, MessageCode code, MessageType type)
+    ErrorCode Message::intoNotification(Observer &observer)
     {
-        this->setCode(code);
-        this->setType(type);
-
         // Overwrite any existing token and add the observer token.
         const uint8_t *observerToken = observer.getToken();
         size_t observerTokenLength = observer.getTokenLength();

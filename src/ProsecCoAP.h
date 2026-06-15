@@ -686,24 +686,10 @@ namespace Coap
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
          *
          * @param observer The observer to notify. The observer incremental value will be updated accordingly.
-         * @param code The response code to use for the notification.
-         * @param type The message type to use for the notification.
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          */
-        ErrorCode intoNotification(Observer &observer, MessageCode code, MessageType type);
-
-        /**
-         * @brief Convert the message into a notification for the given observer with type set to @ref MessageType::NON.
-         *
-         * This is a convenience method for sending non-confirmable notifications.
-         *
-         * @see intoNotification(Observer &observer, MessageCode code, MessageType type).
-         */
-        ErrorCode intoNotification(Observer &observer, MessageCode code)
-        {
-            return intoNotification(observer, code, MessageType::NON);
-        }
+        ErrorCode intoNotification(Observer &observer);
     };
 
     class Node; // Forward declaration.
