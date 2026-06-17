@@ -398,6 +398,28 @@ namespace Coap
         {
             return this->remove(observer.getIp(), observer.getPort(), observer.getToken(), observer.getTokenLength());
         }
+
+        /**
+         * @brief Process incoming responses to notifications sent to observers.
+         * @return
+         *
+         * This is a maintenance function that must be called in the response handler
+         * @ref setResponseHandler to keep observer state up to date.
+         * It will update the last seen timestamp of observers that have sent a response.
+         * It will also remove observers that have sent a RST response, as per specifications.
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
+         *
+         * @example
+         */
+        ErrorCode processNotificationResponse(Message &message, IPAddress ip, uint16_t port)
+        {
+
+            // TODO: Look for outstanding notifications in the _retransmissionQueue sent to observers and match the response with the observer.
+            // Unclear how to do this, as the _retransmissionQueue is private to the ProsecCoAP class and not accessible from here.
+
+            // If the response is a RST, remove the observer from the registry.
+            // If the response is an ACK, update the last seen timestamp of the observer (by calling setActive(true)).
+        }
     };
 }
 
