@@ -370,6 +370,9 @@ namespace Coap
          * The message ID is always present in a CoAP message.
          *
          * @return The 16-bit message ID.
+         *
+         * @note The role of a message ID is to detect duplicate messages and
+         * handle reliability (ACK/RST, protocol level).
          */
         uint16_t getId() const;
 
@@ -388,6 +391,9 @@ namespace Coap
          * @param length Length of the token in bytes.
          * @return An error code indicating success or failure. Particularly,
          *         it returns @ref ErrorCode::INVALID_ARGUMENT if the token length exceeds @ref COAP_MAX_TOKEN_LENGTH.
+         *
+         * The token matches the request to the response (application level).
+         * @see matchesToken(const uint8_t *token, size_t length) to check if the message token matches a given token.
          */
         ErrorCode setToken(const uint8_t *token, size_t length);
 
