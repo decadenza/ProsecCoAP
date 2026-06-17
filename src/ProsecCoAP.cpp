@@ -1200,8 +1200,6 @@ namespace Coap
                     }
                 }
             }
-            // err will be ErrorCode::NOT_FOUND if there are no more messages to read.
-            // REVIEW: err may also be another error code if something went wrong.
         }
 
         // !SECTION End of server mode.
