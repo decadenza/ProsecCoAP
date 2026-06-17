@@ -140,6 +140,13 @@ namespace Coap
             return err;
         }
 
+        if (observer.isStale())
+        {
+            // Use CON for stale observers, as per specifications.
+            // See https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
+            this->setType(MessageType::CON);
+        }
+
         return ErrorCode::OK;
     }
 
