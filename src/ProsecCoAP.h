@@ -680,7 +680,6 @@ namespace Coap
          * The message will be converted to notification, modifying:
          * - Token and its length, set as the token from the observer (any existing token will be overwritten).
          * - Observe option with the appropriate incremental value taken from the observer.
-         * - Promote the message to a CON message if the observer has not been seen in the last 24 hours.
          *
          * @note This does not set any other field. Other options to be set manually as necessary.
          *
