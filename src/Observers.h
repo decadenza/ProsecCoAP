@@ -48,6 +48,10 @@ namespace Coap
          * Note that a value of zero may still be valid.
          */
         uint8_t _tokenLength = 0;
+        /**
+         * @brief Last seen timestamp in milliseconds.
+         */
+        unsigned long _lastSeen = 0;
 
     public:
         /**
@@ -64,10 +68,11 @@ namespace Coap
          * @param tokenLength The length of the token in bytes.
          */
         Observer(IPAddress ip, uint16_t port, const uint8_t *token, uint8_t tokenLength)
-            : _active(true), _ip(ip), _port(port), _tokenLength(tokenLength)
+            : _ip(ip), _port(port), _tokenLength(tokenLength)
         {
             // Copy the token value, ensuring that we do not exceed the maximum token length.
             memcpy(this->_token, token, tokenLength > COAP_MAX_TOKEN_LENGTH ? COAP_MAX_TOKEN_LENGTH : tokenLength);
+            this->setActive(true);
         }
 
         /**
@@ -82,15 +87,22 @@ namespace Coap
         }
 
         /**
+         * @brief Check if the observer is considered stale.
+         * @return True if the observer is stale, false otherwise.
+         *
+         * An observer is considered stale if it has not been seen for more than 24 hours.
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
+         */
+        bool isStale() const;
+
+        /**
          * @brief Set the observer as active or inactive.
          * @param active True to set the observer as active, false to set it as inactive.
          *
+         * Setting an observer as active also updates its internal last seen value.
          * Inactive observers are ignored by the registry and their slot can be reused to store new observers.
          */
-        void setActive(bool active)
-        {
-            this->_active = active;
-        }
+        void setActive(bool active);
 
         /**
          * @brief Get the IP address of the observer.
@@ -140,11 +152,7 @@ namespace Coap
          *
          * @note Only the least significant 24 bits are used.
          */
-        uint32_t getNextSequentialNumber()
-        {
-            unsigned long currentTime = millis();
-            return currentTime & 0xFFFFFF; // Return only the least significant 24 bits.
-        }
+        uint32_t getNextSequentialNumber();
     };
 
     /**

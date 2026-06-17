@@ -684,6 +684,7 @@ namespace Coap
          * @note This does not set any other field. Other options to be set manually as necessary.
          *
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
          *
          * @param observer The observer to notify. The observer incremental value will be updated accordingly.
          * @return An error code indicating success or failure.

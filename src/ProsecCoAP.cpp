@@ -1200,8 +1200,6 @@ namespace Coap
                     }
                 }
             }
-            // err will be ErrorCode::NOT_FOUND if there are no more messages to read.
-            // REVIEW: err may also be another error code if something went wrong.
         }
 
         // !SECTION End of server mode.
@@ -1217,7 +1215,14 @@ namespace Coap
     {
         if (message.getType() == MessageType::CON)
         {
-            this->_retransmissionQueue.add(message, ip, port);
+            ErrorCode err = this->_retransmissionQueue.add(message, ip, port);
+            if (err != ErrorCode::OK)
+            {
+                // Failed to add to retransmission queue.
+                // Possibly full.
+                // A solution is to throttle requests or increase COAP_CONFIRMABLE_MESSAGE_QUEUE_SIZE.
+                return err;
+            }
         }
         return Detail::sendUdp(this->_udp, message.asRaw(), message.getLength(), ip, port);
     }
