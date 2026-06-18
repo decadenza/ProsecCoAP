@@ -687,14 +687,18 @@ namespace Coap
          * - Token and its length, set as the token from the observer (any existing token will be overwritten).
          * - Observe option with the appropriate incremental value taken from the observer.
          *
-         * @note This does not set any other field. Other options to be set manually as necessary.
-         *
-         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
-         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
-         *
          * @param observer The observer to notify. The observer incremental value will be updated accordingly.
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
+         *
+         * @note This does not set any other fields of the message, such as type, code, payload, etc.
+         * The caller is responsible for setting the notification as @ref MessageType::NON or @ref MessageType::CON.
+         * Please note that _a server that transmits notifications mostly in non-confirmable
+         * messages MUST send a notification in a confirmable message instead of
+         * a non-confirmable message at least every 24 hours_.
+         *
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
          */
         ErrorCode intoNotification(Observer &observer);
     };
