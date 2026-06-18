@@ -404,6 +404,22 @@ namespace Coap
         {
             return this->remove(observer.getIp(), observer.getPort(), observer.getToken(), observer.getTokenLength());
         }
+
+        /**
+         * @brief Removes all stale observers from the registry.
+         * @return @ref ErrorCode::OK.
+         */
+        ErrorCode removeStale()
+        {
+            for (size_t i = 0; i < N; i++)
+            {
+                if (this->_observers[i].isActive() && this->_observers[i].isStale())
+                {
+                    this->_observers[i].deactivate();
+                }
+            }
+            return ErrorCode::OK;
+        }
     };
 }
 
