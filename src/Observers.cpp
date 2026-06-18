@@ -32,7 +32,7 @@ namespace Coap
         unsigned long currentTime = millis();
         unsigned long elapsedTime = currentTime - this->_lastSeen; // Wrapping is safe.
 
-        // Check if the elapsed time since the last seen timestamp exceeds 24 hours (in milliseconds).
-        return elapsedTime > (24UL * 60UL * 60UL * 1000UL);
+        // Check if the elapsed time since the last seen timestamp is 24 hours or more (in milliseconds).
+        return elapsedTime >= (24UL * 60UL * 60UL * 1000UL);
     }
 }
