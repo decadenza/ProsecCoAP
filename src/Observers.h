@@ -72,7 +72,7 @@ namespace Coap
         {
             // Copy the token value, ensuring that we do not exceed the maximum token length.
             memcpy(this->_token, token, tokenLength > COAP_MAX_TOKEN_LENGTH ? COAP_MAX_TOKEN_LENGTH : tokenLength);
-            this->setActive(true);
+            this->activate();
         }
 
         /**
@@ -96,13 +96,19 @@ namespace Coap
         bool isStale() const;
 
         /**
-         * @brief Set the observer as active or inactive.
-         * @param active True to set the observer as active, false to set it as inactive.
+         * @brief Set the observer as active.
          *
          * Setting an observer as active also updates its internal last seen value.
          * Inactive observers are ignored by the registry and their slot can be reused to store new observers.
          */
-        void setActive(bool active);
+        void activate();
+
+        /**
+         * @brief Set the observer as deactivated.
+         *
+         * Inactive observers are ignored by the registry and their slot can be reused to store new observers.
+         */
+        void deactivate();
 
         /**
          * @brief Get the IP address of the observer.
@@ -321,7 +327,7 @@ namespace Coap
                     memcmp(this->_observers[i].getToken(), token, tokenLength) == 0)
                 {
                     // Matching observer found. Remove it by marking it as inactive.
-                    this->_observers[i].setActive(false);
+                    this->_observers[i].deactivate();
                     return ErrorCode::OK;
                 }
             }
@@ -351,7 +357,7 @@ namespace Coap
                     this->_observers[i].getPort() == port)
                 {
                     // Matching observer found. Remove it by marking it as inactive.
-                    this->_observers[i].setActive(false);
+                    this->_observers[i].deactivate();
                     result = ErrorCode::OK;
                 }
             }
@@ -379,7 +385,7 @@ namespace Coap
                 if (this->_observers[i].getIp() == ip)
                 {
                     // Matching observer found. Remove it by marking it as inactive.
-                    this->_observers[i].setActive(false);
+                    this->_observers[i].deactivate();
                     result = ErrorCode::OK;
                 }
             }

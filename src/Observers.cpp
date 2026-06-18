@@ -9,15 +9,16 @@ namespace Coap
         return currentTime & 0xFFFFFF; // Return only the least significant 24 bits.
     }
 
-    void Observer::setActive(bool active)
+    void Observer::activate()
     {
-        this->_active = active;
-        if (active)
-        {
-            // If the observer is set as active, update the last seen timestamp to the current time,
-            // as we assume that the observer is set as active after the registration is confirmed.
-            this->_lastSeen = millis();
-        }
+        this->_active = true;
+        // Update the last seen timestamp to the current time.
+        this->_lastSeen = millis();
+    }
+
+    void Observer::deactivate()
+    {
+        this->_active = false;
     }
 
     bool Observer::isStale() const
