@@ -570,20 +570,20 @@ namespace Coap
 
         /**
          * @brief Retrieve all the URI path and URI query options from the message and concatenate them into a single string.
-         * @param[out] path Pointer to a String object where the path (and query) will be stored.
+         * @param[out] path The String object where the path (and query) will be stored.
          * @return An error code indicating success or failure.
          *
          * Example usage:
          * @code{.cpp}
          * String path;
          * path.reserve(100); // OPTIONAL: Reserve some space to avoid dynamic resizing during concatenation.
-         * if (msg.getPath(&path) == Coap::ErrorCode::OK)
+         * if (msg.getPath(path) == Coap::ErrorCode::OK)
          * {
          *   Serial.println(path);
          * }
          * @endcode
          */
-        ErrorCode getPath(String *path) const;
+        ErrorCode getPath(String &path) const;
 
         /**
          * @brief Get the payload from the message.
