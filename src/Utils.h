@@ -11,7 +11,6 @@
 namespace Coap
 {
     /**
-     * @namespace Utils
      * @brief Utilities.
      *
      * This namespace contains public utility functions and classes.
@@ -69,10 +68,6 @@ namespace Coap
             toNetworkByteOrder<8>(int_value, result);
         }
 
-        // ========================================================================
-        // UNSIGNED INTEGER READERS
-        // ========================================================================
-
         // NOTE: The host byte order (big/little endian) does not matter, as the bit shift operator
         // will adjust accordingly.
         // See https://commandcenter.blogspot.com/2012/04/byte-order-fallacy.html
@@ -112,10 +107,6 @@ namespace Coap
                    (static_cast<uint64_t>(bytes[7]));
         }
 
-        // ========================================================================
-        // SIGNED INTEGER READERS
-        // ========================================================================
-
         /**
          * @brief Reads a 16-bit signed integer from a Big-Endian byte stream.
          */
@@ -140,10 +131,6 @@ namespace Coap
         {
             return static_cast<int64_t>(read_uint64(bytes));
         }
-
-        // ========================================================================
-        // FLOATING POINT READERS
-        // ========================================================================
 
         /**
          * @brief Reads a 32-bit float from a Big-Endian byte stream.
