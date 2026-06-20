@@ -20,10 +20,13 @@ namespace Coap
         /**
          * @brief Convert an integer-like value to network byte order (i.e. big-endian).
          *
-         * @param value The integer-like value to convert (both signed or unsigned).
+         * @param value The integer-like value to convert.
          * @param[out] result The array of bytes to store the result in.
          *
          * The result must be stored in an array of bytes with the *exact* required size.
+         *
+         * @note Both signed and unsigned integers are supported as long as the right-shift operator
+         * performs arithmetic right shift, so that the result remains negative.
          */
         template <size_t N, typename T>
         inline void toNetworkByteOrder(T value, uint8_t (&result)[N])
