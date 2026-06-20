@@ -27,11 +27,18 @@ namespace Coap::Utils
     template <size_t N, typename T>
     inline void toNetworkByteOrder(T value, uint8_t (&result)[N])
     {
+        static_assert(N == sizeof(T), "Array size N must match the size of type T.");
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+        // If the host is already big-endian, we can just memcpy the value.
+        memcpy(result, &value, N);
+#else
+        // The host is little endian, so we need to manually convert to big-endian.
         for (size_t i = 0; i < N; ++i)
         {
             // Shift right by (N - 1 - i) * 8 bits, then mask the lowest byte.
             result[i] = static_cast<uint8_t>((value >> ((N - 1 - i) * 8)) & 0xFF);
         }
+#endif
     }
 
     /**
@@ -43,10 +50,7 @@ namespace Coap::Utils
     inline void toNetworkByteOrder(float value, uint8_t (&result)[4])
     {
         uint32_t int_value;
-        // Safely grab the raw bits of the float without breaking strict-aliasing
         memcpy(&int_value, &value, sizeof(float));
-
-        // Pass the bits into your original integer template
         toNetworkByteOrder<4>(int_value, result);
     }
 
@@ -59,10 +63,7 @@ namespace Coap::Utils
     inline void toNetworkByteOrder(double value, uint8_t (&result)[8])
     {
         uint64_t int_value;
-        // Safely grab the raw bits of the double
         memcpy(&int_value, &value, sizeof(double));
-
-        // Pass the bits into your original integer template
         toNetworkByteOrder<8>(int_value, result);
     }
 
