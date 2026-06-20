@@ -19,6 +19,9 @@ namespace Coap::Utils
     /**
      * @brief Convert an integer-like value to network byte order (i.e. big-endian).
      *
+     * @param value The integer-like value to convert.
+     * @param[out] result The array of bytes to store the result in.
+     *
      * The result must be stored in an array of bytes with the *exact* required size.
      */
     template <size_t N, typename T>
@@ -29,6 +32,38 @@ namespace Coap::Utils
             // Shift right by (N - 1 - i) * 8 bits, then mask the lowest byte.
             result[i] = static_cast<uint8_t>((value >> ((N - 1 - i) * 8)) & 0xFF);
         }
+    }
+
+    /**
+     * @brief Overload to convert a 32-bit float to network byte order.
+     *
+     * @param value The float value to convert.
+     * @param[out] result The array of bytes to store the result in.
+     */
+    inline void toNetworkByteOrder(float value, uint8_t (&result)[4])
+    {
+        uint32_t int_value;
+        // Safely grab the raw bits of the float without breaking strict-aliasing
+        memcpy(&int_value, &value, sizeof(float));
+
+        // Pass the bits into your original integer template
+        toNetworkByteOrder<4>(int_value, result);
+    }
+
+    /**
+     * @brief Overload to convert a 64-bit double to network byte order.
+     *
+     * @param value The double value to convert.
+     * @param[out] result The array of bytes to store the result in.
+     */
+    inline void toNetworkByteOrder(double value, uint8_t (&result)[8])
+    {
+        uint64_t int_value;
+        // Safely grab the raw bits of the double
+        memcpy(&int_value, &value, sizeof(double));
+
+        // Pass the bits into your original integer template
+        toNetworkByteOrder<8>(int_value, result);
     }
 
     // ========================================================================
