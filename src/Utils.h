@@ -20,7 +20,7 @@ namespace Coap
         /**
          * @brief Convert an integer-like value to network byte order (i.e. big-endian).
          *
-         * @param value The integer-like value to convert.
+         * @param value The integer-like value to convert (both signed or unsigned).
          * @param[out] result The array of bytes to store the result in.
          *
          * The result must be stored in an array of bytes with the *exact* required size.
@@ -37,7 +37,7 @@ namespace Coap
             for (size_t i = 0; i < N; ++i)
             {
                 // Shift right by (N - 1 - i) * 8 bits, then mask the lowest byte.
-                result[i] = static_cast<uint8_t>((value >> ((N - 1 - i) * 8)) & 0xFF);
+                result[i] = static_cast<uint8_t>((value >> ((N - 1 - i) * 8)) & 0xFF); // NOTE: Right shift is defined behaviour also for signed integers.
             }
 #endif
         }
