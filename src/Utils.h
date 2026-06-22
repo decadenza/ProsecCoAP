@@ -78,7 +78,7 @@ namespace Coap
         /**
          * @brief Reads a 16-bit unsigned integer from a Big-Endian byte stream.
          */
-        inline constexpr uint16_t read_uint16(const uint8_t *bytes)
+        inline constexpr uint16_t read_uint16(const uint8_t (&bytes)[2])
         {
             return static_cast<uint16_t>((static_cast<uint16_t>(bytes[0]) << 8) |
                                          static_cast<uint16_t>(bytes[1]));
@@ -87,7 +87,7 @@ namespace Coap
         /**
          * @brief Reads a 32-bit unsigned integer from a Big-Endian byte stream.
          */
-        inline constexpr uint32_t read_uint32(const uint8_t *bytes)
+        inline constexpr uint32_t read_uint32(const uint8_t (&bytes)[4])
         {
             return (static_cast<uint32_t>(bytes[0]) << 24) |
                    (static_cast<uint32_t>(bytes[1]) << 16) |
@@ -98,7 +98,7 @@ namespace Coap
         /**
          * @brief Reads a 64-bit unsigned integer from a Big-Endian byte stream.
          */
-        inline constexpr uint64_t read_uint64(const uint8_t *bytes)
+        inline constexpr uint64_t read_uint64(const uint8_t (&bytes)[8])
         {
             return (static_cast<uint64_t>(bytes[0]) << 56) |
                    (static_cast<uint64_t>(bytes[1]) << 48) |
@@ -113,7 +113,7 @@ namespace Coap
         /**
          * @brief Reads a 16-bit signed integer from a Big-Endian byte stream.
          */
-        inline constexpr int16_t read_int16(const uint8_t *bytes)
+        inline constexpr int16_t read_int16(const uint8_t (&bytes)[2])
         {
             // Read as unsigned to avoid bitshift undefined behaviour, then cast to signed.
             return static_cast<int16_t>(read_uint16(bytes));
@@ -122,7 +122,7 @@ namespace Coap
         /**
          * @brief Reads a 32-bit signed integer from a Big-Endian byte stream.
          */
-        inline constexpr int32_t read_int32(const uint8_t *bytes)
+        inline constexpr int32_t read_int32(const uint8_t (&bytes)[4])
         {
             return static_cast<int32_t>(read_uint32(bytes));
         }
@@ -130,7 +130,7 @@ namespace Coap
         /**
          * @brief Reads a 64-bit signed integer from a Big-Endian byte stream.
          */
-        inline constexpr int64_t read_int64(const uint8_t *bytes)
+        inline constexpr int64_t read_int64(const uint8_t (&bytes)[8])
         {
             return static_cast<int64_t>(read_uint64(bytes));
         }
@@ -138,7 +138,7 @@ namespace Coap
         /**
          * @brief Reads a 32-bit float from a Big-Endian byte stream.
          */
-        inline float read_float(const uint8_t *bytes)
+        inline float read_float(const uint8_t (&bytes)[4])
         {
             uint32_t value = read_uint32(bytes);
             float host_float;
@@ -152,7 +152,7 @@ namespace Coap
          * @note Templated to defer the 64-bit architecture check until the function is actually called.
          */
         template <typename T = double>
-        inline T read_double(const uint8_t *bytes)
+        inline T read_double(const uint8_t (&bytes)[8])
         {
             static_assert(sizeof(T) == 8, "Cannot read a 64-bit network double on a 32-bit double architecture (like AVR).");
             uint64_t value = read_uint64(bytes);

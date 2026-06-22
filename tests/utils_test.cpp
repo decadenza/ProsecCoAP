@@ -38,6 +38,33 @@ void test_read_uint64(void)
     TEST_ASSERT_EQUAL(expected, result);
 }
 
+void test_read_int16(void)
+{
+    const int16_t expected = 0xABCD;
+    uint8_t stream[2];
+    Coap::Utils::toNetworkByteOrder(expected, stream);
+    int16_t result = Coap::Utils::read_int16(stream);
+    TEST_ASSERT_EQUAL(expected, result);
+}
+
+void test_read_int32(void)
+{
+    const int32_t expected = 0xABCDEF12;
+    uint8_t stream[4];
+    Coap::Utils::toNetworkByteOrder(expected, stream);
+    int32_t result = Coap::Utils::read_int32(stream);
+    TEST_ASSERT_EQUAL(expected, result);
+}
+
+void test_read_int64(void)
+{
+    const int64_t expected = 0x0123456701234567;
+    uint8_t stream[8];
+    Coap::Utils::toNetworkByteOrder(expected, stream);
+    int64_t result = Coap::Utils::read_int64(stream);
+    TEST_ASSERT_EQUAL(expected, result);
+}
+
 void test_read_float(void)
 {
     const float expected = 42.2256;
@@ -62,6 +89,9 @@ int main()
     RUN_TEST(test_read_uint16);
     RUN_TEST(test_read_uint32);
     RUN_TEST(test_read_uint64);
+    RUN_TEST(test_read_int16);
+    RUN_TEST(test_read_int32);
+    RUN_TEST(test_read_int64);
     RUN_TEST(test_read_float);
     RUN_TEST(test_read_double);
     return UNITY_END();
