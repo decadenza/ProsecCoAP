@@ -1,4 +1,2 @@
 # Doxygen local output directory
 html/*
-# Unit test artifacts
-test/unity/*
