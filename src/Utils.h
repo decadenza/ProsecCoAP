@@ -77,6 +77,18 @@ namespace Coap
 
         /**
          * @brief Reads a 16-bit unsigned integer from a Big-Endian byte stream.
+         *
+         * Basic usage:
+         * @code{.cpp}
+         * uint8_t stream[2] = {0xAB, 0xCD};
+         * uint16_t value = Coap::Utils::read_uint16(stream); // value will be 0xABCD
+         * @endcode
+         *
+         * Usage with larger buffers:
+         * @code{.cpp}
+         * uint8_t stream[100] = {0}; // Large source data (must be populated).
+         * uint16_t value = read_uint16(*reinterpret_cast<uint8_t(*)[2]>(&stream[42]));
+         * @endcode
          */
         inline constexpr uint16_t read_uint16(const uint8_t (&bytes)[2])
         {
