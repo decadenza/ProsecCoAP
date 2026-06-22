@@ -1,2 +1,3 @@
 # Doxygen local output directory
 html/*
+.vscode/
