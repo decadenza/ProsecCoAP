@@ -59,10 +59,10 @@ test:
 	git submodule sync --recursive
 	git submodule update --init --recursive
 	@echo "--- Running unit tests ---"; \
-	for test_file in $$(find test -wholename 'test/*_test.cpp'); do \
-		echo "Running unit test: $$test_file"; \
+	for test_file in $$(find tests -name '*_test.cpp'); do \
+		echo "Running unit tests: $$test_file"; \
 		runner="$$test_file.out"; \
-		g++ -std=c++11 -I./src -I./test/unity/src $$test_file ./test/unity/src/unity.c -o $$runner || exit 1; \
+		g++ -std=c++11 -I./src -I./tests/unity/src $$test_file ./tests/unity/src/unity.c -o $$runner || exit 1; \
 		./$$runner || exit 1; \
 		rm $$runner; \
 	done
