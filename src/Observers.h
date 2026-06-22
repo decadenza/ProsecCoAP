@@ -232,9 +232,9 @@ namespace Coap
         }
 
         /**
-         * @brief Add a new observer to the registry.
+         * @brief Add a new active observer to the registry.
          *
-         * If the observer already exists and is active, it will not be added again.
+         * If an active observer with same configuration already exists, it will not be added again.
          *
          * @param ip The IP address of the observer.
          * @param port The port of the observer.
@@ -254,7 +254,7 @@ namespace Coap
          *
          * If the observer already exists and is active, it will not be added again.
          *
-         * @param observer The observer to be added.
+         * @param observer The observer to be added. The observer must be active to be added to the registry.
          * @return An error code indicating success or failure. It will return @ref ErrorCode::OK
          *         if the observer is successfully added (or was already present).
          *         It will return @ref ErrorCode::NOT_SUPPORTED if the registry is full
@@ -291,12 +291,12 @@ namespace Coap
             {
                 if (!this->_observers[i].isActive())
                 {
-                    // Inactive slot found. Add the new observer here (active by default, see constructor).
+                    // Inactive slot found. Add the new observer here.
                     this->_observers[i] = observer;
                     return ErrorCode::OK;
                 }
             }
-
+            // Could not find an inactive slot, the registry is full.
             return ErrorCode::NOT_SUPPORTED;
         }
 
