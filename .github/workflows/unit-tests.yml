@@ -6,6 +6,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          submodules: recursive
+          persist-credentials: false
       - name: Unit tests
         run: make test
