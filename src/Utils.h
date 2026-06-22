@@ -5,7 +5,7 @@
 #ifndef __PROSECCOAP_UTILS_H__
 #define __PROSECCOAP_UTILS_H__
 
-#include <cstring> // For memcpy.
+#include <string.h> // For memcpy.
 #include <stdint.h>
 
 namespace Coap

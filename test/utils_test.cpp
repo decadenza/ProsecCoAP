@@ -63,5 +63,6 @@ int main()
     RUN_TEST(test_read_uint32);
     RUN_TEST(test_read_uint64);
     RUN_TEST(test_read_float);
+    RUN_TEST(test_read_double);
     return UNITY_END();
 }
