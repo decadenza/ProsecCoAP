@@ -35,19 +35,15 @@
 #define SERIAL_WHILE_WAIT \
     while (!Serial)       \
         ;
-#define SERIAL_PRINT(x) Serial.print(x)
-#define SERIAL_PRINT_HEX(x) Serial.print(x, HEX)
-#define SERIAL_PRINTLN(x) Serial.println(x)
-#define SERIAL_WRITE(x) Serial.write(x)
-#define SERIAL_WRITE_LEN(x, y) Serial.write(x, y)
+#define SERIAL_PRINT(...) Serial.print(__VA_ARGS__)
+#define SERIAL_PRINTLN(...) Serial.println(__VA_ARGS__)
+#define SERIAL_WRITE(...) Serial.write(__VA_ARGS__)
 #else
 #define SERIAL_BEGIN(baud)
 #define SERIAL_WHILE_WAIT
-#define SERIAL_PRINT(x)
-#define SERIAL_PRINT_HEX(x)
-#define SERIAL_PRINTLN(x)
-#define SERIAL_WRITE(x)
-#define SERIAL_WRITE_LEN(x, y)
+#define SERIAL_PRINT(...)
+#define SERIAL_PRINTLN(...)
+#define SERIAL_WRITE(...)
 #endif
 
 // UDP and CoAP instances.
@@ -153,7 +149,7 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
             response.intoNotification(new_observer);  // Build an ACK notification.
             response.setType(Coap::MessageType::ACK); // Set the response type to ACK.
             SERIAL_PRINT("Subscribed with token: ");
-            SERIAL_WRITE_LEN(message.getToken(), message.getTokenLength());
+            SERIAL_WRITE(message.getToken(), message.getTokenLength());
             SERIAL_PRINTLN();
         }
         else
