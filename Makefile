@@ -56,6 +56,8 @@ doc-open: doc
 
 .PHONY: test
 test:
+	git submodule sync --recursive
+	git submodule update --init --recursive
 	@echo "--- Running unit tests ---"; \
 	for test_file in $$(find test -wholename 'test/*_test.cpp'); do \
 		echo "Running unit test: $$test_file"; \
