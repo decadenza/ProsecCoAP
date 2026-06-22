@@ -52,3 +52,15 @@ doc-open: doc
 	else \
 		xdg-open "$(shell pwd)/html/index.html"; \
 	fi
+
+
+.PHONY: test
+test:
+	@echo "--- Running unit tests ---"; \
+	for test_file in $$(find test -wholename 'test/*_test.cpp'); do \
+		echo "Running unit test: $$test_file"; \
+		runner="$$test_file.out"; \
+		g++ -std=c++11 -I./src -I./test/unity/src $$test_file ./test/unity/src/unity.c -o $$runner || exit 1; \
+		./$$runner || exit 1; \
+		rm $$runner; \
+	done

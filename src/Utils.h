@@ -5,7 +5,7 @@
 #ifndef __PROSECCOAP_UTILS_H__
 #define __PROSECCOAP_UTILS_H__
 
-#include <Arduino.h>
+#include <cstring> // For memcpy.
 #include <stdint.h>
 
 namespace Coap
