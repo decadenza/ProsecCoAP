@@ -1077,6 +1077,11 @@ namespace Coap
 
     ErrorCode Node::serve(const char *path, Callback callback)
     {
+        if (path == nullptr || callback == nullptr)
+        {
+            return ErrorCode::INVALID_ARGUMENT;
+        }
+        // NOTE: A path == "" is a valid one!
         return this->_serverRegistry.add(path, callback);
     }
 
