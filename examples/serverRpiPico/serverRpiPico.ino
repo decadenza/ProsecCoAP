@@ -57,19 +57,19 @@ void setup()
 {
   Serial.begin(115200);
 
-  // Wait for serial before starting.
+  // Wait for serial before starting. Optional.
   while (!Serial)
   {
   }
 
-  delay(2000);
-
-  // Set SPI to the onboard Wiznet chip.
+  // Set SPI pins for your specific board.
+  // Not needed for W5100S-EVB-Pico.
   // Edit to match your hardware.
-  SPI.setRX(16);
-  SPI.setCS(17);
-  SPI.setSCK(18);
-  SPI.setTX(19);
+  //   SPI.setRX(16);
+  //   SPI.setCS(17);
+  //   SPI.setSCK(18);
+  //   SPI.setTX(19);
+  //   SPI.begin();
 
   eth.config(deviceIp, gateway, subnet, dns);
 
