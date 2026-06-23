@@ -81,13 +81,13 @@ namespace Coap
          * Basic usage:
          * @code{.cpp}
          * uint8_t stream[2] = {0xAB, 0xCD};
-         * uint16_t value = Coap::Utils::read_uint16(stream); // value will be 0xABCD
+         * uint16_t value = Coap::Utils::read_uint16(stream);
          * @endcode
          *
          * Usage with larger buffers:
          * @code{.cpp}
          * uint8_t stream[100] = {0}; // Large source data (must be populated).
-         * uint16_t value = Coap::Utils::read_uint16(&stream[42]); // Clean C++11 syntax
+         * uint16_t value = Coap::Utils::read_uint16(&stream[42]);
          * @endcode
          */
         inline constexpr uint16_t read_uint16(const uint8_t *bytes)
