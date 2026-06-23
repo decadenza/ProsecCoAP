@@ -41,7 +41,6 @@ IPAddress dns(192, 168, 0, 99);      // Set your own.
 IPAddress gateway(192, 168, 0, 99);  // Set your own.
 IPAddress subnet(255, 255, 255, 0);  // Set your own.
 
-//
 // CoAP server path callback.
 void callbackLight(Coap::Message &packet, IPAddress ip, uint16_t port);
 
@@ -62,6 +61,8 @@ void setup()
   while (!Serial)
   {
   }
+
+  delay(2000);
 
   // Set SPI to the onboard Wiznet chip.
   // Edit to match your hardware.
