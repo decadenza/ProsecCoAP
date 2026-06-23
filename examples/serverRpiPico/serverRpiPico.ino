@@ -37,6 +37,10 @@ Wiznet5100lwIP eth(17, SPI, 21); // Note chip select is **17**.
 
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress deviceIp(192, 168, 0, 99); // Set your own.
+IPAddress dns(192, 168, 0, 99);      // Set your own.
+IPAddress gateway(192, 168, 0, 99);  // Set your own.
+IPAddress subnet(255, 255, 255, 0);  // Set your own.
+
 //
 // CoAP server path callback.
 void callbackLight(Coap::Message &packet, IPAddress ip, uint16_t port);
@@ -53,6 +57,7 @@ bool LED_STATUS;
 void setup()
 {
   Serial.begin(115200);
+  // while(!Serial) {} // Uncomment to wait for serial before continuing.
 
   // Set SPI to the onboard Wiznet chip.
   SPI.setRX(16);
@@ -60,7 +65,7 @@ void setup()
   SPI.setSCK(18);
   SPI.setTX(19);
 
-  eth.config(deviceIp);
+  eth.config(deviceIp, gateway, subnet, dns);
 
   while (!eth.begin())
   {
