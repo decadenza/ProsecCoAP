@@ -133,7 +133,6 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
 
     // Build the response with resource payload.
     Coap::Message response = getCurrentTimeMessage();
-    response.addPath("time");
 
     if (message.isObserveRegister())
     {
