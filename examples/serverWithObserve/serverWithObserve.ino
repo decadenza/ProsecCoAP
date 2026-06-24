@@ -182,7 +182,7 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
     }
 
     // Send the response.
-    if (coapNode.sendMessage(response, ip, port) < Coap::ErrorCode::OK)
+    if (coapNode.sendMessage(response, ip, port) != Coap::ErrorCode::OK)
     {
         SERIAL_PRINTLN("Failed to send response!");
     }
