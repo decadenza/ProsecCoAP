@@ -7,7 +7,7 @@ Contributions are welcome. You may contribute by:
 ## Coding standards
 Code must be documented using [Doxygen](https://www.doxygen.nl/manual/docblocks.html).
 
-Please write code following the [Arduino Style Guide](https://docs.arduino.cc/learn/contributions/arduino-library-style-guide/) as much as possible.
+Please write code following the [Arduino Style Guide](https://docs.arduino.cc/learn/contributions/arduino-library-style-guide/) and the style of [official Arduino libraries](https://github.com/arduino-libraries) as much as possible.
 
 ## Unit tests
 Unit tests for pure C++ functions can be added in the [tests](./tests) folder.
