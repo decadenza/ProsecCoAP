@@ -68,7 +68,7 @@ void myCallback(Coap::Message &message, IPAddress ip, uint16_t port)
   }
 }
 ```
-Navigate to *File > Examples > ProsecCoAP* in Arduino IDE or check the [example folder](./examples/) for more examples.
+Navigate to *File > Examples > ProsecCoAP* in Arduino IDE or check the [examples folder](./examples/) for more examples.
 
 ### Run the examples
 For the examples to compile and work correctly, please ensure to have all the necessary boards installed.
@@ -92,9 +92,9 @@ arduino-cli core install esp8266:esp8266 --additional-urls http://arduino.esp826
 
 #### Functional tests through the examples
 The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need another CoAP node to be executed. You can, alternatively:
+- Use one device and a [CoAP tool](https://coap.space/tools.html) running a computer.
+  I suggest [libcoap](https://github.com/obgm/libcoap), either by compiling it yourself or use the binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
 - Use two devices and check serial monitor of each.
-- Use one device and a [CoAP tool](https://coap.space/tools.html) on your computer for testing.
-  For example, [libcoap](https://github.com/obgm/libcoap) by compiling it yourself or use the example binaries available as Debian package [libcoap3-bin](https://packages.debian.org/stable/libs/libcoap3-bin). In this case, you can test with `coap-client-notls` and `coap-server-notls`.
 
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
