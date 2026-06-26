@@ -486,24 +486,22 @@ namespace Coap
          * the error code @ref ErrorCode::NOT_SUPPORTED is returned.
          * For options that can appear multiple times, the option is *appended after* the existing ones.
          *
-         * @warning This is a low-level method to add options.
-         *          It does not perform validation of the option length.
-         *          It is the caller's responsibility to ensure that the option is valid
-         *          according to the CoAP specification.
-         *
+         * @warning This is a low-level method. Caller has the responsibility to produce a valid option
+         * according to the CoAP specification. Avoid overflows by validating the option length.
          *
          * Prefer using specialized methods for common options like @ref COAP_CONTENT_FORMAT,
          * @ref COAP_URI_PATH, or @ref COAP_URI_QUERY when available.
          *
-         * See https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
-         *
-         * @param number The option number, as defined in the CoAP specification.
-         * @param value The pointer to the option value.
-         * @param length The length of the option value.
+         * @param number Option number, as defined in the CoAP specification.
+         * @param value Pointer to the option value.
+         * @param length Length of the option value.
          * @return An error code indicating success or failure. @ref ErrorCode::NOT_SUPPORTED is returned
-         *        if adding the option would exceed the maximum number of allowed options for that
-         *        number. An @ref ErrorCode::MESSAGE_TOO_LARGE is returned if adding the option would exceed
-         *        the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).
+         * if adding the option would exceed the maximum number of allowed options for that
+         * number. An @ref ErrorCode::MESSAGE_TOO_LARGE is returned if adding the option would exceed
+         * the maximum message size (@ref COAP_MAX_MESSAGE_SIZE).
+         *
+         * @see https://datatracker.ietf.org/doc/html/rfc7252#section-3.1
+         * @see Option value format https://datatracker.ietf.org/doc/html/rfc7252#section-3.2
          */
         ErrorCode addOption(OptionNumber number, const uint8_t *value, size_t length);
 

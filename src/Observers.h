@@ -3,7 +3,7 @@
  *
  * @brief Manage observers for the observe mechanism of CoAP.
  *
- * It extends the main ProsecCoAP library with helpers objects to support the Observe mechanism as per RFC 7641.
+ * It extends ProsecCoAP library with helpers structures to support the Observe mechanism as per RFC 7641.
  */
 #ifndef OBSERVERS_H_INCLUDED
 #define OBSERVERS_H_INCLUDED
@@ -13,9 +13,9 @@
 namespace Coap
 {
     /**
-     * @brief A remote CoAP observer, actively observing a resource.
+     * @brief A remote CoAP observer.
      *
-     * It tracks a remote observer registered for notifications.
+     * It tracks a remote observer registered to a specific resource for notifications.
      */
     class Observer
     {
@@ -407,6 +407,7 @@ namespace Coap
         /**
          * @brief Removes all stale observers from the registry.
          * @return @ref ErrorCode::OK.
+         * @see Observer::isStale().
          */
         ErrorCode removeStale()
         {

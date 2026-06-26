@@ -1,10 +1,7 @@
 /**
  * @file Detail.h
  *
- * @brief This header file contains detail functions, not meant for public use.
- *
- * This software is released under the MIT License.
- * Copyright (c) 2026 Pasquale Lafiosca
+ * @brief This header file contains internal implementation functions, not meant for external use.
  */
 #ifndef DETAIL_H_INCLUDED
 #define DETAIL_H_INCLUDED
@@ -14,7 +11,6 @@
 
 namespace Coap
 {
-
     /**
      * @brief Internal details of the library. Not for public use.
      */
@@ -29,7 +25,6 @@ namespace Coap
          * @return A random timeout value in milliseconds.
          */
         unsigned long getRandomTimeout();
-
         /**
          * @brief Return the minimum number of bytes needed to represent the given value.
          *
@@ -37,10 +32,9 @@ namespace Coap
          * @see https://datatracker.ietf.org/doc/html/rfc7252#section-3.2
          *
          * @param value The value to evaluate.
-         * @return The minimum number of bytes required to represent the value.
+         * @return The minimum number of bytes required to represent the value. Return 0 if the value is 0.
          */
         size_t getMinOptionBytes(uint32_t value);
-
         /**
          * @brief Wrapper around low level function to send raw UDP data.
          *
@@ -95,7 +89,6 @@ namespace Coap
              *             Examples of valid paths are:
              *                 - `test`
              *                 - `sensors/temp`
-             *
              *
              * @param callback The callback function associated with the path.
              * @return An error code indicating success or failure.
