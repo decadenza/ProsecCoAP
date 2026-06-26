@@ -1,6 +1,6 @@
 /**
  * @file server.ino
- * @brief A CoAP server example.
+ * @brief A CoAP server example for general Arduino boards.
  *
  * The current light status can be read using:
  * ```
@@ -67,12 +67,13 @@ void loop()
   delay(1000);
 }
 
-// CoAP server path URL.
+// Light control callback.
 // The expected payload input is one string character.
 //
 // A GET request will only return the current value.
-// A PUT request will set a new value.
 // The response will be a string, either "1" or "0".
+//
+// A PUT request will set the light on if the payload is "1", off otherwise.
 void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 {
   if (message.getCode() == Coap::MessageCode::PUT)

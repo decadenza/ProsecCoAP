@@ -10,14 +10,14 @@
 const char *ssid = "your-ssid";
 const char *password = "your-password";
 
+WiFiUDP udp;
+Coap::Node coapNode(udp);
+
 // CoAP client response callback
 void callbackResponse(Coap::Message &message, IPAddress, uint16_t);
 
 // CoAP server path url callback
 void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port);
-
-WiFiUDP udp;
-Coap::Node coapNode(udp);
 
 // Track LED status at runtime.
 bool LED_STATUS;
@@ -63,12 +63,13 @@ void loop()
   coapNode.loop();
 }
 
-// CoAP server path URL.
+// Light control callback.
 // The expected payload input is one string character.
 //
 // A GET request will only return the current value.
-// A PUT request will set a new value.
 // The response will be a string, either "1" or "0".
+//
+// A PUT request will set the light on if the payload is "1", off otherwise.
 void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 {
   if (message.getCode() == Coap::MessageCode::PUT)

@@ -3,6 +3,7 @@
  * @brief Examples of advanced message building.
  *
  * @note Message building does not require to initialise the CoAP node.
+ * See the client example to see how to send the message after building it.
  */
 #include <Ethernet.h>
 #include <EthernetUdp.h>

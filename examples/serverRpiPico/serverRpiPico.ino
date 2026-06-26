@@ -1,8 +1,8 @@
 /**
  * @file serverRpiPico.ino
- * @brief A CoAP server example specific for W5100S-EVB-Pico board.
+ * @brief A CoAP server example specific for Raspberry Pi Pico.
  *
- * Tested on WIZnet W5100S-EVB-Pico.
+ * Tested on WIZnet W5100S-EVB-Pico. Other boards may require changes.
  *
  * Requirements:
  * - Install "https://github.com/earlephilhower/arduino-pico" (also through the Board Manager).
@@ -19,11 +19,6 @@
  * ```
  * Note that on some boards, ON/OFF logic may be inverted.
  *
- * In addition, this example also acts as client, sending a GET request every second.
- * To receive such requests, start a CoAP server on the remote machine. To test, you may use:
- * ```
- * coap-server-notls -v 9
- * ```
  */
 #include <SPI.h>
 #include <W5100lwIP.h>
@@ -100,12 +95,13 @@ void loop()
   delay(1000);
 }
 
-// CoAP server path URL.
+// Light control callback.
 // The expected payload input is one string character.
 //
 // A GET request will only return the current value.
-// A PUT request will set a new value.
 // The response will be a string, either "1" or "0".
+//
+// A PUT request will set the light on if the payload is "1", off otherwise.
 void callbackLight(Coap::Message &message, IPAddress ip, uint16_t port)
 {
   if (message.getCode() == Coap::MessageCode::PUT)
