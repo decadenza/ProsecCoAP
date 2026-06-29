@@ -145,7 +145,7 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
             // Send ACK response.
             // As per https://datatracker.ietf.org/doc/html/rfc7641#section-4.1
             // the response must also be a notification i.e. including the observe option.
-            response.intoNotification(new_observer);  // Build an ACK notification.
+            response.intoNotification(new_observer);  // Build a notification.
             response.setType(Coap::MessageType::ACK); // Set the response type to ACK.
             SERIAL_PRINT("Subscribed with token: ");
             SERIAL_WRITE(message.getToken(), message.getTokenLength());

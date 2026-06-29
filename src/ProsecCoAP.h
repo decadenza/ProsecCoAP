@@ -696,6 +696,7 @@ namespace Coap
          * a non-confirmable message at least every 24 hours_.
          *
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-3.5
+         * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.2
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
          */
         ErrorCode intoNotification(Observer &observer);
