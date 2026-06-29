@@ -244,8 +244,8 @@ namespace Coap
          * @see add(Observer observer) for the version that accepts an Observer object.
          *
          * @note RFC-7641 section 4.1 specifies that the list of observers is keyed by endpoint and token.
-         * Each @ref ObserverRegistry instance will be linked to the specific resource, so that there is
-         * no need to record the endpoint here.
+         * Each @ref ObserverRegistry instance will be associated to a specific resource/endpoint, so that there is
+         * no need to record the endpoint within the registry.
          * Observers are also keyed by IP address and port to differenciate among multiple clients
          * using the same token.
          * Therefore the combination of IP, port and token fully identifies the observer.
