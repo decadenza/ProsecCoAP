@@ -123,6 +123,7 @@ void loop()
     Serial.print("Error while reading options: ");
     Serial.println((int8_t)err);
   }
+  // Else, a NOT_FOUND error means that we correctly reached the end of the options.
 
   // Read the payload from the message.
   const uint8_t *payload;
