@@ -612,7 +612,9 @@ namespace Coap
          * @param payload Pointer to the payload data.
          * @param length Length of the payload data.
          * @param format The content format of the payload.
-         * @return An error code indicating success or failure.
+         * @return An error code indicating success or failure. Returns @ref ErrorCode::NOT_SUPPORTED
+         * if a payload is already present. Returns @ref ErrorCode::INVALID_ARGUMENT if the provided
+         * payload is empty.
          *
          * @see addPayload(const uint8_t *payload, size_t length, ContentFormat format)
          *      for the variant that also adds the Content-Format option.

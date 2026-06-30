@@ -175,9 +175,8 @@ void timeCallback(Coap::Message &message, IPAddress ip, uint16_t port)
     }
     else
     {
-        // This is a normal GET request without observe option. Just reply with the current time.
+        // This is a normal GET request without observe option. Just send the response.
         response.intoResponse(message, Coap::MessageCode::CONTENT);
-        response.addPayload((const uint8_t *)"Current time: ", 14, Coap::ContentFormat::TEXT_PLAIN);
         SERIAL_PRINTLN("Received non-observe GET request!");
     }
 
