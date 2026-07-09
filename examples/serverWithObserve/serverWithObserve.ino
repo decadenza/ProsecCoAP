@@ -195,13 +195,14 @@ void sendNotification()
         return;
     }
 
-    Coap::Message notification = getCurrentTimeMessage();
+    Coap::Message time_message = getCurrentTimeMessage();
 
     for (size_t i = 0; i < myObservers.length(); i++)
     {
         if (myObservers[i].isActive())
         {
-            // Build a notification message for this observer, using the original message as template.
+            // Build a notification message for this observer, using the original time message as template.
+            Coap::Message notification = time_message;
             Coap::ErrorCode err = notification.intoNotification(myObservers[i]);
             if (err == Coap::ErrorCode::OK)
             {
