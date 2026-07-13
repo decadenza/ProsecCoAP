@@ -59,8 +59,8 @@ Coap::ObserverRegistry<5> myObservers;
 
 byte mac[] = {0xBE, 0xEF, 0xBE, 0xEF, 0x00, DEVICE_ID}; // Define the MAC address, this must be unique.
 IPAddress ip(192, 168, 0, DEVICE_ID);                   // This device IP.
-IPAddress dns(192, 168, 0, 1);                          // Optional. Set your own.
-IPAddress gateway(192, 168, 0, 1);                      // Optional. Set your own.
+IPAddress dns(0, 0, 0, 0);                              // Optional. Set your own.
+IPAddress gateway(0, 0, 0, 0);                          // Optional. Set your own.
 IPAddress subnet(255, 255, 255, 0);                     // Optional. Set your own.
 
 /**
