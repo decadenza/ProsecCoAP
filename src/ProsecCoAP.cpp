@@ -52,7 +52,7 @@ namespace Coap
 
     ErrorCode Message::fromUdp(UDP *udp, Message &message)
     {
-        message._messageLength = 0; // Initialize to zero in case of failure.
+        message._messageLength = 0; // Initialize to zero (so it is safe to reuse the same allocated message).
 
         int len = udp->parsePacket();
         if (len < COAP_HEADER_SIZE)
