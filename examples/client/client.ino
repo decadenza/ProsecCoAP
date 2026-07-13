@@ -20,8 +20,8 @@
 byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 IPAddress deviceIp(192, 168, 0, 99);                   // Set your own.
 IPAddress destinationIp = IPAddress(192, 168, 0, 100); // Set your CoAP server IP address here.
-IPAddress dns(192, 168, 0, 1);                         // Optional. Set your own.
-IPAddress gateway(192, 168, 0, 1);                     // Optional. Set your own.
+IPAddress dns(0, 0, 0, 0);                             // Optional. Set your own.
+IPAddress gateway(0, 0, 0, 0);                         // Optional. Set your own.
 IPAddress subnet(255, 255, 255, 0);                    // Optional. Set your own.
 
 // CoAP client response callback
@@ -61,7 +61,7 @@ void loop()
 
   coapNode.sendMessage(msg, destinationIp, COAP_DEFAULT_PORT);
   Serial.print("[Request] id=");
-  Serial.println(msg.getId());
+  Serial.println(msg.getId(), HEX);
 
   // Even when acting as client, we still need to run the loop housekeeping.
   coapNode.loop();
