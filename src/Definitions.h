@@ -36,7 +36,9 @@
  *
  * This value applies to both incoming and outgoing messages.
  * Keep this value small enough to reduce memory usage. Exceeding it will
- * lead to errors when building outgoing messages or parsing incoming messages.
+ * lead to errors when building outgoing messages.
+ *
+ * @warning Incoming messages large than this threshold will be dropped.
  *
  * See https://datatracker.ietf.org/doc/html/rfc7252#section-4.6
  *
