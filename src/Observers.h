@@ -89,7 +89,7 @@ namespace Coap
          * @brief Check if the observer is stale.
          * @return True if the observer is stale, false otherwise.
          *
-         * An observer is considered stale if it is active but has not been seen for 24 hours or more.
+         * An observer is considered stale if it is active AND has not been seen for 24 hours or more.
          * @see https://datatracker.ietf.org/doc/html/rfc7641#section-4.5
          */
         bool isStale() const;
