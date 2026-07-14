@@ -55,6 +55,7 @@ void setup()
   // Wait for serial before starting. Optional.
   while (!Serial)
   {
+    delay(10);
   }
 
   // Set SPI pins for your specific board.

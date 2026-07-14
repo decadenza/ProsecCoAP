@@ -34,7 +34,9 @@
 #define SERIAL_BEGIN(baud) Serial.begin(baud)
 #define SERIAL_WHILE_WAIT \
     while (!Serial)       \
-        ;
+    {                     \
+        delay(10);        \
+    }
 #define SERIAL_PRINT(...) Serial.print(__VA_ARGS__)
 #define SERIAL_PRINTLN(...) Serial.println(__VA_ARGS__)
 #define SERIAL_WRITE(...) Serial.write(__VA_ARGS__)
