@@ -29,10 +29,12 @@ namespace Coap
             return false;
         }
 
+        // As per RFC 7641 Section 4.5, an observer is stale if not seen for 24 hours.
+        // Using unsigned arithmetic which handles millis() overflow correctly.
+        const unsigned long staleThreshold = 24UL * 60UL * 60UL * 1000UL;
         unsigned long currentTime = millis();
-        unsigned long elapsedTime = currentTime - this->_lastSeen; // Wrapping is safe.
+        unsigned long elapsedTime = currentTime - this->_lastSeen; // The unsigned subtraction correctly handles millis() overflow (every ~49.7 days).
 
-        // Check if the elapsed time since the last seen timestamp is 24 hours or more (in milliseconds).
-        return elapsedTime >= (24UL * 60UL * 60UL * 1000UL);
+        return elapsedTime >= staleThreshold;
     }
 }
