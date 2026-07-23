@@ -956,6 +956,39 @@ namespace Coap
         return false;
     }
 
+    ErrorCode Message::getMaxAge(uint32_t &age)
+    {
+        OptionIterator it = this->getOptionIterator();
+        Option option;
+        while (it.next(option) == ErrorCode::OK)
+        {
+            if (option.number < OptionNumber::MAX_AGE)
+                continue;
+            if (option.number == OptionNumber::MAX_AGE)
+            {
+                // The MAX_AGE option value is 0-4 bytes long (32-bit unsigned integer).
+                // The protocol uses Network Byte Order (big-endian).
+                // Shift the bytes accordingly.
+                age = 0;
+                for (size_t i = 0; i < option.length && i < 4; i++) // Length is capped to 4.
+                {
+                    age |= static_cast<uint32_t>(option.value[i]) << (8 * (3 - i));
+                }
+                age >>= (8 * (4 - option.length)); // Shift back to the right if length is less than 4.
+                return ErrorCode::OK;
+            }
+            else
+            {
+                // Since options are ordered by number, if we have passed the MAX_AGE option number,
+                // it means that the MAX_AGE option is not present.
+                break;
+            }
+        }
+        // MAX_AGE option not present, set default value of 60 seconds.
+        age = 60;
+        return ErrorCode::NOT_FOUND;
+    }
+
     ErrorCode Message::getPath(String &path) const
     {
         OptionIterator it = this->getOptionIterator();

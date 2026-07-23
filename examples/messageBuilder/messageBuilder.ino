@@ -141,5 +141,19 @@ void loop()
     Serial.println();
   }
 
+  uint32_t maxAge;
+  err = msg.getMaxAge(maxAge);
+  if (err != Coap::ErrorCode::OK && err != Coap::ErrorCode::NOT_FOUND)
+  {
+    Serial.print("Error while reading Max-Age: ");
+    Serial.println((int8_t)err);
+  }
+  else
+  {
+    Serial.print("Max-Age: ");
+    Serial.print(maxAge);
+    Serial.println();
+  }
+
   delay(2000);
 }
