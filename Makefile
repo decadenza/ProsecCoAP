@@ -62,7 +62,7 @@ test:
 	for test_file in $$(find tests -name '*_test.cpp'); do \
 		echo "Running unit tests: $$test_file"; \
 		runner="$$test_file.out"; \
-		g++ -std=c++11 -I./src -I./tests/unity/src $$test_file ./tests/unity/src/unity.c -o $$runner || exit 1; \
+		g++ -std=c++11 -I./tests/mocks -I./src -I./tests/unity/src $$test_file ./tests/unity/src/unity.c -o $$runner || exit 1; \
 		./$$runner || exit 1; \
 		rm $$runner; \
 	done

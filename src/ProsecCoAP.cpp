@@ -258,7 +258,8 @@ namespace Coap
         }
         // SECTION Update message header to reflect new token length.
         // The token length is stored in the 4 lower bits of the first byte.
-        this->_message[0] |= static_cast<uint8_t>(length) & 0x0F;
+        // Clear previous token length bits before setting the new value.
+        this->_message[0] = (this->_message[0] & 0xF0) | (static_cast<uint8_t>(length) & 0x0F);
         return ErrorCode::OK;
     }
 
@@ -451,10 +452,26 @@ namespace Coap
         // SECTION Read the next option and adjust its delta.
         uint8_t optionHeader = this->_message[currentByte];
         currentByte++; // Move to the next byte (which may be extended delta/length or value start).
-        uint16_t oldDelta = (optionHeader >> 4) & 0x0F;
+        uint16_t oldDeltaNibble = (optionHeader >> 4) & 0x0F;
+        uint16_t oldDelta = oldDeltaNibble;
         uint16_t newDelta = oldDelta - newOptionDelta;
         uint16_t length = optionHeader & 0x0F;
-        if ((oldDelta < 13) & (newDelta < 13))
+
+        // Decode the actual old delta value if it uses extended encoding.
+        if (oldDeltaNibble == 13)
+        {
+            oldDelta = static_cast<uint16_t>(this->_message[currentByte]) + 13;
+            newDelta = oldDelta - newOptionDelta;
+        }
+        else if (oldDeltaNibble == 14)
+        {
+            oldDelta = ((static_cast<uint16_t>(this->_message[currentByte]) << 8) |
+                        static_cast<uint16_t>(this->_message[currentByte + 1])) +
+                       269;
+            newDelta = oldDelta - newOptionDelta;
+        }
+
+        if ((oldDeltaNibble < 13) && (newDelta < 13))
         {
             // Easy case: both old and new delta fit in 4 bits.
             this->_message[currentByte - 1] = (static_cast<uint8_t>(newDelta) << 4) | (optionHeader & 0x0F);
@@ -462,7 +479,7 @@ namespace Coap
         }
         else
         {
-            if (oldDelta == 13)
+            if (oldDeltaNibble == 13)
             {
                 // Old delta was extended delta (8 bits).
                 if (newDelta < 13)
@@ -480,7 +497,7 @@ namespace Coap
                     this->_message[currentByte] = static_cast<uint8_t>(newDelta - 13);
                 }
             }
-            else if (oldDelta == 14)
+            else if (oldDeltaNibble == 14)
             {
                 // Old delta was extended delta (16 bits).
                 if (newDelta < 13)
@@ -508,7 +525,7 @@ namespace Coap
                     return ErrorCode::OK;
                 }
             }
-            else if (oldDelta == 15)
+            else if (oldDeltaNibble == 15)
             {
                 // Old delta is special case: payload marker.
                 if (length == 15)
@@ -831,10 +848,10 @@ namespace Coap
             return err;
         }
 
-        // The current byte points to the payload marker or the end of message.
-        size_t firstByteOfPayload = it._currentByte;
-
-        if (firstByteOfPayload < this->getLength() && this->_message[firstByteOfPayload] == COAP_PAYLOAD_MARKER)
+        // If the payload marker was found, OptionIterator::next() returned NOT_FOUND with
+        // _currentByte advanced one byte after the marker.
+        size_t insertionPoint = it._currentByte;
+        if (insertionPoint > 0 && insertionPoint <= this->getLength() && this->_message[insertionPoint - 1] == COAP_PAYLOAD_MARKER)
         {
             // Payload marker already present. Cannot add another payload.
             return ErrorCode::NOT_SUPPORTED;
@@ -846,17 +863,17 @@ namespace Coap
             return ErrorCode::MESSAGE_TOO_LARGE;
         }
         // All good. Insert the payload marker.
-        err = this->_insert(firstByteOfPayload, reinterpret_cast<const uint8_t *>(&COAP_PAYLOAD_MARKER), 1);
+        err = this->_insert(insertionPoint, reinterpret_cast<const uint8_t *>(&COAP_PAYLOAD_MARKER), 1);
         if (err != ErrorCode::OK)
         {
             return err;
         }
         // Insert the payload itself.
-        err = this->_insert(firstByteOfPayload + 1, payload, length);
+        err = this->_insert(insertionPoint + 1, payload, length);
         if (err != ErrorCode::OK)
         {
             // Try to cancel the previous insertion of the payload marker.
-            this->_remove(firstByteOfPayload, 1);
+            this->_remove(insertionPoint, 1);
             // Return the original error.
             return err;
         }
