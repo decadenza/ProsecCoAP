@@ -32,15 +32,15 @@ namespace Coap
         size_t getMinOptionBytes(uint32_t value)
         {
             if (value == 0)
-                return 0;
-            else if (value <= 0xFF)
-                return 1;
-            else if (value <= 0xFFFF)
-                return 2;
-            else if (value <= 0xFFFFFF)
-                return 3;
-            else
-                return 4;
+                return 0; // Zero can be represented with 0 bytes.
+
+            uint32_t leadingZeros = __builtin_clz(value); // Count the leading zeros.
+            // Calculate the minimum number of bytes to represent the value.
+            // 0-7 leading zeros => 4 bytes
+            // 8-15 => 3
+            // 16-23 => 2
+            // 24-31 => 1
+            return (32 - leadingZeros + 7) / 8;
         }
 
         ErrorCode UriRegistry::add(const char *path, Callback callback)
