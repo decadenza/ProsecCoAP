@@ -665,14 +665,27 @@ namespace Coap
          *
          * @param[out] age The output parameter to store the MAX_AGE option value in seconds.
          * @return An error code indicating success or failure.
-         *         It returns @ref ErrorCode::OK if the MAX_AGE option is present or not present (default value set).
-         *         It returns @ref ErrorCode::NOT_FOUND if the MAX_AGE option is not present in the message (default value is still set).
+         *         It returns @ref ErrorCode::OK if the MAX_AGE option is present.
+         *         It returns @ref ErrorCode::NOT_FOUND if the MAX_AGE option is not present in the message (default value will be set).
          *         Other error codes may be returned in case of message parsing errors.
          *
          * @note The MAX_AGE option value is a 32-bit unsigned integer (0-4294967295 seconds, ~136 years).
          *       The default value of 60 seconds is set when the option is absent.
          */
         ErrorCode getMaxAge(uint32_t &age);
+
+        /**
+         * @brief Add the MAX_AGE option to the message.
+         *
+         * The MAX_AGE option indicates the maximum age of the resource representation in seconds,
+         * as per RFC 7252 Section 5.10.1. This is used for caching purposes.
+         *
+         * If a MAX_AGE option is already present, this function will return an error.
+         *
+         * @param age The maximum age value in seconds.
+         * @return Returns @ref ErrorCode::OK or other error code indicating specific failure.
+         */
+        ErrorCode setMaxAge(uint32_t age);
 
         /**
          * @brief Check if the message is an Observe register GET request.

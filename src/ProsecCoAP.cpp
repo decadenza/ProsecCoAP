@@ -989,6 +989,20 @@ namespace Coap
         return ErrorCode::NOT_FOUND;
     }
 
+    ErrorCode Message::setMaxAge(uint32_t age)
+    {
+        // Determine the minimum number of bytes needed to represent the age value.
+        // Per RFC 7252 Section 3.2, the option value can be 0-4 bytes.
+        size_t length = Coap::Detail::getMinOptionBytes(age);
+
+        // Convert to network byte order (big-endian).
+        uint8_t ageBytes[4];
+        Utils::toNetworkByteOrder(age, ageBytes);
+
+        // Add the option. The addOption method will handle the single-instance check.
+        return this->addOption(OptionNumber::MAX_AGE, ageBytes + (4 - length), length);
+    }
+
     ErrorCode Message::getPath(String &path) const
     {
         OptionIterator it = this->getOptionIterator();

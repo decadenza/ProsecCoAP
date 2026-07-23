@@ -28,6 +28,7 @@ void setup()
 
 void loop()
 {
+  // SECTION - Writing the message content.
   Serial.println("[Building new message]");
   // Build a GET request message to transmit.
   Coap::Message msg(Coap::MessageType::CON, Coap::MessageCode::GET); // Initialise a new CoAP confirmable message, as GET request.
@@ -85,6 +86,13 @@ void loop()
     Serial.println((int8_t)err);
   }
 
+  err = msg.setMaxAge(42);
+  if (err != Coap::ErrorCode::OK)
+  {
+    Serial.print("Error while adding Max-Age: ");
+    Serial.println((int8_t)err);
+  }
+
   /**
    * PRO-TIP: The library supports building a message in any order.
    * However, given the structure of the CoAP message, some memmove calls
@@ -97,7 +105,7 @@ void loop()
    * 4. Lastly, add a payload.
    */
 
-  // Reading the message content.
+  // SECTION - Reading the message content.
 
   // Read the current options from the message using an iterator.
   Coap::OptionIterator optIterator = msg.getOptionIterator();
