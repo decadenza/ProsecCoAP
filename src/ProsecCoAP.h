@@ -584,6 +584,36 @@ namespace Coap
         ErrorCode getPath(String &path) const;
 
         /**
+         * @brief Build a Cache-Key hash for this request message.
+         *
+         * The hash includes the message method and all request options except those
+         * marked NoCacheKey by RFC 7252 option number semantics.
+         *
+         * This variant uses only options explicitly present in the message.
+         * If Uri-Host or Uri-Port are omitted, their implicit defaults are not added.
+         *
+         * A Cache-Key can be calculated for any Message, but it is generally
+         * only needed for requests.
+         *
+         * @return 32-bit hash value suitable for cache indexing.
+         *
+         * @see RFC 7252 Section 5.6 and Section 5.4.6.
+         */
+        uint32_t getCacheKey() const;
+
+        /**
+         * @brief Build a Cache-Key hash for this request message including URI defaults.
+         *
+         * This variant adds implicit Uri-Host and Uri-Port defaults when the corresponding
+         * options are not present in the message.
+         *
+         * @param destinationIp Request destination IP address used as implicit Uri-Host.
+         * @param destinationPort Request destination UDP port used as implicit Uri-Port.
+         * @return 32-bit hash value suitable for cache indexing.
+         */
+        uint32_t getCacheKey(IPAddress destinationIp, uint16_t destinationPort) const;
+
+        /**
          * @brief Get the payload from the message.
          *
          * The payload is a raw set of bytes. To interpret it, refer to the

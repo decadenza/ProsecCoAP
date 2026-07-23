@@ -5,6 +5,52 @@
 namespace Coap
 {
 
+    namespace
+    {
+        constexpr uint32_t FNV1A_OFFSET_BASIS_32 = 2166136261UL;
+        constexpr uint32_t FNV1A_PRIME_32 = 16777619UL;
+
+        void hashByte(uint32_t &hash, uint8_t value)
+        {
+            hash ^= value;
+            hash *= FNV1A_PRIME_32;
+        }
+
+        void hashBytes(uint32_t &hash, const uint8_t *data, size_t length)
+        {
+            for (size_t i = 0; i < length; i++)
+            {
+                hashByte(hash, data[i]);
+            }
+        }
+
+        void hashUint16(uint32_t &hash, uint16_t value)
+        {
+            hashByte(hash, static_cast<uint8_t>((value >> 8) & 0xFF));
+            hashByte(hash, static_cast<uint8_t>(value & 0xFF));
+        }
+
+        bool isNoCacheKeyOption(uint16_t optionNumber)
+        {
+            // RFC 7252 Section 5.4.6: NoCacheKey = ((onum & 0x1e) == 0x1c)
+            return ((optionNumber & 0x1eU) == 0x1cU);
+        }
+
+        void hashOptionForCacheKey(uint32_t &hash, uint16_t optionNumber, const uint8_t *value, size_t length)
+        {
+            hashUint16(hash, optionNumber);
+            hashUint16(hash, static_cast<uint16_t>(length));
+            hashBytes(hash, value, length);
+        }
+
+        bool isRequestCode(MessageCode code)
+        {
+            const uint8_t rawCode = static_cast<uint8_t>(code);
+            const uint8_t codeClass = (rawCode >> 5) & 0x07;
+            return (codeClass == 0) && (rawCode != 0);
+        }
+    }
+
     ErrorCode getRandomToken(size_t length, uint8_t *buffer)
     {
         if (length > COAP_MAX_TOKEN_LENGTH)
@@ -1034,6 +1080,89 @@ namespace Coap
             }
         }
         return ErrorCode::OK;
+    }
+
+    uint32_t Message::getCacheKey() const
+    {
+        if (!isRequestCode(this->getCode()))
+        {
+            return 0;
+        }
+
+        uint32_t hash = FNV1A_OFFSET_BASIS_32;
+        hashByte(hash, static_cast<uint8_t>(this->getCode()));
+
+        OptionIterator it = this->getOptionIterator();
+        Option option;
+        while (it.next(option) == ErrorCode::OK)
+        {
+            uint16_t optionNumber = static_cast<uint16_t>(option.number);
+            if (isNoCacheKeyOption(optionNumber))
+            {
+                continue;
+            }
+            hashOptionForCacheKey(hash, optionNumber, option.value, option.length);
+        }
+
+        return hash;
+    }
+
+    uint32_t Message::getCacheKey(IPAddress destinationIp, uint16_t destinationPort) const
+    {
+        if (!isRequestCode(this->getCode()))
+        {
+            return 0;
+        }
+
+        uint32_t hash = FNV1A_OFFSET_BASIS_32;
+        hashByte(hash, static_cast<uint8_t>(this->getCode()));
+
+        bool hasUriHost = false;
+        bool hasUriPort = false;
+
+        OptionIterator it = this->getOptionIterator();
+        Option option;
+        while (it.next(option) == ErrorCode::OK)
+        {
+            uint16_t optionNumber = static_cast<uint16_t>(option.number);
+
+            if (option.number == OptionNumber::URI_HOST)
+            {
+                hasUriHost = true;
+            }
+            else if (option.number == OptionNumber::URI_PORT)
+            {
+                hasUriPort = true;
+            }
+
+            if (isNoCacheKeyOption(optionNumber))
+            {
+                continue;
+            }
+            hashOptionForCacheKey(hash, optionNumber, option.value, option.length);
+        }
+
+        if (!hasUriHost)
+        {
+            uint8_t hostBytes[4] = {destinationIp[0], destinationIp[1], destinationIp[2], destinationIp[3]};
+            hashOptionForCacheKey(hash,
+                                  static_cast<uint16_t>(OptionNumber::URI_HOST),
+                                  hostBytes,
+                                  sizeof(hostBytes));
+        }
+
+        if (!hasUriPort)
+        {
+            uint8_t portBigEndian[2];
+            Utils::toNetworkByteOrder(destinationPort, portBigEndian);
+            size_t portLength = Coap::Detail::getMinOptionBytes(destinationPort);
+            hashOptionForCacheKey(hash,
+                                  static_cast<uint16_t>(OptionNumber::URI_PORT),
+                                  portBigEndian + (2 - portLength),
+                                  portLength);
+        }
+
+        return hash;
     }
 
     void Detail::RetransmissionEntry::set(Coap::Message message, IPAddress ip, uint16_t port)
