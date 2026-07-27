@@ -451,11 +451,11 @@ namespace Coap
 
         // SECTION Read the next option and adjust its delta.
         uint8_t optionHeader = this->_message[currentByte];
-        currentByte++; // Move to the next byte (which may be extended delta/length or value start).
-        uint16_t oldDeltaNibble = (optionHeader >> 4) & 0x0F;
-        uint16_t oldDelta = oldDeltaNibble;
-        uint16_t newDelta = oldDelta - newOptionDelta;
-        uint16_t length = optionHeader & 0x0F;
+        currentByte++;                                        // Move to the next byte (which may be extended delta/length or value start).
+        uint16_t oldDeltaNibble = (optionHeader >> 4) & 0x0F; // The first 4-bit unsigned value of the old delta.
+        uint16_t oldDelta = oldDeltaNibble;                   // The full old delta integer.
+        uint16_t newDelta = oldDelta - newOptionDelta;        // The candidate new delta.
+        uint16_t length = optionHeader & 0x0F;                // The length of the new option.
 
         // Decode the actual old delta value if it uses extended encoding.
         if (oldDeltaNibble == 13)
@@ -527,9 +527,9 @@ namespace Coap
             }
             else if (oldDeltaNibble == 15)
             {
-                // Old delta is special case: payload marker.
                 if (length == 15)
                 {
+                    // The first option byte is 0xFF.
                     // Payload marker reached. End of options.
                     return ErrorCode::OK;
                 }
