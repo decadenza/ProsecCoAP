@@ -987,11 +987,14 @@ namespace Coap
                 // The protocol uses Network Byte Order (big-endian).
                 // Shift the bytes accordingly.
                 age = 0;
-                for (size_t i = 0; i < option.length && i < 4; i++) // Length is capped to 4.
+                if (option.length > 0)
                 {
-                    age |= static_cast<uint32_t>(option.value[i]) << (8 * (3 - i));
+                    for (size_t i = 0; i < option.length && i < 4; i++) // Length is capped to 4.
+                    {
+                        age |= static_cast<uint32_t>(option.value[i]) << (8 * (3 - i));
+                    }
+                    age >>= (8 * (4 - option.length)); // Shift back to the right if length is less than 4.
                 }
-                age >>= (8 * (4 - option.length)); // Shift back to the right if length is less than 4.
                 return ErrorCode::OK;
             }
             else
