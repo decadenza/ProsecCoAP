@@ -2,7 +2,9 @@
 
 <a href="http://coap.space/" target=_blank>Constrained Application Protocol (CoAP)</a> server/client library for Arduino IDE/PlatformIO, ESP32, ESP8266.
 
-![Build with Arduino](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-arduino.yml/badge.svg) ![Build with PlatformIO](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-platformio.yml/badge.svg)
+[![Unit tests](https://github.com/decadenza/ProsecCoAP/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/unit-tests.yml)
+[![Build with Arduino CLI](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-arduino.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-arduino.yml)
+[![Build with PlatformIO](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-platformio.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-platformio.yml)
 
 Documentation is available at [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
 
