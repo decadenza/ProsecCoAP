@@ -1208,8 +1208,6 @@ namespace Coap
         ErrorCode err;
         {                            // Reducing scope of incomingMessage and uriPath.
             Message incomingMessage; // Will be populated by fromUdp().
-            String uriPath;
-            uriPath.reserve(64); // Pre-allocate some space to reduce dynamic allocations. If you use long paths, you obviously don't care.
 
             // fromUdp() returns ErrorCode::OK while there are incoming messages.
             while ((err = Message::fromUdp(this->_udp, incomingMessage)) == ErrorCode::OK)
@@ -1239,44 +1237,9 @@ namespace Coap
                     // ANCHOR This is a request message.
                     // https://datatracker.ietf.org/doc/html/rfc7252#section-5.1
 
-                    // SECTION Extract the URI path from the message options.
-                    // Empty URI path by default.
-                    uriPath = "";
-                    // Build the URI path from the Uri-Path option(s), if present.
-                    OptionIterator it = incomingMessage.getOptionIterator();
-                    Option opt;
-                    while (it.next(opt) == ErrorCode::OK)
-                    {
-                        // Options must be in number order.
-                        if (opt.number < OptionNumber::URI_PATH)
-                        {
-                            continue;
-                        }
-                        else if (opt.number == OptionNumber::URI_PATH)
-                        {
-                            // Append '/' if uriPath is not empty.
-                            if (uriPath.length() > 0)
-                            {
-                                uriPath += '/';
-                            }
-                            // Append the option value as a string.
-                            for (size_t i = 0; i < opt.length; i++)
-                            {
-                                uriPath += static_cast<char>(opt.value[i]);
-                            }
-                        }
-                        else
-                        {
-                            // No more Uri-Path options.
-                            break;
-                        }
-                    }
-                    // !SECTION End of URI path extraction.
-
                     // Match the message URI to the registered handlers.
-                    // uriPath.c_str() will give the C-style string pointer.
                     Callback handler;
-                    err = this->_serverRegistry.find(uriPath.c_str(), handler);
+                    err = this->_serverRegistry.find(incomingMessage, handler);
                     if (err != ErrorCode::OK)
                     {
                         // No handler found for this path.

@@ -1,4 +1,5 @@
 #include "Detail.h"
+#include "../ProsecCoAP.h"
 #include "Arduino.h"
 
 namespace Coap
@@ -87,6 +88,108 @@ namespace Coap
                 }
             }
             // Not found.
+            return ErrorCode::NOT_FOUND;
+        }
+
+        ErrorCode UriRegistry::find(const Message &message, Callback &callback) const
+        {
+            struct Candidate
+            {
+                const char *path;
+                size_t pathOffset;
+                bool possible;
+            };
+
+            OptionIterator options = message.getOptionIterator();
+            Option option;
+            ErrorCode err;
+            Candidate candidates[COAP_MAX_CALLBACKS];
+
+            for (size_t i = 0; i < this->_count; i++)
+            {
+                candidates[i] = {this->_path[i], 0, true};
+            }
+
+            while (true)
+            {
+                do
+                {
+                    err = options.next(option);
+                } while (err == ErrorCode::OK && option.number < OptionNumber::URI_PATH);
+
+                if (err == ErrorCode::NOT_FOUND)
+                {
+                    break;
+                }
+
+                if (err != ErrorCode::OK)
+                {
+                    return err;
+                }
+
+                if (option.number != OptionNumber::URI_PATH)
+                {
+                    break;
+                }
+
+                // Compare this URI-Path option with every candidate that has
+                // matched all preceding options.
+                for (size_t i = 0; i < this->_count; i++)
+                {
+                    Candidate &candidate = candidates[i];
+                    if (!candidate.possible)
+                    {
+                        continue;
+                    }
+
+                    if (candidate.path[candidate.pathOffset] == '\0')
+                    {
+                        // The message contains another segment after the
+                        // registered path has already been consumed.
+                        candidate.possible = false;
+                        continue;
+                    }
+
+                    size_t segmentIndex = 0;
+                    while (segmentIndex < option.length)
+                    {
+                        char pathByte = candidate.path[candidate.pathOffset];
+                        char optionByte = static_cast<char>(option.value[segmentIndex]);
+                        if (pathByte == '/' || pathByte != optionByte)
+                        {
+                            candidate.possible = false;
+                            break;
+                        }
+                        candidate.pathOffset++;
+                        segmentIndex++;
+                    }
+
+                    if (candidate.possible)
+                    {
+                        char nextPathByte = candidate.path[candidate.pathOffset];
+                        if (nextPathByte == '/')
+                        {
+                            candidate.pathOffset++;
+                        }
+                        else if (nextPathByte != '\0')
+                        {
+                            candidate.possible = false;
+                        }
+                    }
+                }
+            }
+
+            for (size_t i = 0; i < this->_count; i++)
+            {
+                Candidate &candidate = candidates[i];
+                if (candidate.possible &&
+                    candidate.path[candidate.pathOffset] == '\0')
+                {
+                    callback = this->_callback[i];
+                    return ErrorCode::OK;
+                }
+            }
+
             return ErrorCode::NOT_FOUND;
         }
     }
