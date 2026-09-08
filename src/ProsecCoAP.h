@@ -994,8 +994,9 @@ namespace Coap
          *
          * The callback is invoked when a request message targeting the given path is received.
          *
-         * @param path The URI path to serve with **no leading slash**,
-         *             **no trailing slash** and no other special characters.
+         * @param path The URI path to serve with **no leading slash**
+         *             and no other special characters. A trailing slash is
+         *             ignored when matching the path.
          *             If the path already exists, the callback is updated.
          *             Paths are *case-sensitive.
          *             Examples of valid paths are:

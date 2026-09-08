@@ -11,6 +11,8 @@
 
 namespace Coap
 {
+    class OptionIterator;
+
     /**
      * @brief Internal details of the library. Not for public use.
      */
@@ -61,8 +63,8 @@ namespace Coap
             /**
              * @brief Array of pointers to constant URI paths.
              *
-             * @note These are just pointers; the actual null terminated strings must
-             * exist elsewhere, normally as a constant.
+             * Each pointed-to path must be a null-terminated C string and remain
+             * valid for the lifetime of the registry. The array stores only pointers.
              */
             const char *_path[COAP_MAX_CALLBACKS];
             /**
@@ -82,8 +84,9 @@ namespace Coap
             /**
              * @brief Add a new URI path and its associated callback.
              *
-             * @param path The URI path to serve with **no leading slash**,
-             *             **no trailing slash** and no other special characters.
+             * @param path The URI path to serve with **no leading slash**
+             *             and no other special characters. A trailing slash is
+             *             ignored when matching the path.
              *             If the path already exists, the callback is updated.
              *             Paths are *case-sensitive.
              *             Examples of valid paths are:
@@ -114,6 +117,18 @@ namespace Coap
              *       at setup time and not modified at runtime.
              */
             ErrorCode find(const char *path, Callback &callback) const;
+
+            /**
+             * @brief Find the callback for a message's URI-Path options.
+             *
+             * The message is matched directly against the registered paths without
+             * constructing a temporary path string.
+             *
+             * @param message The message whose URI-Path options should be matched.
+             * @param[out] callback Output parameter to store the found callback.
+             * @return @ref ErrorCode::OK if found, @ref ErrorCode::NOT_FOUND if not found.
+             */
+            ErrorCode find(const Message &message, Callback &callback) const;
         };
 
     }

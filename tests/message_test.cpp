@@ -5,6 +5,14 @@
 
 namespace
 {
+    void handlerA(Coap::Message &, IPAddress, uint16_t)
+    {
+    }
+
+    void handlerB(Coap::Message &, IPAddress, uint16_t)
+    {
+    }
+
     void assertBytesEqual(const uint8_t *expected, const uint8_t *actual, size_t length)
     {
         TEST_ASSERT_EQUAL_INT(0, memcmp(expected, actual, length));
@@ -206,6 +214,20 @@ void test_setMaxAge_stores_minimal_encoding_and_reads_back(void)
     TEST_ASSERT_EQUAL(0x012345, age);
 }
 
+void test_uriRegistry_find_matches_second_registered_path(void)
+{
+    Coap::Detail::UriRegistry registry;
+    Coap::Message message;
+    Coap::Callback callback = nullptr;
+
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, registry.add("a/b", handlerA));
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, registry.add("c/d", handlerB));
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.addPath("c/d"));
+
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, registry.find(message, callback));
+    TEST_ASSERT_TRUE(callback == handlerB);
+}
+
 int main()
 {
     UNITY_BEGIN();
@@ -224,6 +246,7 @@ int main()
     RUN_TEST(test_getQuery);
     RUN_TEST(test_getMaxAge_returns_default_when_option_absent);
     RUN_TEST(test_setMaxAge_stores_minimal_encoding_and_reads_back);
+    RUN_TEST(test_uriRegistry_find_matches_second_registered_path);
 
     return UNITY_END();
 }
