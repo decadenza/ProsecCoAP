@@ -8,6 +8,7 @@ Closes #
 ## ✅ Checklist
 - [ ] I've linked the corresponding issue using `Closes #XXX` syntax, if any.
 - [ ] I have performed a self-review of my own code.
+- [ ] I've added automated tests, if possible.
 - [ ] I have sufficiently documented my code.
 - [ ] I followed any other indication specified by `README.md` and `CONTRIBUTING.md`.
 
