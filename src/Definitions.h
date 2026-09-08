@@ -343,6 +343,8 @@ namespace Coap
         NOT_SUPPORTED = -5,
         /** A network error occurred. */
         NETWORK = -6,
+        /** A caller-provided output buffer is too small for the requested result. */
+        BUFFER_TOO_SMALL = -7,
         /** General unexpected failure. */
         UNEXPECTED = -99
     };

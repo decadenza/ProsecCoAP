@@ -167,11 +167,14 @@ void test_addPayload_roundtrip_and_rejects_second_payload(void)
 void test_addPath_and_getPath_roundtrip(void)
 {
     Coap::Message message;
-    String path;
+    char insufficientPath[10];
+    char path[64];
 
     TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.addPath("/sensors/temp?unit=celsius&scale=metric"));
-    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.getPath(path));
-    TEST_ASSERT_EQUAL_STRING("/sensors/temp?unit=celsius&scale=metric", path.c_str());
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::BUFFER_TOO_SMALL,
+                      message.getPath(insufficientPath, sizeof(insufficientPath)));
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.getPath(path, sizeof(path)));
+    TEST_ASSERT_EQUAL_STRING("/sensors/temp?unit=celsius&scale=metric", path);
 }
 
 void test_addPath_rejects_invalid_query_separator_position(void)

@@ -1023,37 +1023,70 @@ namespace Coap
         return this->addOption(OptionNumber::MAX_AGE, ageBytes + (4 - length), length);
     }
 
-    ErrorCode Message::getPath(String &path) const
+    ErrorCode Message::getPath(char *path, size_t capacity) const
     {
+        if (path == nullptr || capacity == 0)
+        {
+            return ErrorCode::INVALID_ARGUMENT;
+        }
+
+        size_t pathLength = 0;
+        path[0] = '\0';
+
+        auto append = [&](char value) -> ErrorCode
+        {
+            if (pathLength + 1 >= capacity)
+            {
+                return ErrorCode::BUFFER_TOO_SMALL;
+            }
+            path[pathLength++] = value;
+            path[pathLength] = '\0';
+            return ErrorCode::OK;
+        };
+
         OptionIterator it = this->getOptionIterator();
         Option opt;
-        path = "";
         bool hasQuery = false;
-        while (it.next(opt) == ErrorCode::OK)
+        ErrorCode err;
+        while ((err = it.next(opt)) == ErrorCode::OK)
         {
             if (opt.number == OptionNumber::URI_PATH) // Uri path always comes before query.
             {
                 // Append '/' before each path segment.
-                path += '/';
-                // Append the path segment one character at a time.
+                err = append('/');
+                if (err != ErrorCode::OK)
+                {
+                    return err;
+                }
                 for (size_t i = 0; i < opt.length; i++)
                 {
-                    path += static_cast<char>(opt.value[i]);
+                    err = append(static_cast<char>(opt.value[i]));
+                    if (err != ErrorCode::OK)
+                    {
+                        return err;
+                    }
                 }
             }
             else if (opt.number == OptionNumber::URI_QUERY)
             {
                 // Append '?' before the first query segment, '&' before the following ones.
-                path += hasQuery ? '&' : '?';
+                err = append(hasQuery ? '&' : '?');
+                if (err != ErrorCode::OK)
+                {
+                    return err;
+                }
                 hasQuery = true;
-                // Append the query segment value one character at a time.
                 for (size_t i = 0; i < opt.length; i++)
                 {
-                    path += static_cast<char>(opt.value[i]);
+                    err = append(static_cast<char>(opt.value[i]));
+                    if (err != ErrorCode::OK)
+                    {
+                        return err;
+                    }
                 }
             }
         }
-        return ErrorCode::OK;
+        return err == ErrorCode::NOT_FOUND ? ErrorCode::OK : err;
     }
 
     ErrorCode Message::getQuery(const char *name, size_t length, String &out) const

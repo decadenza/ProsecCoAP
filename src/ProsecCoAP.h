@@ -567,21 +567,24 @@ namespace Coap
         ErrorCode addPath(const char *path);
 
         /**
-         * @brief Retrieve all the URI path and URI query options from the message and concatenate them into a single string.
-         * @param[out] path The String object where the path (and query) will be stored.
+         * @brief Retrieve all the URI path and URI query options into a C string.
+         * @param[out] path The buffer where the path (and query) will be stored.
+         * @param capacity The size of @p path, including space for the null terminator.
          * @return An error code indicating success or failure.
+         *         It returns @ref ErrorCode::INVALID_ARGUMENT if @p path is null or
+         *         @p capacity is zero. It returns @ref ErrorCode::BUFFER_TOO_SMALL
+         *         if the buffer is too small.
          *
          * Example usage:
          * @code{.cpp}
-         * String path;
-         * path.reserve(100); // OPTIONAL: Reserve some space to avoid dynamic resizing during concatenation.
-         * if (msg.getPath(path) == Coap::ErrorCode::OK)
+         * char path[100];
+         * if (msg.getPath(path, sizeof(path)) == Coap::ErrorCode::OK)
          * {
          *   Serial.println(path);
          * }
          * @endcode
          */
-        ErrorCode getPath(String &path) const;
+        ErrorCode getPath(char *path, size_t capacity) const;
 
         /**
          * @brief Retrieve the value of a Uri-Query option by name.
