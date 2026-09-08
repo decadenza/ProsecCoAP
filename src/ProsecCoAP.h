@@ -594,20 +594,25 @@ namespace Coap
          *
          * @param name The query parameter name to search for, not null terminated.
          * @param length The length of @p name in bytes, **excluding** any null terminator (e.g. `strlen(name)`).
-         * @param[out] out The value associated with @p name. Left empty if the query has no `=value` part.
-         * @return @ref ErrorCode::OK if a Uri-Query option matching @p name is found, @ref ErrorCode::NOT_FOUND otherwise.
+         * @param[out] out The buffer where the value associated with @p name is stored.
+         *                 It is left empty if the query has no `=value` part.
+         * @param capacity The size of @p out, including space for the null terminator.
+         * @return @ref ErrorCode::OK if a Uri-Query option matching @p name is found,
+         *         @ref ErrorCode::NOT_FOUND otherwise. It returns @ref ErrorCode::INVALID_ARGUMENT
+         *         if an input pointer is null or a length is zero, and @ref ErrorCode::BUFFER_TOO_SMALL
+         *         if the value does not fit in @p out.
          *
          * Example usage:
          * @code{.cpp}
          * // For a message with the query "unit=celsius":
-         * String value;
-         * if (msg.getQuery("unit", 4, value) == Coap::ErrorCode::OK)
+         * char value[16];
+         * if (msg.getQuery("unit", 4, value, sizeof(value)) == Coap::ErrorCode::OK)
          * {
          *   Serial.println(value); // Prints "celsius".
          * }
          * @endcode
          */
-        ErrorCode getQuery(const char *name, size_t length, String &out) const;
+        ErrorCode getQuery(const char *name, size_t length, char *out, size_t capacity) const;
 
         /**
          * @brief Get the payload from the message.

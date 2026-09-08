@@ -189,13 +189,17 @@ void test_getQuery(void)
     Coap::Message message;
     const uint8_t queryA[] = {'s', 'c', 'a', 'l', 'e', '=', 'm', 'e', 't', 'r', 'i', 'c'};
     const uint8_t queryB[] = {'u', 'n', 'i', 't', '=', 'c', 'e', 'l', 's', 'i', 'u', 's'};
-    String value;
+    char insufficientValue[7];
+    char value[16];
 
     TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.addOption(Coap::OptionNumber::URI_QUERY, queryA, sizeof(queryA)));
     TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.addOption(Coap::OptionNumber::URI_QUERY, queryB, sizeof(queryB)));
 
-    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.getQuery("unit", 4, value));
-    TEST_ASSERT_EQUAL_STRING("celsius", value.c_str());
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::BUFFER_TOO_SMALL,
+                      message.getQuery("unit", 4, insufficientValue, sizeof(insufficientValue)));
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK,
+                      message.getQuery("unit", 4, value, sizeof(value)));
+    TEST_ASSERT_EQUAL_STRING("celsius", value);
 }
 
 void test_getMaxAge_returns_default_when_option_absent(void)

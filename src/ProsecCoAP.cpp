@@ -1089,15 +1089,18 @@ namespace Coap
         return err == ErrorCode::NOT_FOUND ? ErrorCode::OK : err;
     }
 
-    ErrorCode Message::getQuery(const char *name, size_t length, String &out) const
+    ErrorCode Message::getQuery(const char *name, size_t length, char *out, size_t capacity) const
     {
-        if (name == nullptr || length == 0)
+        if (name == nullptr || length == 0 || out == nullptr || capacity == 0)
         {
             return ErrorCode::INVALID_ARGUMENT;
         }
+
+        out[0] = '\0';
         OptionIterator it = this->getOptionIterator();
         Option opt;
-        while (it.next(opt) == ErrorCode::OK)
+        ErrorCode err;
+        while ((err = it.next(opt)) == ErrorCode::OK)
         {
             if (opt.number < OptionNumber::URI_QUERY)
                 continue;
@@ -1108,22 +1111,20 @@ namespace Coap
             if (opt.length == length)
             {
                 // Bare "name" with no '=', as allowed by HTTP/CoAP query syntax.
-                out = "";
                 return ErrorCode::OK;
             }
             if (opt.value[length] != '=')
                 continue; // Only a prefix match, e.g. "name2=...": not a match.
-            // opt.value[length] is the '=' character separating the name and value.
-            // Iterate over the remaining characters in the option value to extract the query parameter value.
-            out = "";
-            out.reserve(opt.length - length - 1); // Reserve space for the value part.
-            for (size_t i = length + 1; i < opt.length; i++)
+            size_t valueLength = opt.length - length - 1;
+            if (valueLength >= capacity)
             {
-                out += static_cast<char>(opt.value[i]);
+                return ErrorCode::BUFFER_TOO_SMALL;
             }
+            memcpy(out, opt.value + length + 1, valueLength);
+            out[valueLength] = '\0';
             return ErrorCode::OK;
         }
-        return ErrorCode::NOT_FOUND;
+        return err == ErrorCode::NOT_FOUND ? ErrorCode::NOT_FOUND : err;
     }
 
     void Detail::RetransmissionEntry::set(Coap::Message message, IPAddress ip, uint16_t port)
