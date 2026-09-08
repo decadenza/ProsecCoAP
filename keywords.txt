@@ -40,6 +40,7 @@ getLength	KEYWORD2
 getOptionIterator	KEYWORD2
 getPayload	KEYWORD2
 getPort	KEYWORD2
+getQuery	KEYWORD2
 getToken	KEYWORD2
 getTokenLength	KEYWORD2
 getType	KEYWORD2
