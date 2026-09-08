@@ -1056,6 +1056,43 @@ namespace Coap
         return ErrorCode::OK;
     }
 
+    ErrorCode Message::getQuery(const char *name, size_t length, String &out) const
+    {
+        if (name == nullptr || length == 0)
+        {
+            return ErrorCode::INVALID_ARGUMENT;
+        }
+        OptionIterator it = this->getOptionIterator();
+        Option opt;
+        while (it.next(opt) == ErrorCode::OK)
+        {
+            if (opt.number < OptionNumber::URI_QUERY)
+                continue;
+            if (opt.number != OptionNumber::URI_QUERY)
+                break; // Options are ordered, no more Uri-Query options to check.
+            if (opt.length < length || memcmp(opt.value, name, length) != 0)
+                continue; // Name does not match this segment.
+            if (opt.length == length)
+            {
+                // Bare "name" with no '=', as allowed by HTTP/CoAP query syntax.
+                out = "";
+                return ErrorCode::OK;
+            }
+            if (opt.value[length] != '=')
+                continue; // Only a prefix match, e.g. "name2=...": not a match.
+            // opt.value[length] is the '=' character separating the name and value.
+            // Iterate over the remaining characters in the option value to extract the query parameter value.
+            out = "";
+            out.reserve(opt.length - length - 1); // Reserve space for the value part.
+            for (size_t i = length + 1; i < opt.length; i++)
+            {
+                out += static_cast<char>(opt.value[i]);
+            }
+            return ErrorCode::OK;
+        }
+        return ErrorCode::NOT_FOUND;
+    }
+
     void Detail::RetransmissionEntry::set(Coap::Message message, IPAddress ip, uint16_t port)
     {
         this->message = message;

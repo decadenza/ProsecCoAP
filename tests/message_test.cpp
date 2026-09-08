@@ -173,6 +173,20 @@ void test_addPath_rejects_invalid_query_separator_position(void)
     TEST_ASSERT_EQUAL(Coap::ErrorCode::INVALID_ARGUMENT, message.addPath("/sensors/temp&unit=celsius"));
 }
 
+void test_getQuery(void)
+{
+    Coap::Message message;
+    const uint8_t queryA[] = {'s', 'c', 'a', 'l', 'e', '=', 'm', 'e', 't', 'r', 'i', 'c'};
+    const uint8_t queryB[] = {'u', 'n', 'i', 't', '=', 'c', 'e', 'l', 's', 'i', 'u', 's'};
+    String value;
+
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.addOption(Coap::OptionNumber::URI_QUERY, queryA, sizeof(queryA)));
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.addOption(Coap::OptionNumber::URI_QUERY, queryB, sizeof(queryB)));
+
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.getQuery("unit", 4, value));
+    TEST_ASSERT_EQUAL_STRING("celsius", value.c_str());
+}
+
 void test_getMaxAge_returns_default_when_option_absent(void)
 {
     Coap::Message message;
@@ -207,6 +221,7 @@ int main()
     RUN_TEST(test_addPayload_roundtrip_and_rejects_second_payload);
     RUN_TEST(test_addPath_and_getPath_roundtrip);
     RUN_TEST(test_addPath_rejects_invalid_query_separator_position);
+    RUN_TEST(test_getQuery);
     RUN_TEST(test_getMaxAge_returns_default_when_option_absent);
     RUN_TEST(test_setMaxAge_stores_minimal_encoding_and_reads_back);
 

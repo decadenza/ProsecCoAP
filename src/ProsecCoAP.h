@@ -584,6 +584,29 @@ namespace Coap
         ErrorCode getPath(String &path) const;
 
         /**
+         * @brief Retrieve the value of a Uri-Query option by name.
+         *
+         * As per RFC 7252 Section 6.4/6.5, a query segment is encoded as a Uri-Query option
+         * with the form `name=value` or, like in HTTP, just `name` when there is no associated value.
+         *
+         * @param name The query parameter name to search for, not null terminated.
+         * @param length The length of @p name in bytes, **excluding** any null terminator (e.g. `strlen(name)`).
+         * @param[out] out The value associated with @p name. Left empty if the query has no `=value` part.
+         * @return @ref ErrorCode::OK if a Uri-Query option matching @p name is found, @ref ErrorCode::NOT_FOUND otherwise.
+         *
+         * Example usage:
+         * @code{.cpp}
+         * // For a message with the query "unit=celsius":
+         * String value;
+         * if (msg.getQuery("unit", 4, value) == Coap::ErrorCode::OK)
+         * {
+         *   Serial.println(value); // Prints "celsius".
+         * }
+         * @endcode
+         */
+        ErrorCode getQuery(const char *name, size_t length, String &out) const;
+
+        /**
          * @brief Get the payload from the message.
          *
          * The payload is a raw set of bytes. To interpret it, refer to the
