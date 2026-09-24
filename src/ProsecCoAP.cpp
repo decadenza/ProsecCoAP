@@ -562,7 +562,8 @@ namespace Coap
     {
         OptionIterator it = this->getOptionIterator();
         Option opt;
-        while (it.next(opt) == ErrorCode::OK)
+        ErrorCode err = ErrorCode::NOT_FOUND;
+        while ((err = it.next(opt)) == ErrorCode::OK)
         {
             if (opt.number == number)
             {
@@ -575,7 +576,7 @@ namespace Coap
                 break;
             }
         }
-        return ErrorCode::NOT_FOUND; // Option not found.
+        return err;
     }
 
     ErrorCode Message::addHost(IPAddress ip)
@@ -920,7 +921,8 @@ namespace Coap
     {
         OptionIterator it = this->getOptionIterator();
         Option option;
-        while (it.next(option) == ErrorCode::OK)
+        ErrorCode err = ErrorCode::NOT_FOUND;
+        while ((err = it.next(option)) == ErrorCode::OK)
         {
             if (option.number < OptionNumber::OBSERVE)
                 continue;
@@ -941,10 +943,10 @@ namespace Coap
             {
                 // Since options are ordered by number, if we have passed the Observe option number,
                 // it means that the Observe option is not present.
-                break;
+                return ErrorCode::NOT_FOUND;
             }
         }
-        return ErrorCode::NOT_FOUND;
+        return err;
     }
 
     bool Message::isObserveRegister()
@@ -977,9 +979,12 @@ namespace Coap
 
     ErrorCode Message::getMaxAge(uint32_t &age)
     {
+        // If MAX_AGE option is not present, the default value is 60 seconds.
+        age = 60;
         OptionIterator it = this->getOptionIterator();
         Option option;
-        while (it.next(option) == ErrorCode::OK)
+        ErrorCode err;
+        while ((err = it.next(option)) == ErrorCode::OK)
         {
             if (option.number < OptionNumber::MAX_AGE)
                 continue;
@@ -1003,12 +1008,10 @@ namespace Coap
             {
                 // Since options are ordered by number, if we have passed the MAX_AGE option number,
                 // it means that the MAX_AGE option is not present.
-                break;
+                return ErrorCode::NOT_FOUND;
             }
         }
-        // MAX_AGE option not present, set default value of 60 seconds.
-        age = 60;
-        return ErrorCode::NOT_FOUND;
+        return err;
     }
 
     ErrorCode Message::setMaxAge(uint32_t age)
