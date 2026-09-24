@@ -1,18 +1,23 @@
 # ProsecCoAP 🥂 - CoAP client/server library for Arduino
 
-<a href="http://coap.space/" target=_blank>Constrained Application Protocol (CoAP)</a> server/client library for Arduino IDE/PlatformIO, ESP32, ESP8266.
+<a href="http://coap.space/" target=_blank>Constrained Application Protocol (CoAP)</a> server/client library for Arduino.
 
-[![Unit tests](https://github.com/decadenza/ProsecCoAP/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/unit-tests.yml)
 [![Build with Arduino CLI](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-arduino.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-arduino.yml)
 [![Build with PlatformIO](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-platformio.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/build-platformio.yml)
+[![Unit tests](https://github.com/decadenza/ProsecCoAP/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/unit-tests.yml)
+[![Documentation build and deploy](https://github.com/decadenza/ProsecCoAP/actions/workflows/document.yml/badge.svg)](https://github.com/decadenza/ProsecCoAP/actions/workflows/document.yml)
 
-Documentation is available at [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
+### Documentation is available at [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/)
+Published documentation points to latest `main`.
 
 ## Details
-This library is an implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)).
-The aim is to provide all the compulsory functionalities, maintaining the execution lightweight and clearly documenting its API. 
+This library is an implementation of CoAP protocol ([RFC-7252](https://datatracker.ietf.org/doc/html/rfc7252)) for Arduino devices.
+It is compatible with any Arduino-compatible boards like Uno, Due, Giga, ESP32, ESP8266, Raspberry Pi Pico, etc.
+It aims to provide all the compulsory protocol functionalities, maintaining the execution lightweight and clearly documenting its API.
 
-Please open an issue to request missing functionalities or report bugs.
+ProsecCoAP is published both as an [Arduino Library](https://docs.arduino.cc/libraries/proseccoap/) and in the [PlatformIO registry](https://registry.platformio.org/libraries/decadenza/ProsecCoAP).
+
+Please contribute by reporting bugs and requesting missing functionalities on the [GitHub repository](https://github.com/decadenza/ProsecCoAP).
 
 ## How to install
 ### Install from Arduino IDE Library Manager
@@ -30,7 +35,7 @@ pio pkg install --library ProsecCoAP
 2. In the Arduino IDE, navigate to *Sketch > Include Library > Add .ZIP Library*. At the top of the drop down list, select the option to "Add .ZIP Library".
 
 ## Getting started
-A simple server can be started as:
+A simple server can be started in a few lines of code:
 ```cpp
 #include <Ethernet.h>
 #include <EthernetUdp.h>
@@ -100,9 +105,9 @@ The [examples](https://github.com/decadenza/ProsecCoAP/tree/main/examples) need 
 
 ## Documentation
 Documentation is available at: [https://decadenza.github.io/ProsecCoAP/](https://decadenza.github.io/ProsecCoAP/).
-It points to the `main` branch.
+Published documentation points to latest `main`.
 
-### Building the documentation
+### Building the documentation locally
 To manually build documentation in your current working directory, run:
 ```
 doxygen
