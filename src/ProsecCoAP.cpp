@@ -787,6 +787,8 @@ namespace Coap
 
     ErrorCode Message::getPayload(const uint8_t *&payload, size_t &length) const
     {
+        payload = nullptr;
+        length = 0;
         // Find the payload marker (0xFF), if present.
         OptionIterator it = this->getOptionIterator();
         ErrorCode err;
