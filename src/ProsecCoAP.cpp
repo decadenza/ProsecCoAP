@@ -244,10 +244,22 @@ namespace Coap
         {
             return ErrorCode::INVALID_ARGUMENT;
         }
+        if (token == nullptr && length > 0)
+        {
+            return ErrorCode::INVALID_ARGUMENT;
+        }
 
         // SECTION Remove any existing token.
         size_t existingTokenLength = this->_message[0] & 0x0F; // Get existing token length.
-        this->_remove(COAP_HEADER_SIZE, existingTokenLength);  // No-op if existingTokenLength is 0.
+        if (existingTokenLength > COAP_MAX_TOKEN_LENGTH)
+        {
+            return ErrorCode::MALFORMED_MESSAGE;
+        }
+        ErrorCode removeErr = this->_remove(COAP_HEADER_SIZE, existingTokenLength); // No-op if existingTokenLength is 0.
+        if (removeErr != ErrorCode::OK)
+        {
+            return removeErr;
+        }
 
         // Write the generated token into the message buffer and update overall message length.
         ErrorCode err = this->_insert(COAP_HEADER_SIZE, token, length);

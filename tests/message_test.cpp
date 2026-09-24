@@ -33,7 +33,7 @@ void tearDown(void)
 {
 }
 
-void test_constructor_sets_default_header(void)
+void testConstructorSetsDefaultHeader(void)
 {
     Coap::Message message;
 
@@ -44,7 +44,7 @@ void test_constructor_sets_default_header(void)
     TEST_ASSERT_EQUAL(0, message.getTokenLength());
 }
 
-void test_constructor_with_parameters_sets_expected_values(void)
+void testConstructorWithParametersSetsExpectedValues(void)
 {
     Coap::Message message(Coap::MessageType::CON, Coap::MessageCode::GET, 0x1234);
 
@@ -53,7 +53,7 @@ void test_constructor_with_parameters_sets_expected_values(void)
     TEST_ASSERT_EQUAL(0x1234, message.getId());
 }
 
-void test_setters_update_type_code_and_id(void)
+void testSettersUpdateTypeCodeAndId(void)
 {
     Coap::Message message;
 
@@ -66,7 +66,7 @@ void test_setters_update_type_code_and_id(void)
     TEST_ASSERT_EQUAL(0xABCD, message.getId());
 }
 
-void test_setToken_sets_and_overwrites_token(void)
+void testSetTokenSetsAndOverwritesToken(void)
 {
     Coap::Message message;
     const uint8_t tokenA[] = {0xAA, 0xBB, 0xCC, 0xDD};
@@ -83,7 +83,7 @@ void test_setToken_sets_and_overwrites_token(void)
     assertBytesEqual(tokenB, message.getToken(), sizeof(tokenB));
 }
 
-void test_setToken_rejects_tokens_longer_than_spec_limit(void)
+void testSetTokenRejectsTokensLongerThanSpecLimit(void)
 {
     Coap::Message message;
     const uint8_t validToken[] = {0x10, 0x11};
@@ -92,11 +92,28 @@ void test_setToken_rejects_tokens_longer_than_spec_limit(void)
     TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.setToken(validToken, sizeof(validToken)));
 
     TEST_ASSERT_EQUAL(Coap::ErrorCode::INVALID_ARGUMENT, message.setToken(tooLongToken, sizeof(tooLongToken)));
+    // Expect the token to be the first one.
     TEST_ASSERT_EQUAL(sizeof(validToken), message.getTokenLength());
     assertBytesEqual(validToken, message.getToken(), sizeof(validToken));
 }
 
-void test_matchesToken_requires_matching_content_and_length(void)
+void testSetTokenRejectsMalformedExistingTokenLength(void)
+{
+    Coap::Message message;
+    const uint8_t originalToken[] = {0x10, 0x11};
+    const uint8_t replacementToken[] = {0x22, 0x33};
+
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, message.setToken(originalToken, sizeof(originalToken)));
+
+    uint8_t *raw = const_cast<uint8_t *>(message.asRaw());
+    raw[0] = (raw[0] & 0xF0) | 0x0F; // Deliberately corrupt the token length to an invalid value.
+
+    // Expect a MALFORMED_MESSAGE error due to the corrupted token length.
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::MALFORMED_MESSAGE, message.setToken(replacementToken, sizeof(replacementToken)));
+    assertBytesEqual(originalToken, message.getToken(), sizeof(originalToken)); // The token should remain unchanged despite the malformed header.
+}
+
+void testMatchesTokenRequiresMatchingContentAndLength(void)
 {
     Coap::Message message;
     const uint8_t token[] = {0x44, 0x55, 0x66};
@@ -109,7 +126,7 @@ void test_matchesToken_requires_matching_content_and_length(void)
     TEST_ASSERT_FALSE(message.matchesToken(token, sizeof(token) - 1));
 }
 
-void test_addOption_keeps_options_ordered_by_number(void)
+void testAddOptionKeepsOptionsOrderedByNumber(void)
 {
     Coap::Message message;
     const uint8_t queryValue[] = {'u', 'n', 'i', 't'};
@@ -132,7 +149,7 @@ void test_addOption_keeps_options_ordered_by_number(void)
     TEST_ASSERT_EQUAL(Coap::ErrorCode::NOT_FOUND, it.next(option));
 }
 
-void test_addOption_rejects_duplicate_single_instance_option(void)
+void testAddOptionRejectsDuplicateSingleInstanceOption(void)
 {
     Coap::Message message;
     const uint8_t formatA[] = {0x32};
@@ -148,7 +165,7 @@ void test_addOption_rejects_duplicate_single_instance_option(void)
     assertOptionValue(option, formatA, sizeof(formatA));
 }
 
-void test_addPayload_roundtrip_and_rejects_second_payload(void)
+void testAddPayloadRoundtripAndRejectsSecondPayload(void)
 {
     Coap::Message message;
     const uint8_t payload[] = {'h', 'e', 'l', 'l', 'o'};
@@ -164,7 +181,7 @@ void test_addPayload_roundtrip_and_rejects_second_payload(void)
     TEST_ASSERT_EQUAL(Coap::ErrorCode::NOT_SUPPORTED, message.addPayload(payload, sizeof(payload)));
 }
 
-void test_addPath_and_getPath_roundtrip(void)
+void testAddPathAndGetPathRoundtrip(void)
 {
     Coap::Message message;
     char insufficientPath[10];
@@ -177,14 +194,14 @@ void test_addPath_and_getPath_roundtrip(void)
     TEST_ASSERT_EQUAL_STRING("/sensors/temp?unit=celsius&scale=metric", path);
 }
 
-void test_addPath_rejects_invalid_query_separator_position(void)
+void testAddPathRejectsInvalidQuerySeparatorPosition(void)
 {
     Coap::Message message;
 
     TEST_ASSERT_EQUAL(Coap::ErrorCode::INVALID_ARGUMENT, message.addPath("/sensors/temp&unit=celsius"));
 }
 
-void test_getQuery(void)
+void testGetQuery(void)
 {
     Coap::Message message;
     const uint8_t queryA[] = {'s', 'c', 'a', 'l', 'e', '=', 'm', 'e', 't', 'r', 'i', 'c'};
@@ -202,7 +219,7 @@ void test_getQuery(void)
     TEST_ASSERT_EQUAL_STRING("celsius", value);
 }
 
-void test_getMaxAge_returns_default_when_option_absent(void)
+void testGetMaxAgeReturnsDefaultWhenOptionAbsent(void)
 {
     Coap::Message message;
     uint32_t age = 0;
@@ -211,7 +228,7 @@ void test_getMaxAge_returns_default_when_option_absent(void)
     TEST_ASSERT_EQUAL(60, age);
 }
 
-void test_setMaxAge_stores_minimal_encoding_and_reads_back(void)
+void testSetMaxAgeStoresMinimalEncodingAndReadsBack(void)
 {
     Coap::Message message;
     uint32_t age = 0;
@@ -221,7 +238,7 @@ void test_setMaxAge_stores_minimal_encoding_and_reads_back(void)
     TEST_ASSERT_EQUAL(0x012345, age);
 }
 
-void test_uriRegistry_find_matches_second_registered_path(void)
+void testUriRegistryFindMatchesSecondRegisteredPath(void)
 {
     Coap::Detail::UriRegistry registry;
     Coap::Message message;
@@ -239,21 +256,22 @@ int main()
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_constructor_sets_default_header);
-    RUN_TEST(test_constructor_with_parameters_sets_expected_values);
-    RUN_TEST(test_setters_update_type_code_and_id);
-    RUN_TEST(test_setToken_sets_and_overwrites_token);
-    RUN_TEST(test_setToken_rejects_tokens_longer_than_spec_limit);
-    RUN_TEST(test_matchesToken_requires_matching_content_and_length);
-    RUN_TEST(test_addOption_keeps_options_ordered_by_number);
-    RUN_TEST(test_addOption_rejects_duplicate_single_instance_option);
-    RUN_TEST(test_addPayload_roundtrip_and_rejects_second_payload);
-    RUN_TEST(test_addPath_and_getPath_roundtrip);
-    RUN_TEST(test_addPath_rejects_invalid_query_separator_position);
-    RUN_TEST(test_getQuery);
-    RUN_TEST(test_getMaxAge_returns_default_when_option_absent);
-    RUN_TEST(test_setMaxAge_stores_minimal_encoding_and_reads_back);
-    RUN_TEST(test_uriRegistry_find_matches_second_registered_path);
+    RUN_TEST(testConstructorSetsDefaultHeader);
+    RUN_TEST(testConstructorWithParametersSetsExpectedValues);
+    RUN_TEST(testSettersUpdateTypeCodeAndId);
+    RUN_TEST(testSetTokenSetsAndOverwritesToken);
+    RUN_TEST(testSetTokenRejectsTokensLongerThanSpecLimit);
+    RUN_TEST(testSetTokenRejectsMalformedExistingTokenLength);
+    RUN_TEST(testMatchesTokenRequiresMatchingContentAndLength);
+    RUN_TEST(testAddOptionKeepsOptionsOrderedByNumber);
+    RUN_TEST(testAddOptionRejectsDuplicateSingleInstanceOption);
+    RUN_TEST(testAddPayloadRoundtripAndRejectsSecondPayload);
+    RUN_TEST(testAddPathAndGetPathRoundtrip);
+    RUN_TEST(testAddPathRejectsInvalidQuerySeparatorPosition);
+    RUN_TEST(testGetQuery);
+    RUN_TEST(testGetMaxAgeReturnsDefaultWhenOptionAbsent);
+    RUN_TEST(testSetMaxAgeStoresMinimalEncodingAndReadsBack);
+    RUN_TEST(testUriRegistryFindMatchesSecondRegisteredPath);
 
     return UNITY_END();
 }
