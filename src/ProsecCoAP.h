@@ -303,17 +303,20 @@ namespace Coap
         ErrorCode intoResponse(const Message &request, MessageCode code, MessageType type);
 
         /**
-         * @brief Convert the message into an ACK response to the given request.
+         * @brief Convert the message into a response to the given request.
+         *
+         * It chooses the response type automatically, based on the request type.
+         * It will chose use @ref MessageType::NON for non-confirmable requests and
+         * @ref MessageType::ACK for confirmable requests. The latter is the default
+         * for any other message type.
+         *
          * @param request The request message.
          * @param code The response message code.
          * @return An error code indicating success or failure.
          *         It returns @ref ErrorCode::OK on success.
          * @see intoResponse(const Message &request, MessageCode code, MessageType type) for a more general method that allows specifying the response type.
          */
-        ErrorCode intoResponse(const Message &request, MessageCode code)
-        {
-            return intoResponse(request, code, MessageType::ACK);
-        }
+        ErrorCode intoResponse(const Message &request, MessageCode code);
 
         /**
          * @brief Get the CoAP version of this message.

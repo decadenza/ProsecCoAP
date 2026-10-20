@@ -53,6 +53,27 @@ void testConstructorWithParametersSetsExpectedValues(void)
     TEST_ASSERT_EQUAL(0x1234, message.getId());
 }
 
+void testIntoResponseChoosesTypeFromRequestType(void)
+{
+    const uint8_t token[] = {0x12, 0x34};
+    Coap::Message request(Coap::MessageType::NON, Coap::MessageCode::GET, 0x42);
+    Coap::Message response;
+
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, request.setToken(token, sizeof(token)));
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, response.intoResponse(request, Coap::MessageCode::CONTENT));
+    TEST_ASSERT_EQUAL(Coap::MessageType::NON, response.getType());
+    TEST_ASSERT_EQUAL(Coap::MessageCode::CONTENT, response.getCode());
+    TEST_ASSERT_EQUAL(request.getId(), response.getId());
+    TEST_ASSERT_TRUE(response.matchesToken(token, sizeof(token)));
+
+    request.setType(Coap::MessageType::CON);
+    TEST_ASSERT_EQUAL(Coap::ErrorCode::OK, response.intoResponse(request, Coap::MessageCode::CONTENT));
+    TEST_ASSERT_EQUAL(Coap::MessageType::ACK, response.getType());
+    TEST_ASSERT_EQUAL(Coap::MessageCode::CONTENT, response.getCode());
+    TEST_ASSERT_EQUAL(request.getId(), response.getId());
+    TEST_ASSERT_TRUE(response.matchesToken(token, sizeof(token)));
+}
+
 void testSettersUpdateTypeCodeAndId(void)
 {
     Coap::Message message;
@@ -258,6 +279,7 @@ int main()
 
     RUN_TEST(testConstructorSetsDefaultHeader);
     RUN_TEST(testConstructorWithParametersSetsExpectedValues);
+    RUN_TEST(testIntoResponseChoosesTypeFromRequestType);
     RUN_TEST(testSettersUpdateTypeCodeAndId);
     RUN_TEST(testSetTokenSetsAndOverwritesToken);
     RUN_TEST(testSetTokenRejectsTokensLongerThanSpecLimit);

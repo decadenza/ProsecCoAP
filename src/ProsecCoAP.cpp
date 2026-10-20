@@ -83,6 +83,15 @@ namespace Coap
         return ErrorCode::OK;
     }
 
+    ErrorCode Message::intoResponse(const Message &request, MessageCode code)
+    {
+        if (request.getType() == MessageType::NON)
+        {
+            return Message::intoResponse(request, code, MessageType::NON);
+        }
+        return Message::intoResponse(request, code, MessageType::ACK);
+    }
+
     ErrorCode Message::intoResponse(const Message &request, MessageCode code, MessageType type)
     {
         this->setCode(code);
