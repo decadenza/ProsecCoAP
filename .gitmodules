@@ -1,4 +1,4 @@
 [submodule "tests/unity"]
 	path = tests/unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
-	tag = v2.6.1
+	tag = v2.7.0

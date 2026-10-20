@@ -86,6 +86,11 @@ The examples need standard libraries, like:
 Refer to the comments in each example for details.
 
 ### How to test
+#### Run unit tests
+```
+make test
+```
+
 #### Verify compile errors and warnings for multiple boards
 To quickly verify a successful build process for multiple boards: 
 1. Install [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation/).
