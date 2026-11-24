@@ -59,12 +59,6 @@
  */
 #define COAP_MAX_CALLBACKS 10U
 #endif
-#ifndef COAP_MAX_OBSERVERS
-/**
- * @brief Maximum number of observers that can be registered at runtime.
- */
-#define COAP_MAX_OBSERVERS 4U
-#endif
 #ifndef COAP_OBSERVER_LEASE_MS
 #define COAP_OBSERVER_LEASE_MS 60000UL
 #endif
