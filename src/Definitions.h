@@ -14,14 +14,16 @@
 // SECTION Constants.
 /**
  * @defgroup ConfigurableConstants
- * @brief CoAP constants that can be overridden.
+ * @brief Compile-time CoAP configuration macros.
  *
- * These constants can be overridden by defining them before including this header.
- * Example:
- * @code{.cpp}
- * #define COAP_MAX_OBSERVERS 8
- * #include <ProsecCoAP.h>
- * @endcode
+ * Define a macro before including this header to affect the current
+ * translation unit. When building the library from separate source files,
+ * that alone may not configure the library implementation: the same
+ * definition must also be supplied when compiling the library's source files.
+ *
+ * Configure overrides through your build system's global compiler definitions
+ * (for example, -DCOAP_MAX_CALLBACKS=16), so the library and application
+ * are compiled with consistent values.
  *
  * Refer to each constant's documentation for details.
  *@{
